@@ -1,0 +1,8 @@
+[objects]
+src/star_merchants.obj
+data.obj
+hdr.obj
+c:\dev\snes\tools\pvsneslib\pvsneslib\lib\LoROM_SlowROM/crt0_snes.obj
+c:\dev\snes\tools\pvsneslib\pvsneslib\lib\LoROM_SlowROM/libc.obj
+c:\dev\snes\tools\pvsneslib\pvsneslib\lib\LoROM_SlowROM/libm.obj
+c:\dev\snes\tools\pvsneslib\pvsneslib\lib\LoROM_SlowROM/libtcc.obj
