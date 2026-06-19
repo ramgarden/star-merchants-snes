@@ -1,17 +1,25 @@
 {
     "version": 4,
     "env": {
-        "pvsneslibPath": ["C:/dev/snes/tools/pvsneslib/pvsneslib/include/**",
-            "C:/dev/snes/tools/pvsneslib/devkitsnes/include"],
-        "projectIncludePath": [ "${workspaceFolder}",
+        "pvsneslibPath": [
+            "C:/dev/snes/tools/pvsneslib/pvsneslib/include/**",
+            "C:/dev/snes/tools/pvsneslib/devkitsnes/include"
+        ],
+        "projectIncludePath": [
+            "${workspaceFolder}",
             "${workspaceFolder}/include",
-            "${workspaceFolder}/source"]
-      },
+            "${workspaceFolder}/source"
+        ]
+    },
     "configurations": [
         {
             "name": "PVSneslib",
-            "includePath": ["${projectIncludePath}",
-                "${pvsneslibPath}"],
+            "includePath": [
+                "${projectIncludePath}",
+                "${pvsneslibPath}",
+                "C:/dev/snes/tools/pvsneslib/pvsneslib/include",
+                "${workspaceFolder}/game/include"
+            ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""

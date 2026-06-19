@@ -1,5 +1,7 @@
 [objects]
-src/star_merchants.obj
+src/main.obj
+src/engine/console.obj
+src/engine/draw.obj
 data.obj
 hdr.obj
 c:\dev\snes\tools\pvsneslib\pvsneslib\lib\LoROM_SlowROM/crt0_snes.obj

@@ -1,0 +1,13 @@
+#ifndef SM_VERSION_H
+#define SM_VERSION_H
+
+#define SM_GAME_NAME "STAR MERCHANTS"
+#define SM_PROJECT_NAME "PROJECT VIBEBREW"
+
+#define SM_VERSION_MAJOR 0
+#define SM_VERSION_MINOR 1
+#define SM_VERSION_PATCH 0
+
+#define SM_BUILD "0002"
+
+#endif
