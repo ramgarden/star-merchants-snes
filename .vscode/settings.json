@@ -46,4 +46,24 @@
     "C_Cpp.vcFormat.indent.caseContents": false,
     "C_Cpp.vcFormat.indent.preserveWithinParentheses": true,
     "C_Cpp.vcFormat.newLine.closeBraceSameLine.emptyFunction": true,
+    "chat.tools.terminal.autoApprove": {
+        "/^cmd\\.exe /c \"C:\\\\dev\\\\snes\\\\star-merchants-snes\\\\scripts\\\\build-and-run\\.bat\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "export": true,
+        "/^cmd\\.exe /c \"set PVSNESLIB_HOME=/c/dev/snes/tools/pvsneslib && cd /c/dev/snes/star-merchants-snes/game && make clean && make\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cmd\\.exe /c \"set PVSNESLIB_HOME=/c/dev/snes/tools/pvsneslib; cd /c/dev/snes/star-merchants-snes/game; make clean; make\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cmd\\.exe /c \"cd /d C:\\\\dev\\\\snes\\\\star-merchants-snes && scripts\\\\build-and-run\\.bat\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "bash.exe": true
+    },
 }

@@ -1,31 +1,47 @@
 {
-  // See https://go.microsoft.com/fwlink/?LinkId=733558
-  // for the documentation about the tasks.json format
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "PVSneslib - Build",
-      "type": "shell",
-      "command": "make",
-      "args": ["all"],
-      "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "PVSneslib - Clean",
-      "type": "shell",
-      "command": "make",
-      "args": ["clean"],
-      "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
-    },
-  ]
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "PVSneslib - Build",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "clean",
+                "all"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "PVSneslib - Clean",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "clean"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Star Merchants - Build and Run",
+            "type": "process",
+            "command": "C:\\msys64\\usr\\bin\\bash.exe",
+            "args": [
+                "-lc",
+                "cd \"/c/dev/snes/star-merchants-snes\" && ./scripts/build-and-run.sh"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
 }

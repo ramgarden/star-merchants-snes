@@ -5,6 +5,6 @@
 
 void smDrawHorizontalLine(u16 x, u16 y, u16 width);
 void smDrawVerticalLine(u16 x, u16 y, u16 height);
-void smDrawBox(u16 x, u16 y, u16 width, u16 height);
+void smDrawBox(u16 x,u16 y,u16 width,u16 height);
 
 #endif

@@ -1,0 +1,4 @@
+The debug mode is NOT enabled, you can do it by executing "export PVSNESLIB_DEBUG=1"
+LoROM compilation is enabled
+SlowROM compilation is enabled
+make: Nothing to be done for 'all'.

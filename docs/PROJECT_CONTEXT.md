@@ -16,12 +16,12 @@ The project targets:
 - PVSnesLib
 
 ## Current Status
-- Phase 0 complete
-- Build 0001 boots successfully
-- First custom ROM displays:
+- Phase 1 is in progress and the title/menu flow is implemented.
+- Build 0003 is the current build marker.
+- The current ROM displays:
   - STAR MERCHANTS
   - PROJECT VIBEBREW
-  - BUILD 0001
+  - BUILD 0003
 
 ## Bootstrap
 The game project was bootstrapped from the official `hello_world` example included with PVSnesLib, then customized.

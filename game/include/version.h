@@ -8,6 +8,6 @@
 #define SM_VERSION_MINOR 1
 #define SM_VERSION_PATCH 0
 
-#define SM_BUILD "0002"
+#define SM_BUILD "0003"
 
 #endif

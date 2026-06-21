@@ -11,9 +11,9 @@
 - [x] ASCII box
 
 ## Input
-- [ ] Read controller
+- [x] Read controller
 - [ ] Key repeat
-- [ ] Menu navigation
+- [x] Menu navigation
 
 ## Windows
 - [ ] Title bar
