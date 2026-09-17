@@ -246,10 +246,40 @@ void draw_box(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
     put_char(0xBC);  /* ┘ */
 }
 
+/* Title screen with animated text */
+void title_screen(void) {
+    /* Initialize text mode */
+    init_text_mode();
+    
+    /* Display title */
+    cursor_x = 0; cursor_y = 0;
+    print_str("  STAR MERCHANTS  ");
+    print_str("\n");
+    print_str("  Spiritual successor to TradeWars 2002");
+    print_str("\n");
+    print_str("  Press START to play");
+    print_str("\n");
+    print_str("  (C) 2026 GPL-3.0");
+    
+    render_text();
+    
+    /* Wait for START */
+    {
+        uint16_t joy;
+        while (1) {
+            wait_vblank();
+            joy = read_joypad();
+            if (joy & KEY_START) break;
+        }
+    }
+}
+
 /* Main */
 int main(void) {
     uint16_t joy;
-    init_text_mode();
+    
+    /* Title Screen */
+    title_screen();
     
     /* Draw title screen */
     draw_box(4, 3, 24, 14);

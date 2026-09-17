@@ -47,7 +47,6 @@ $DEVKIT_INCLUDE = "C:\pvsneslib\devkitsnes\include"
 
 # PVSnesLib object files (pre-built with 816-tcc)
 $PVS_OBJECTS = @(
-    "$PVS_LIB_DIR\crt0_snes.obj",
     "$PVS_LIB_DIR\libc.obj",
     "$PVS_LIB_DIR\libm.obj",
     "$PVS_LIB_DIR\libtcc.obj"
@@ -128,11 +127,10 @@ foreach ($asm in $ASMFiles) {
 # --- Link ---
 Write-Host "Linking $ROM_FILE..." -ForegroundColor Green
 $linkArgs = @(
-    "-C", "$CC65_HOME\cfg\snestarget.cfg",
+    "-C", "$CC65_HOME\cfg\snes.cfg",
     "-o", $ROM_FILE,
     "-m", $MAP_FILE,
     "--dbgfile", $SYM_FILE,
-    "--obj", $PVS_OBJECTS,
     "--obj", $ObjFiles,
     "-u", "__STARTUP__",
     "-u", "__IRQ_VECTOR__",
