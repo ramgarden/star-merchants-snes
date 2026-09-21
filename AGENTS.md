@@ -1,70 +1,142 @@
 # Star Merchants SNES - Agent Instructions
 
 SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
+**Read `devlog/` for the detailed history of what has been tried and verified.**
+
+## Current Status (2026-09-21)
+
+- ✅ Toolchain builds a structurally valid LoROM (256 KB) that **Mesen-S loads**
+  (header scoring identical to PVSnesLib's known-good `Mode1Scroll.sfc`)
+- ✅ **Title screen working** — black backdrop, white "STAR MERCHANTS" text, blinking
+  "PRESS START" prompt, waits for START button (bit 3 of $4218)
+- Do **NOT** trust claims from older sessions/logs; everything below is verified
+  this session unless marked otherwise
 
 ## Structure
 
 ```
-src/                    # C source (cc65 + PVSnesLib)
-  main.c                # Minimal text-mode ANSI test (entrypoint)
+src/                    # C + asm sources (cc65 toolchain, custom crt0 — PVSnesLib NOT linked)
+  main.c                # Title screen: font/palette/tilemap init via direct PPU registers
+  crt0.s                # Custom reset/NMI/IRQ + SNES header + vector table
+  font.s                # .incbin of PVSnesLib 96-glyph 4bpp font (see devlog for format)
 scripts/
-  build.ps1             # PowerShell build script (PVSnesLib + ca65/ld65)
-  clean.ps1             # Clean build artifacts
-  package.ps1           # ROM packaging
-  install-runner.ps1    # Emulator/flashcart setup
-assets/
-  sprites/              # Graphics
-  music/                # SPC700 audio
-  sfx/                  # Sound effects
-  palettes/             # Color palettes
-  fonts/                # Font data
-  ansi/                 # ANSI art references
-tools/                  # Custom tooling (empty)
-devlog/                 # Development notes
+  build.ps1             # Compile+link+pad+checksum, then gate on Mesen-S's exact header logic
+  snes-lorom.cfg        # ld65 config: ROM/HEADER/VECTORS areas -> header at file 0x7FC0
+  capture.ps1           # Screenshot the Mesen-S **client area** (game screen only, no window frame) to PNG for automated visual debugging
+  clean.ps1             # Remove build dir
+tools/
+  verify_rom.py         # Exact Python port of Mesen-S BaseCartridge::GetHeaderScore/LoadRom
+devlog/                 # Session-by-session technical history — READ THIS
+pvsneslib_extracted/    # Reference material + known-good Mode1Scroll.sfc + font asset
 ```
-
-## Development Notes
-
-- **Target**: SNES (65c816 CPU, SPC700 audio)
-- **Toolchain**: PVSnesLib (C library) + ca65/ld65 (assembler/linker)
-- **Build**: `& "scripts\build.ps1"` compiles + links `.sfc`
-- **Emulator**: `-Run` flag launches ROM in Mesen-S / bsnes / snes9x
 
 ## Verified Commands
 
 | Action | Command |
 |--------|---------|
-| Clean + build ROM | `& "scripts\build.ps1" -Clean` |
-| Full build + run emulator | `& "scripts\build.ps1" -Run` |
-| Build with target | `& "scripts\build.ps1" -Target "LoROM_SlowROM"` |
-| PVSNESLIB home override | Set `$env:PVSNESLIB_HOME` before running |
+| Build + validate ROM | `& "scripts\build.ps1"` (fails loudly if Mesen-S would reject it) |
+| Clean + build | `& "scripts\build.ps1" -Clean` |
+| Build + launch Mesen-S | `& "scripts\build.ps1" -Run` |
+| Validate any ROM file | `python tools\verify_rom.py <file.sfc>` |
+| Screenshot Mesen-S | `& "scripts\capture.ps1" -Out build\shot.png -DelaySeconds 3` |
+| Launch Mesen-S on a ROM | `Start-Process "C:\dev\snes\tools\mesen-s\Mesen-S.exe" '"path\to.sfc"'` |
 
-## Key Files
+## Toolchain (paths verified)
 
-- `src/main.c` — Minimal text-mode test using direct SNES registers + CP437 font
-- `scripts/build.ps1` — Build orchestration; default `PVSNESLIB_HOME = C:\dev\snes\tools\pvsneslib\pvsneslib`
-- `scripts/clean.ps1` — `Remove-Item -Recurse -Force build`
-- `scripts/package.ps1` / `install-runner.ps1` — Placeholders (empty)
+- cc65 V2.19 at `C:\cc65` (`cl65` auto-links `none.lib` runtime: stack helpers,
+  `zerobss`, `zeropage` — this is what resolves `c_sp`/`zerobss` imports in crt0)
+- PVSnesLib at `C:\dev\snes\tools\pvsneslib\pvsneslib` — **only used as an asset
+  source**; its prebuilt .obj libs are tcc/COFF format and do NOT link with ld65
+- **Emulator: Mesen-S 0.4.0** at `C:\dev\snes\tools\mesen-s\Mesen-S.exe`
+  (installed from the official GitHub release zip; shows a one-time config wizard)
+- Python 3.14 available (`python` on PATH) — useful for hexdumps/CRC/hashing;
+  PowerShell 5.1 has unreliable unsigned-int arithmetic (see Quirks)
+
+## CRITICAL: Emulator Facts (root cause of the historical "infinite loop")
+
+- **Mesen 0.9.9 (winget `SourMesen.Mesen`) is an NES-ONLY emulator.** Proven from
+  its own source (`SourMesen/Mesen` tag 0.9.9, `Core/RomLoader.cpp`): it only
+  recognizes NES formats (iNES/FDS/NSF/NSFE/UNIF) or a game-DB CRC match, and
+  logs `Invalid rom file.` for **any** `.sfc`. No SNES ROM can ever load in it.
+  The multi-console unified Mesen was never publicly released.
+- **Mesen-S** (SourMesen/Mesen-S, latest release 0.4.0) is the SNES sibling with
+  the same UI/debugger. Use it. bsnes/snes9x also work for basic testing
+- Mesen-S accepts a ROM by **scoring header candidates** at base addresses
+  `0, 0x200, 0x8000, 0x8200, 0x408000, 0x408200` (`Core/BaseCartridge.cpp`).
+  Our ROM and the reference `Mode1Scroll.sfc` both score 20
+- `tools/verify_rom.py` replicates that scoring exactly — run it BEFORE launching
+  the emulator whenever the build script's gate is bypassed
+
+## ROM Format Requirements (verified)
+
+- LoROM: SNES internal header at file offset `0x7FC0` (21-byte title, map mode
+  `$20` = LoROM/SlowROM at `0x7FD5`, ROM size byte `$08` = 2 Mbit at `0x7FD7`)
+- Vectors at file offsets `0x7FE0-0x7FFF`; reset vector `0x7FFC` must point
+  >= $8000 (bank 0); Mesen-S additionally checks the opcode at the reset target
+  (SEI/CLI/JMP/JSR/etc. score up; BRK/SBC/CPY score down)
+- Checksum/complement at `0x7FDC-0x7FDF`: 16-bit word-sum of the whole padded
+  ROM excluding those 4 bytes; complement = `0xFFFF - sum`; `sum + comp = 0xFFFF`
+- ld65 writes MEMORY areas **sequentially** into the output file in config order
+  and `fill = yes` pads each area to its full size. `scripts/snes-lorom.cfg`
+  exploits this: ROM `$7FC0` + HEADER `$20` + VECTORS `$20` = exactly 32 KB,
+  header lands at file offset `0x7FC0`, vectors at `0x7FE0`. build.ps1 then pads
+  to 256 KB and patches the checksum
+- crt0.s **must** `.export __STARTUP__` — cc65-generated modules import it;
+  without the export ld65 pulls none.lib's generic startup + condes.o and fails
+  on unresolved constructor symbols
+
+## Memory Map / Runtime Setup (decoded & verified this session)
+
+- All code/data in LoROM bank 00 (first 32 KB). File offset F == CPU `$8000+F`
+- crt0 (`src/crt0.s`, bytes verified): emulation->native switch, DB=0 via
+  `pha/plb` BEFORE any absolute addressing, DP=$0000 via `tcd`, hardware stack
+  and cc65 `c_sp` both at `$1FFF`, 8-bit A/X/Y when calling C (cc65 convention),
+  ClearRegisters zeroes `$2100-$2133` and `$4200-$420D`, then `zerobss`, `_main`
+- Label addresses in the current build: reset=$8000, NMI=$802E, handlers end
+  $8032, ClearRegisters=$8033, wait_vblank=$8048, load_font=$8069,
+  load_palette=$80BA, draw_text=$8105, clear_map=$8162, _main=$818B,
+  INIDISP=0x0F store at **$81EE** (if that executes, the screen turns on),
+  runtime helpers: pusha=$82D0, vram_set=$82E6, zerobss=$8307
+- PPU config in main.c: BGMODE=1 (4bpp), BG1SC=$68 (map at VRAM word $6800,
+  32x32), BG12NBA=$03 (char base word $3000), VMAIN=$80 (increment after high)
+- VRAM: font tiles 96 x 8x8 4bpp at words $3000-$35FF; BG map words
+  $6800-$6BFF; **tile index for ASCII char c is `c-32`** (NOT c-32+0x300)
+- Font data format (PVSnesLib `pvsneslibfont.pic`): planar 4bpp — each 8x8 tile
+  is 32 bytes; bytes 0-15 = bitplanes 0/1 interleaved per row, bytes 16-31 =
+  planes 2/3; glyph pixels use **color index 1**
+- Palette: CGRAM[0]=$0000 (black backdrop), CGRAM[1]=$7FFF (white glyphs);
+  auto-joy + NMI enabled via NMITIMEN=$81; START button = bit 3 of $4218
 
 ## Toolchain Quirks
 
-- `build.ps1` requires `PVSNESLIB_HOME` env var or the default `C:\dev\snes\tools\pvsneslib\pvsneslib`
-- cc65 cfg `C:\cc65\cfg\snes.cfg` needed for linking; provides MEMORY/SEGMENTS for LoROM
-- PVSnesLib object files must exist at `lib\$Target\*.obj` under the PVSnesLib dir
-- `#include <snes.h>` from PVSnesLib conflicts with `stdint.h` / `stddef.h`; define `uint8_t`/`uint16_t` manually if needed
+- Linking uses `scripts/snes-lorom.cfg` (NOT `C:\cc65\cfg\snes.cfg`, headerless)
+- `#include <snes.h>` from PVSnesLib conflicts with `stdint.h`/`stddef.h`;
+  main.c defines `uint8_t`/`uint16_t` manually
+- PowerShell 5.1: `Byte -shl 8` returns a Byte (truncates!) — cast `[int]` first;
+  `0xFFFFFFFF` parses as Int32 `-1` (sign-extends) — use `4294967295L` + `-band`
+- Hexdump with Python, not PowerShell array slicing (slice-with-array bugs)
 
-## Next Steps (verified)
+## Debugging Workflow (this is how we avoid burning credits in loops)
 
-1. ✅ Implement build.ps1 — **done**, fixed PVSNESLIB_HOME path
-2. ✅ Create src/main.c — **done**, minimal ANSI text-mode test compiles & links
-3. Define memory map in src/ (lorom/hirom, vector table, header)
-4. Set up asset conversion pipelines (gfx→CHR, audio→SPC, ANSI→font+tilemap)
-5. Add emulator test targets (bsnes, snes9x, Mesen-S)
-6. Prototype ANSI rendering: CP437 font → 2bpp tiles → BG layer scrolling
+1. **Build gate**: build.ps1 runs the Mesen-S header-scoring port; a structurally
+   invalid ROM fails the build with a specific message
+2. **Visual state**: `scripts/capture.ps1` screenshots the running Mesen-S window
+   to a PNG; read the PNG directly (vision) — no user round-trips needed
+3. **Runtime debugging**: hand-decode ROM bytes (labels above are stable) or use
+   Mesen-S's debugger/Lua; bisect with visible checkpoints (e.g. backdrop color
+   changes at each init stage — plan in devlog)
+4. **Calibrate against the reference**: `Mode1Scroll.sfc` in pvsneslib_extracted
+   is a known-good 256 KB LoROM; diff headers/layout against it when in doubt
+
+## Next Steps
+
+1. Milestone 1 title screen work complete — proceed to Milestone 2 (see MILESTONES.md)
 
 ## Key References
 
 - PVSnesLib: https://github.com/alekmaul/pvsneslib
+- Mesen-S source (header scoring): https://github.com/SourMesen/Mesen-S
+- Mesen 0.9.9 source (NES-only proof): https://github.com/SourMesen/Mesen
 - Awesome SNESdev: https://github.com/matthewh/awesome-snesdev
 - cc65/ca65 docs: https://cc65.github.io/doc/
-- TradeWars ANSI art references in assets/ansi/
+- Full-analogy game design: see MILESTONES.md (TradeWars 2002 reference)

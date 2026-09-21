@@ -1,0 +1,19 @@
+# Build output
+build/
+scripts/build/
+
+# Lua scripts (debugging)
+scripts/*.lua
+
+# Emulator zips
+*.zip
+mesen-s/
+snes9x/
+
+# IDE/OS
+*.bak
+*.off
+InstallationLog.txt
+mesen_*.txt
+pvsneslib_extracted/
+pvsneslib.zip

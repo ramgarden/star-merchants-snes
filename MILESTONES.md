@@ -3,12 +3,13 @@
 Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, historical docs).
 
 ## Milestone 0: Foundation (Current)
-- [x] PVSnesLib + ca65/ld65 toolchain working (build compiles main.c)
-- [x] Build script (build.ps1) compiles & links framework
-- [x] Emulator launch target configured (-Run flag)
-- [x] Memory map defined (LoROM, 8 Mbit, vector table, header) via snes.cfg
-- [x] CP437 font with box-drawing chars → 2bpp tiles in main.c
-- [x] ANSI text-mode BG layer rendering prototype in main.c
+- [x] Build script (build.ps1) compiles & links a LoROM via cc65 (custom crt0, no PVSnesLib linkage)
+- [x] ROM format: header at 0x7FC0, vectors at 0x7FE0, checksum — verified, loads in Mesen-S
+- [x] Emulator: Mesen-S 0.4.0 installed (C:\dev\snes\tools\mesen-s) — regular Mesen 0.9.9 is NES-only, do not use
+- [x] ROM validation: tools/verify_rom.py + build gate replicate Mesen-S header scoring
+- [ ] **BLOCKER: black screen in Mesen-S** — checkpoint-bisect plan in devlog/2026-09-21-rom-format-and-emulator.md
+- [ ] Title screen renders (font/palette/tilemap init via direct PPU registers in main.c)
+- [ ] Input handler basics (START = bit 3 of $4218 with auto-joy read enabled)
 
 ## Milestone 1: Title Screen & Boot
 - [ ] **Title Screen** - ANSI art logo "STAR MERCHANTS", version, credits
@@ -138,9 +139,10 @@ Boot → Title → Main Menu → New Game → Sector View (Main Loop)
 
 ---
 
-## Next Action: Milestone 0 Completion
-1. Verify cc65/ca65/ld65 + PVSnesLib includes link successfully
-2. Write build.ps1 wrapper around cl65
-3. Compile hello_world.c → .sfc
-4. Run in bsnes/Mesen-S
-5. Prototype ANSI BG layer with CP437 font
+## Next Action: Fix the black screen (Milestone 0 completion)
+1. Follow the checkpoint-bisect plan in `devlog/2026-09-21-rom-format-and-emulator.md`
+   (backdrop color checkpoints in main.c + `scripts/capture.ps1` screenshots)
+2. Identify which init call (load_font / load_palette / clear_map / draw_text)
+   hangs or crashes before INIDISP=$0F executes at $81EE
+3. Fix, re-verify title screen renders in Mesen-S
+4. Then proceed to Milestone 1 (title screen polish, attract mode)
