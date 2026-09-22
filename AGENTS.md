@@ -3,14 +3,31 @@
 SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 **Read `devlog/` for the detailed history of what has been tried and verified.**
 
-## Current Status (2026-09-21)
+## Current Status (2026-09-22)
 
-- ✅ Toolchain builds a structurally valid LoROM (256 KB) that **Mesen-S loads**
-  (header scoring identical to PVSnesLib's known-good `Mode1Scroll.sfc`)
-- ✅ **Title screen working** — black backdrop, white "STAR MERCHANTS" text, blinking
-  "PRESS START" prompt, waits for START button (bit 3 of $4218)
-- Do **NOT** trust claims from older sessions/logs; everything below is verified
-  this session unless marked otherwise
+- ✅ Black screen RESOLVED (two root causes, see
+  devlog/2026-09-22-black-screen-root-causes.md)
+- ✅ **Title screen art SHIPPED and screenshot-verified in snes9x AND
+  Mesen-S** — ANSI homage: starfield, blue planet + cyan limb, white 3D
+  "STAR MERCHANTS" + gray shadows, red "2026" + dark-red shadow, blue warp
+  lines, gray freighter + cyan windows, credits footer, blinking
+  "PRESS START" (blink ON/OFF both captured); main loop runs, waits for
+  START (bit 4 of $4218), then holds
+- Do **NOT** trust the 2026-09-21 "title screen working" claim — it was
+  inferred from disassembly, never screenshotted; every capture then was black
+
+## Hard Constraints (violating these re-introduces the black screen)
+
+- C code: **globals + parameterless functions + inline register writes
+  ONLY. No C locals, no C function arguments, ever.** cc65 stack-frame
+  helpers (`decspN`/`ldax0sp`/`addeq0sp`/`pusha`, `(c_sp),Y` access) hang
+  the CPU on this setup even though D=0, DBR=0, c_sp=$1FFF, M=X=1 were all
+  verified perfect. See `src/main.c` header comment.
+- CGRAM: **init ALL 128 BG colors** (8 pals × 16), not just used slots.
+  Power-on CGRAM is garbage, not black — uninitialized slots show through.
+- crt0: DP=$0000 via full-16-bit TCD BEFORE any direct-page access
+  (`sta c_sp`); `src/cpustate.s` `_probe` kept as unreferenced no-stack
+  diagnostic that paints D/B/c_sp/M/X state as colors.
 
 ## Structure
 
@@ -105,7 +122,8 @@ pvsneslib_extracted/    # Reference material + known-good Mode1Scroll.sfc + font
   is 32 bytes; bytes 0-15 = bitplanes 0/1 interleaved per row, bytes 16-31 =
   planes 2/3; glyph pixels use **color index 1**
 - Palette: CGRAM[0]=$0000 (black backdrop), CGRAM[1]=$7FFF (white glyphs);
-  auto-joy + NMI enabled via NMITIMEN=$81; START button = bit 3 of $4218
+  auto-joy + NMI enabled via NMITIMEN=$81; START button = bit 4 of $4218
+  ($10 — NOT bit 3); joy settle: spin on $4212 bit 0 before reading $4218
 
 ## Toolchain Quirks
 

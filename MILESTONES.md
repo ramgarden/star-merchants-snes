@@ -7,12 +7,19 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
 - [x] ROM format: header at 0x7FC0, vectors at 0x7FE0, checksum — verified, loads in Mesen-S
 - [x] Emulator: Mesen-S 0.4.0 installed (C:\dev\snes\tools\mesen-s) — regular Mesen 0.9.9 is NES-only, do not use
 - [x] ROM validation: tools/verify_rom.py + build gate replicate Mesen-S header scoring
-- [ ] **BLOCKER: black screen in Mesen-S** — checkpoint-bisect plan in devlog/2026-09-21-rom-format-and-emulator.md
-- [ ] Title screen renders (font/palette/tilemap init via direct PPU registers in main.c)
-- [ ] Input handler basics (START = bit 3 of $4218 with auto-joy read enabled)
+- [x] **Black screen RESOLVED 2026-09-22** — two root causes, see
+  devlog/2026-09-22-black-screen-root-causes.md: (1) cc65 stack-frame
+  locals/stack-passed args hang the CPU — C code must use globals +
+  parameterless functions only; (2) CGRAM power-on is not black — init
+  ALL 128 BG colors. Renders verified in snes9x AND Mesen-S.
+- [x] Title screen renders (font/palette/tilemap init via direct PPU registers in main.c)
+- [x] Input basics (START = bit 4 of $4218 ($10), auto-joy settle on $4212
+  bit 0; blinking PRESS START waits for START, then holds)
 
 ## Milestone 1: Title Screen & Boot
-- [ ] **Title Screen** - ANSI art logo "STAR MERCHANTS", version, credits
+- [x] **Title Screen** - ANSI art logo "STAR MERCHANTS" (white 3D + gray
+  shadow), red "2026", planet, freighter, starfield, warp lines, version,
+  credits, blinking PRESS START — verified by screenshot in both emulators
 - [ ] **Attract Mode** - Cycle demo screens (sector map, starport, combat)
 - [ ] **Input Handler** - Joypad polling, menu navigation (D-pad, A/B/X/Y, Start/Select)
 - [ ] **Save/Load** - SRAM detection, new game / continue / options
@@ -139,10 +146,7 @@ Boot → Title → Main Menu → New Game → Sector View (Main Loop)
 
 ---
 
-## Next Action: Fix the black screen (Milestone 0 completion)
-1. Follow the checkpoint-bisect plan in `devlog/2026-09-21-rom-format-and-emulator.md`
-   (backdrop color checkpoints in main.c + `scripts/capture.ps1` screenshots)
-2. Identify which init call (load_font / load_palette / clear_map / draw_text)
-   hangs or crashes before INIDISP=$0F executes at $81EE
-3. Fix, re-verify title screen renders in Mesen-S
-4. Then proceed to Milestone 1 (title screen polish, attract mode)
+## Next Action: Milestone 2 — Main Menu & Character Creation (see above).
+ Constraints carry over: globals-only C, full CGRAM init, START = bit 4
+ of $4218. Checkpoint-bisect with `scripts/capture.ps1` screenshots for
+ any future black-screen-style symptom (workflow proven this session).

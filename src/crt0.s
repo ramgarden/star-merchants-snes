@@ -14,6 +14,7 @@
 .setcpu "65816"
 
 .import _main
+.import _probe
 .import zerobss
 .import __STACKSTART__
 .importzp c_sp
@@ -54,6 +55,25 @@ ResetHandler:
     clc
     xce                             ; Switch to native mode (E=0)
 
+    ; NOTE: D (direct page) is UNDEFINED at reset on real hardware.
+    ; Set DP=$0000 FIRST, before any direct-page access (c_sp lives at
+    ; $80/$81 and cc65 helpers use (DP) addressing everywhere). A bad DP
+    ; silently breaks the C software stack: loop counters never terminate
+    ; and function args read as garbage.
+    rep #$30                        ; 16-bit A/X/Y
+    .a16
+    .i16
+
+    lda #$0000
+    tcd                             ; Direct page at $0000 (full 16-bit)
+
+    ldx #$1FFF
+    txs                             ; Hardware stack at $1FFF (page 1 WRAM)
+
+    lda #__STACKSTART__
+    sta c_sp                        ; cc65 software stack pointer ($0080)
+                                    ; DP=0 guaranteed above, so this lands
+
     sep #$30                        ; 8-bit A/X/Y
     .a8
     .i8
@@ -63,25 +83,6 @@ ResetHandler:
     plb                             ; Data bank register = $00
 
     stz $4200                       ; Disable NMI, IRQ and auto-joypad read
-
-    rep #$30                        ; 16-bit A/X/Y for setup
-    .a16
-    .i16
-
-    ldx #$1FFF
-    txs                             ; Hardware stack at $1FFF (page 1 WRAM)
-
-    lda #<__STACKSTART__
-    sta c_sp                        ; cc65 software stack pointer
-    lda #>__STACKSTART__
-    sta c_sp+1
-
-    lda #$0000
-    tcd                             ; Direct page at $0000
-
-    sep #$30                        ; 8-bit A/X/Y (cc65 runtime convention)
-    .a8
-    .i8
 
     jsr ClearRegisters              ; PPU/CPU registers to a known state
     jsr zerobss                     ; Clear C static storage

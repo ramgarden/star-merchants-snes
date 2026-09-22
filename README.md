@@ -3,10 +3,12 @@ A VibeBrew "spiritual successor" of the old BBS game Tradewars 2002.
 
 ## Current Status
 
-The build pipeline produces a structurally valid 256 KB LoROM that loads in
-**Mesen-S** (the SNES Mesen). The game boots but currently renders a black
-screen — active debugging, see `AGENTS.md` and `devlog/` for the full
-technical state and next steps.
+The build pipeline produces a structurally valid 256 KB LoROM with a
+fully working ANSI-style title screen ("STAR MERCHANTS", planet,
+freighter, blinking PRESS START) — screenshot-verified in **Mesen-S**
+(the SNES Mesen) and snes9x. See `AGENTS.md` and `devlog/` for the full
+technical state (including the two resolved root causes of the old
+black-screen blocker) and next steps.
 
 ## Quick Start
 
