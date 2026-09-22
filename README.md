@@ -10,6 +10,9 @@ freighter, blinking PRESS START) — screenshot-verified in **Mesen-S**
 technical state (including the two resolved root causes of the old
 black-screen blocker) and next steps.
 
+Currently working **Milestone 2: Main Menu & Character Creation** —
+see `MILESTONES.md` for the roadmap.
+
 ## Quick Start
 
 ```powershell

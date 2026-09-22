@@ -2,7 +2,7 @@
 
 Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, historical docs).
 
-## Milestone 0: Foundation (Current)
+## Milestone 0: Foundation (Complete)
 - [x] Build script (build.ps1) compiles & links a LoROM via cc65 (custom crt0, no PVSnesLib linkage)
 - [x] ROM format: header at 0x7FC0, vectors at 0x7FE0, checksum — verified, loads in Mesen-S
 - [x] Emulator: Mesen-S 0.4.0 installed (C:\dev\snes\tools\mesen-s) — regular Mesen 0.9.9 is NES-only, do not use
@@ -24,10 +24,19 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
 - [ ] **Input Handler** - Joypad polling, menu navigation (D-pad, A/B/X/Y, Start/Select)
 - [ ] **Save/Load** - SRAM detection, new game / continue / options
 
-## Milestone 2: Main Menu & Character Creation
-- [ ] **Main Menu** - New Game, Continue, Options, Credits
-- [ ] **New Game Wizard** - Trader name, ship name, corporation (optional)
-- [ ] **Difficulty/Options** - Turn rate, universe size, starting credits, Ferrengi aggression
+## Milestone 2: Main Menu & Character Creation (Complete 2026-09-22)
+- [x] **Main Menu** - New Game, Continue, Options, Credits; wrap cursor,
+  A/START select, B back to title — verified by screenshot
+- [x] **New Game Wizard** - Trader name + ship name entry (8 slots, A-Z
+  0-9 charset cycling, slot cursor, A advance/confirm, B back) — verified
+- [x] **Difficulty/Options** - Turn rate, universe size, starting credits,
+  Ferrengi aggression (3 values each, L/R adjust, persists) — verified
+  incl. summary screen showing all choices + launch stub (Milestone 3 hook)
+- [ ] Continue = "NO SAVED GAME" stub (SRAM is a Milestone 1 open item)
+- Verified via in-ROM scripted self-drive (`gselfdrive` in main.c: injected
+  pad masks through the real tick/dispatch path, PID-tracked screenshots);
+  live START-button transition still unverified (no Start keypress arrives
+  in either test emulator — see devlog/2026-09-22-milestone-2-menu.md)
 
 ## Milestone 3: Sector View (Core Gameplay)
 - [ ] **Sector Display** - ANSI grid: sector #, warps (1-6), port/planet/ftrs icons

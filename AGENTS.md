@@ -33,13 +33,17 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 
 ```
 src/                    # C + asm sources (cc65 toolchain, custom crt0 — PVSnesLib NOT linked)
-  main.c                # Title screen: font/palette/tilemap init via direct PPU registers
+  main.c                # Title + menu engine (globals-only C, direct PPU registers;
+                        # gselfdrive=1 = scripted self-drive tour for testing, SHIP WITH 0)
   crt0.s                # Custom reset/NMI/IRQ + SNES header + vector table
   font.s                # .incbin of PVSnesLib 96-glyph 4bpp font (see devlog for format)
+  cpustate.s            # No-stack bring-up probe (unreferenced; paints CPU state as colors)
 scripts/
   build.ps1             # Compile+link+pad+checksum, then gate on Mesen-S's exact header logic
   snes-lorom.cfg        # ld65 config: ROM/HEADER/VECTORS areas -> header at file 0x7FC0
-  capture.ps1           # Screenshot the Mesen-S **client area** (game screen only, no window frame) to PNG for automated visual debugging
+  capture.ps1           # Screenshot an emulator window to PNG (full window by default;
+                        # flags: -ClientOnly -NoClose -UsePrintWindow -ProcessName) for
+                        # automated visual debugging
   clean.ps1             # Remove build dir
 tools/
   verify_rom.py         # Exact Python port of Mesen-S BaseCartridge::GetHeaderScore/LoadRom
@@ -68,6 +72,8 @@ pvsneslib_extracted/    # Reference material + known-good Mode1Scroll.sfc + font
   (installed from the official GitHub release zip; shows a one-time config wizard)
 - Python 3.14 available (`python` on PATH) — useful for hexdumps/CRC/hashing;
   PowerShell 5.1 has unreliable unsigned-int arithmetic (see Quirks)
+- snes9x 1.62.3 at `snes9x/snes9x-x64.exe` (in-repo) — second-opinion
+  emulator; renders identically to Mesen-S for our PPU config
 
 ## CRITICAL: Emulator Facts (root cause of the historical "infinite loop")
 
@@ -105,25 +111,33 @@ pvsneslib_extracted/    # Reference material + known-good Mode1Scroll.sfc + font
 ## Memory Map / Runtime Setup (decoded & verified this session)
 
 - All code/data in LoROM bank 00 (first 32 KB). File offset F == CPU `$8000+F`
-- crt0 (`src/crt0.s`, bytes verified): emulation->native switch, DB=0 via
-  `pha/plb` BEFORE any absolute addressing, DP=$0000 via `tcd`, hardware stack
-  and cc65 `c_sp` both at `$1FFF`, 8-bit A/X/Y when calling C (cc65 convention),
-  ClearRegisters zeroes `$2100-$2133` and `$4200-$420D`, then `zerobss`, `_main`
-- Label addresses in the current build: reset=$8000, NMI=$802E, handlers end
-  $8032, ClearRegisters=$8033, wait_vblank=$8048, load_font=$8069,
-  load_palette=$80BA, draw_text=$8105, clear_map=$8162, _main=$818B,
-  INIDISP=0x0F store at **$81EE** (if that executes, the screen turns on),
-  runtime helpers: pusha=$82D0, vram_set=$82E6, zerobss=$8307
+- crt0 (`src/crt0.s`): emulation->native switch, DB=0 via `pha/plb`,
+  DP=$0000 via full-16-bit `tcd` BEFORE any direct-page access, hardware
+  stack and cc65 `c_sp` both at `$1FFF`, 8-bit A/X/Y when calling C (cc65
+  convention), ClearRegisters zeroes `$2100-$2133` and `$4200-$420D`,
+  then `zerobss`, `_main`. Label addresses shift every build — see
+  `build/starmerchants.map`, do NOT trust hardcoded addresses.
 - PPU config in main.c: BGMODE=1 (4bpp), BG1SC=$68 (map at VRAM word $6800,
   32x32), BG12NBA=$03 (char base word $3000), VMAIN=$80 (increment after high)
 - VRAM: font tiles 96 x 8x8 4bpp at words $3000-$35FF; BG map words
-  $6800-$6BFF; **tile index for ASCII char c is `c-32`** (NOT c-32+0x300)
+  $6800-$6BFF; **tile index for ASCII char c is `c-32`**; tilemap high byte
+  is `palette << 2` (palettes 0-7)
 - Font data format (PVSnesLib `pvsneslibfont.pic`): planar 4bpp — each 8x8 tile
   is 32 bytes; bytes 0-15 = bitplanes 0/1 interleaved per row, bytes 16-31 =
-  planes 2/3; glyph pixels use **color index 1**
-- Palette: CGRAM[0]=$0000 (black backdrop), CGRAM[1]=$7FFF (white glyphs);
-  auto-joy + NMI enabled via NMITIMEN=$81; START button = bit 4 of $4218
-  ($10 — NOT bit 3); joy settle: spin on $4212 bit 0 before reading $4218
+  planes 2/3; glyph pixels use **color index 1** (index 0 = transparent)
+- Palette: 8 BG palettes, c0=black everywhere, c1 = white/gray/red/darkred/
+  blue/dimblue/cyan/yellow; auto-joy + NMI enabled via NMITIMEN=$81;
+  START button = bit 4 of $4218
+  ($10 — NOT bit 3); joy settle: spin on $4212 bit 0 before reading $4218.
+  Full joypad: $4218 = B,Y,Sel,Start,Up,Down,Left,Right (bits 7-0);
+  $4219 = A,X,L,R (bits 7-4).
+- Menu engine (Milestone 2): 9-state machine in main.c, all screens
+  screenshot-verified via self-drive; **live joypad input does NOT arrive
+  in test emulators** (snes9x 1.62.3 never asserts Start/Select from any
+  key; Mesen-S keys unresponsive; snes9x rewrites snes9x.conf on exit and
+  its input overlay echoes the conf, not core state — see
+  devlog/2026-09-22-milestone-2-menu.md). START edge path reviewed but
+  never fired live; verify on hardware later.
 
 ## Toolchain Quirks
 
@@ -138,13 +152,20 @@ pvsneslib_extracted/    # Reference material + known-good Mode1Scroll.sfc + font
 
 1. **Build gate**: build.ps1 runs the Mesen-S header-scoring port; a structurally
    invalid ROM fails the build with a specific message
-2. **Visual state**: `scripts/capture.ps1` screenshots the running Mesen-S window
-   to a PNG; read the PNG directly (vision) — no user round-trips needed
-3. **Runtime debugging**: hand-decode ROM bytes (labels above are stable) or use
-   Mesen-S's debugger/Lua; bisect with visible checkpoints (e.g. backdrop color
-   changes at each init stage — plan in devlog)
+2. **Visual state**: `scripts/capture.ps1` screenshots the running emulator window
+   to a PNG; read the PNG directly (vision) — no user round-trips needed.
+   Screenshots ARE the debugger: Mesen-S 0.4.0 has no `--testrunner`
+   (verified by string-searching the exe), and there is no input injection,
+   so checkpoint screens (backdrop colors, text stages) + PID-tracked
+   clean-slate captures are the workflow (see devlog/2026-09-22-*)
+3. **Runtime debugging**: hand-decode ROM bytes (see `build/starmerchants.map`
+   for current labels) or use Mesen-S's GUI debugger; bisect with visible
+   checkpoints (backdrop color per init stage, text-stage screens)
 4. **Calibrate against the reference**: `Mode1Scroll.sfc` in pvsneslib_extracted
-   is a known-good 256 KB LoROM; diff headers/layout against it when in doubt
+   is a known-good 256 KB LoROM (renders perfectly in snes9x); diff
+   headers/layout against it when in doubt. snes9x at
+   `snes9x/snes9x-x64.exe` renders identically to Mesen-S — use it as a
+   second opinion (capture with `-ProcessName snes9x-x64`)
 
 ## Next Steps
 
