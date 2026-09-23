@@ -175,6 +175,11 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
 ## Milestone 10: Endgame & Polish
 - [ ] **Victory Conditions** - Credits, planets, XP, alignment leaderboards
 - [ ] **High Score / Hall of Fame** - SRAM persistence
+- [ ] **Explored-universe persistence** - Save the visited-sector bitmap
+  to SRAM (up to 2000 sectors = 250 bytes; bump record version) so
+  explored sectors stay white (not red) across Continue/resume.
+  RAM-only today by design; sector contents regenerate from the
+  universe seed, only the visited flags need storing.
 - [ ] **ANSI Animations** - Starfield, warp, combat, port entry (see
   devlog/2026-09-23-ansi-graphics-path.md for the researched upgrade
   path: solid-bg tiles, full palette ramps, backdrop BG layer, sprites
