@@ -201,6 +201,46 @@ pvsneslib_extracted/    # Reference material + known-good Mode1Scroll.sfc + font
    `snes9x/snes9x-x64.exe` renders identically to Mesen-S — use it as a
    second opinion (capture with `-ProcessName snes9x-x64`)
 
+## Testing & Release Workflow (ensure only working versions are released)
+
+Before committing changes or making a release, follow this workflow to verify the game works correctly:
+
+1. **Build and validate ROM**
+   ```powershell
+   & "scripts\build.ps1"  # Builds with Mesen-S header validation
+   ```
+
+2. **Test in emulator with visual verification**
+   - Launch Mesen-S with the built ROM: `& "scripts\build.ps1" -Run`
+   - Play through key sections (title screen, sector view, starport, Stardock, planet management)
+   - **OR** use automated screenshots for specific states:
+     ```powershell
+     # Capture full window after 3-second delay
+     & "scripts\capture.ps1" -Out build\shot-title.png -DelaySeconds 3
+     
+     # Capture client area only (without window borders)
+     & "scripts\capture.ps1" -Out build\shot-sector.png -ClientOnly -DelaySeconds 5
+     ```
+
+3. **Use self-drive mode for automated testing** (set gselfdrive=1 in main.c temporarily)
+   - Rebuild with self-drive enabled to run through predefined test sequences
+   - Verify the automated tour completes without issues
+   - Remember to set gselfdrive=0 before committing (SHIP WITH 0)
+
+4. **Verify critical functionality**
+   - Title screen displays correctly and waits for START
+   - Attract mode transitions to Stardock demo after 10s idle
+   - SRAM save/load works (new game, continue, warp persistence)
+   - Sector view navigation and command palette functional
+   - Starport trading (buy/sell/haggle/steal) operates correctly
+   - Stardock hub systems (shipyard, bank, police, etc.) accessible
+   - Planet management (LAND command) functional
+
+5. **Only commit and tag releases after successful verification**
+   - Never commit based solely on successful build - visual verification is required
+   - Tag releases only after multiple testers verify functionality
+   - Keep records of tested versions with corresponding screenshot evidence
+
 ## Next Steps
 
 1. Milestone 7 combat system (see MILESTONES.md) — hooks ready:
