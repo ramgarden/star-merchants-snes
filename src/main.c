@@ -67,6 +67,7 @@ typedef short int16_t;
 #define ST_ATTRACT 10u
 #define ST_LOADRET 11u
 #define ST_PORT 12u
+#define ST_DOCK 13u
 #define PB_UP 0x0008u
 #define PB_DOWN 0x0004u
 #define PB_LEFT 0x0002u
@@ -79,7 +80,8 @@ typedef short int16_t;
 #define PB_L 0x2000u
 #define PB_X 0x4000u
 #define PB_A 0x8000u
-#define SCN 86u
+#define SCN 92u
+#define SCN2 102u
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -169,6 +171,19 @@ uint8_t gportn;
 uint16_t gday;
 uint8_t gstock[3];
 uint8_t gprc[3];
+uint8_t gdept;
+uint8_t gdocksel;
+uint8_t gdockmsg;
+uint8_t gportfrom;
+uint8_t ghubonce;
+uint8_t ghubug;
+uint8_t ghubfence;
+uint16_t gbank;
+uint8_t gprobes;
+uint8_t gbeacons;
+uint8_t gtorp;
+uint8_t gcomm;
+uint16_t gbankday;
 void sram_wr(void);
 void sram_rd(void);
 const uint8_t palc1[16] = {
@@ -205,10 +220,12 @@ static void show_sum(void);
 static void show_sector(void);
 static void show_menu(void);
 static void show_loadret(void);
+static void show_dock(void);
 static void draw_num(void);
 static void sram_sync(void);
 static void sram_load(void);
 static void port_dock(void);
+static void dock_hub(void);
 static void load_palettes(void) {
     REG_CGADD = 0;
     gp = 0u;
@@ -286,6 +303,8 @@ static void read_pads(void) {
     if (gselfdrive) {
         script_pads();
         return;
+    }
+    while (!(REG_HVBJOY & 0x01u)) {
     }
     while (REG_HVBJOY & 0x01u) {
     }
@@ -477,7 +496,7 @@ static void sram_sync(void) {
     gsram_ck = 0u;
     gsram_d = 83u; sram_put();
     gsram_d = 77u; sram_put();
-    gsram_d = 2u; sram_put();
+    gsram_d = 3u; sram_put();
     gi = 0u;
     while (gi < 8u) {
         gsram_d = gname[gi];
@@ -517,6 +536,14 @@ static void sram_sync(void) {
     gsram_d = gequ; sram_put();
     gsram_d = (uint8_t)(gday & 255u); sram_put();
     gsram_d = (uint8_t)(gday >> 8); sram_put();
+    gsram_d = (uint8_t)(gbank & 255u); sram_put();
+    gsram_d = (uint8_t)(gbank >> 8); sram_put();
+    gsram_d = gprobes; sram_put();
+    gsram_d = gbeacons; sram_put();
+    gsram_d = gtorp; sram_put();
+    gsram_d = gcomm; sram_put();
+    gsram_d = (uint8_t)(gbankday & 255u); sram_put();
+    gsram_d = (uint8_t)(gbankday >> 8); sram_put();
     gsram_d = gsram_ck;
     sram_wr();
 }
@@ -529,7 +556,7 @@ static void sram_load(void) {
     sram_get();
     if (gsram_d != 77u) return;
     sram_get();
-    if (gsram_d != 2u) return;
+    if (gsram_d != 3u) return;
     gi = 0u;
     while (gi < 8u) {
         sram_get();
@@ -571,6 +598,14 @@ static void sram_load(void) {
     sram_get(); gequ = gsram_d;
     sram_get(); gtmp = gsram_d;
     sram_get(); gday = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gbank = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gprobes = gsram_d;
+    sram_get(); gbeacons = gsram_d;
+    sram_get(); gtorp = gsram_d;
+    sram_get(); gcomm = gsram_d;
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gbankday = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
     sram_rd();
     if (gsram_d != gsram_ck) {
         gtmp = 0u;
@@ -809,6 +844,19 @@ static void show_launch(void) {
     gportcom = 0u;
     gporthag = 0u;
     gportmsg = 0u;
+    gportfrom = 0u;
+    gdept = 0u;
+    gdocksel = 0u;
+    gdockmsg = 0u;
+    ghubonce = 0u;
+    ghubug = 0u;
+    ghubfence = 0u;
+    gbank = 0u;
+    gprobes = 0u;
+    gbeacons = 0u;
+    gtorp = 0u;
+    gcomm = 0u;
+    gbankday = 0u;
     gmsgmode = 0u;
     gm1 = "";
     gm2 = "";
@@ -1289,7 +1337,21 @@ static void tick_title(void) {
         draw_prompt();
     }
     read_pads();
-    if (gj_new & PB_START) {
+    if (gj_pad & PB_SEL) {
+        gdx = 0u; gdy = 26u; gdpal = PAL_GRAY;
+        gdstr = "PAD "; draw_text();
+        gdpal = PAL_WHITE;
+        gn = (uint16_t)(gj_pad & 255u); draw_num();
+        gdstr = " "; draw_text();
+        gn = (uint16_t)(gj_pad >> 8); draw_num();
+    } else if ((gframe & 31u) == 0u) {
+        gdx = 0u; gdy = 26u; gdpal = PAL_GRAY;
+        gdstr = "         "; draw_text();
+        if (gshow) { gshow = 0u; }
+        else { gshow = 1u; }
+        draw_prompt();
+    }
+    if (gj_new & (PB_START | PB_A)) {
         gsel = 0u;
         show_menu();
         return;
