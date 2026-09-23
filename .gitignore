@@ -1,6 +1,7 @@
 # Build output
 build/
 scripts/build/
+tests/host/out/
 
 # Lua scripts (debugging)
 scripts/*.lua

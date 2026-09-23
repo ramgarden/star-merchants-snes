@@ -90,15 +90,32 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
   per dock from sector hash + warp-day counter (gday, capped), persisted
   in SRAM v2 record; docking costs 1 turn, trading auto-saves
 
-## Milestone 5: Stardock (Central Hub)
-- [ ] **Shipyard** - Buy/sell ships, holds, drives, scanners, cloaks, twarp
-- [ ] **Hardware Emporium** - Mines, probes, genesis torps, adets, ptorps, beacons
-- [ ] **Galactic Bank** - Deposit/withdraw, 4% daily interest (citadel treasury)
-- [ ] **Federation Police** - Bounties (good align), commissions (+500 align → ISS)
-- [ ] **Underground** - Name change, hit contracts (evil align), bounties
-- [ ] **Tavern** - Grimy Trader (track traders, UG password), TriCron, Singles Bar
-- [ ] **Library** - Ship database, alien derelicts
-- [ ] **Singles Bar** - Flavor text, robbery risk
+## Milestone 5: Stardock (Central Hub) (Complete 2026-09-23)
+- [x] **Shipyard** - Class 0 outfitter: BUY HOLDS 5000 (+5 max), BUY
+  FIGHTERS 500 (+5), BUY SHIELDS 1000 (+5), all with credit checks —
+  holds verified ("HOLDS +5 MAX 25"); fighters/shields share the
+  identical buy path (reviewed)
+- [x] **Hardware Emporium** - BUY PROBE 500 / BEACON 100 / GENESIS 5000
+  (caps, M6 hooks: gprobes/gbeacons/gtorp persisted in SRAM v3) —
+  probe verified ("E-PROBE ABOARD TOT 1"); beacon/genesis reviewed
+- [x] **Galactic Bank** - DEPOSIT/WITHDRAW 1000, LEDGER, 3%/day interest
+  accrual on hub entry (capped 32 days, 60000 max) — full round-trip
+  verified ("DEPOSITED BAL 1000" → "WITHDREW BAL 0", CR 4500→3500→4500)
+- [x] **Federation Police** - COMMISSION (needs 500 ALIGN → ISS flag for
+  M7), BOUNTY (align-gated payout, once per visit), RECORD (align/XP
+  display) — commission denial verified ("NEED 500 ALIGN FOR ISS")
+- [x] **Underground** - SEE BOSS (needs -100 ALIGN), FENCE (+150 once
+  per visit), LAY LOW (capped redemption) — implemented + host-proven
+  nav; evil-positive path reviewed (unreachable in a fast tour)
+- [x] **Tavern** - ALE (10cr, +1 XP), GOSSIP (4 rotating Grimy/TriCron
+  rumors + alley-robbery risk), LIBRARY (ship database: ISS/Freighter/
+  Cruiser/Corvette specs) — reviewed (no tour frames left under the
+  255 cap); gossip/ale share verified msg patterns
+- [x] **Hub plumbing** - Sector-1 P opens the hub (8 departments);
+  TRADING POST routes into the M4 commodity port (M4 tour re-verified
+  end-to-end through it: SECTOR 3 / 10006 / 498); ledger/interest/SRAM
+  v3 host-proven (bank 1165 after 5 days); full tour logic proven on
+  host harness (14/14) with zero hangs over 2.2M cycles
 
 ## Milestone 6: Planet Management
 - [ ] **Planet Display** - Level, citadel, colonists (Ore/Org/Eq groups), production
@@ -213,10 +230,9 @@ Boot → Title → Main Menu → New Game → Sector View (Main Loop)
 
 ---
 
-## Next Action: Milestone 5 — Stardock (see above).
- Port engine ships the commodity loop; M5 adds the hub: shipyard
- (holds/fighters/shields = Class 0), Hardware Emporium (probes for
- psychic-probe stealing), Bank, Police/UG alignment, Tavern/Library.
+## Next Action: Milestone 6 — Planet Management (see above).
+ Hooks ready: gprobes/gbeacons/gtorp (Stardock hardware), planet
+ fields (gplanet/gplevel) in the sector view, genesis-torp flow.
  Constraints carry over: globals-only C, full CGRAM init, START = bit 4
  of $4218. Checkpoint-bisect with `scripts/capture.ps1` screenshots for
  any future black-screen-style symptom (workflow proven this session).

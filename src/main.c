@@ -81,7 +81,7 @@ typedef short int16_t;
 #define PB_X 0x4000u
 #define PB_A 0x8000u
 #define SCN 92u
-#define SCN2 102u
+#define SCN2 106u
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -194,27 +194,55 @@ const uint8_t mrows[4] = { 11u, 13u, 15u, 17u };
 const char charset[38] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
 const uint8_t bitmask[8] = { 1u, 2u, 4u, 8u, 16u, 32u, 64u, 128u };
 const uint8_t clsides[9] = { 6u, 5u, 3u, 1u, 2u, 4u, 0u, 7u, 4u };
-const uint8_t scf[86] = {
+const uint8_t scf[92] = {
     3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
     40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
     70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
     100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
-    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 148u, 149u,
-    152u, 153u, 164u, 165u, 168u, 169u, 172u, 173u, 184u, 185u,
-    188u, 189u, 192u, 193u, 196u, 197u, 208u, 209u, 212u, 213u,
+    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 140u, 141u,
+    148u, 149u, 152u, 153u, 160u, 161u, 164u, 165u, 168u, 169u,
+    176u, 177u, 180u, 181u, 184u, 185u, 188u, 189u, 196u, 197u,
+    200u, 201u, 208u, 209u, 212u, 213u, 216u, 217u, 220u, 221u,
+    224u, 225u, 228u, 229u, 232u, 233u, 236u, 237u, 240u, 241u,
+    244u, 245u,
+};
+const uint8_t scp[92] = {
+    1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
+    2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
+    3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 6u, 0u,
+    3u, 0u, 6u, 0u, 2u, 0u, 5u, 0u, 6u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u,
+    6u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u,
+    6u, 0u, 3u, 0u, 6u, 0u, 7u, 0u, 3u, 0u,
+    6u, 0u,
+};
+const uint8_t scf2[106] = {
+    3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
+    40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
+    70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
+    100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
+    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 140u, 141u,
+    144u, 145u, 148u, 149u, 152u, 153u, 156u, 157u, 160u, 161u,
+    164u, 165u, 168u, 169u, 172u, 173u, 176u, 177u, 180u, 181u,
+    184u, 185u, 188u, 189u, 192u, 193u, 196u, 197u, 200u, 201u,
+    204u, 205u, 208u, 209u, 212u, 213u, 216u, 217u, 220u, 221u,
     224u, 225u, 228u, 229u, 232u, 233u, 236u, 237u, 240u, 241u,
     244u, 245u, 248u, 249u, 252u, 253u,
 };
-const uint8_t scp[86] = {
+const uint8_t scp2[106] = {
     1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
     7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
     2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
     3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
     3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
-    6u, 0u, 2u, 0u, 5u, 0u, 6u, 0u, 3u, 0u,
-    3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u, 6u, 0u,
-    3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
-    7u, 0u, 3u, 0u, 6u, 0u,
+    6u, 0u, 6u, 0u, 2u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 6u, 0u, 2u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 3u, 0u, 6u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
+    3u, 0u, 6u, 0u, 6u, 0u,
 };
 static void show_sum(void);
 static void show_sector(void);
@@ -226,6 +254,7 @@ static void sram_sync(void);
 static void sram_load(void);
 static void port_dock(void);
 static void dock_hub(void);
+static void tick_once(void);
 static void load_palettes(void) {
     REG_CGADD = 0;
     gp = 0u;
@@ -279,6 +308,28 @@ static void wait_vblank(void) {
 }
 static void script_pads(void) {
     gsclk = (uint8_t)(gsfr >> 4);
+    if (gselfdrive == 2u) {
+        while (gsi < SCN2) {
+            if (gsclk < scf2[gsi]) break;
+            gact = scp2[gsi];
+            if (gact == 0u) { gj_held = 0u; }
+            else if (gact == 1u) { gj_held = PB_START; }
+            else if (gact == 2u) { gj_held = PB_UP; }
+            else if (gact == 3u) { gj_held = PB_DOWN; }
+            else if (gact == 4u) { gj_held = PB_LEFT; }
+            else if (gact == 5u) { gj_held = PB_RIGHT; }
+            else if (gact == 6u) { gj_held = PB_A; }
+            else if (gact == 7u) { gj_held = PB_B; }
+            else if (gact == 8u) { gj_held = PB_X; }
+            else { gj_held = PB_Y; }
+            gsi++;
+        }
+        gj_pad = gj_held;
+        gj_new = (uint16_t)(gj_pad & (uint16_t)(gj_pad ^ gj_prev));
+        gj_prev = gj_pad;
+        gj_dir = gj_new;
+        return;
+    }
     while (gsi < SCN) {
         if (gsclk < scf[gsi]) break;
         gact = scp[gsi];
@@ -618,6 +669,10 @@ static void sram_load(void) {
     gportcom = 0u;
     gporthag = 0u;
     gportmsg = 0u;
+    gportfrom = 0u;
+    gdept = 0u;
+    gdocksel = 0u;
+    gdockmsg = 0u;
     gmsgmode = 0u;
     gm1 = "";
     gm2 = "";
@@ -1313,7 +1368,10 @@ static void exec_cmd(void) {
         show_sector();
     } else if (gcmdsel == 4u) {
         gcmdopen = 0u;
-        if (gport) {
+        if (gsec == 1u) {
+            dock_hub();
+        } else if (gport) {
+            gportfrom = 0u;
             port_dock();
         } else {
             gmsgmode = 0u;
@@ -1856,14 +1914,22 @@ static void port_steal(void) {
     show_port();
 }
 static void port_leave(void) {
+    gcmdopen = 0u;
+    sram_sync();
+    if (gportfrom == 1u) {
+        gdockmsg = 0u;
+        gm1 = "BACK AT CONCOURSE";
+        gm1pal = PAL_YEL;
+        gm2 = "PICK A DEPARTMENT";
+        show_dock();
+        return;
+    }
     gmsgmode = 0u;
     gm1 = "UNDOCKED: FLY SAFE, TRADER";
     gm1pal = PAL_WHITE;
     gm2 = "";
     gm3 = "";
     gm4 = "";
-    gcmdopen = 0u;
-    sram_sync();
     show_sector();
 }
 static void tick_port(void) {
@@ -1904,6 +1970,649 @@ static void tick_port(void) {
     }
     if (gj_new & PB_B) {
         port_leave();
+        return;
+    }
+}
+/* ---- Milestone 5: Stardock hub (sector 1 Class 9 station) ----
+ * Hub departments: trading post (commodity port), shipyard (Class 0:
+ * holds/fighters/shields), hardware (probes/beacons/genesis), bank
+ * (deposit/withdraw/ledger + interest), police (commission/bounty),
+ * underground (evil contracts), tavern (ale/gossip/library).
+ */
+static void cap_credits(void) {
+    if (gcredits > 60000u) gcredits = 60000u;
+}
+static void dock_count(void) {
+    if (gdept == 0u) { gtmp = 8u; }
+    else { gtmp = 4u; }
+}
+static void draw_dockhead(void) {
+    gdx = 0u; gdy = 0u; gdpal = PAL_CYAN;
+    gdstr = "STARDOCK SECTOR 1"; draw_text();
+    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
+    gdstr = "--------------------------------"; draw_text();
+    gdx = 0u; gdy = 2u; gdpal = PAL_GRAY;
+    gdstr = "CR "; draw_text();
+    gdpal = PAL_WHITE; gn = gcredits; draw_num();
+    gdpal = PAL_GRAY; gdstr = " TR "; draw_text();
+    gdpal = PAL_WHITE; gn = gturns; draw_num();
+    gdx = 0u; gdy = 3u; gdpal = PAL_GRAY;
+    gdstr = "BANK "; draw_text();
+    gdpal = PAL_WHITE; gn = gbank; draw_num();
+    gdpal = PAL_GRAY; gdstr = " FTRS "; draw_text();
+    gdpal = PAL_WHITE; gn = gfighters; draw_num();
+    gdy = 4u; gdx = 0u; gdpal = PAL_BLUE;
+    gdstr = "--------------------------------"; draw_text();
+}
+static void draw_dockmsgs(void) {
+    if (gdockmsg == 1u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "HOLDS +5 MAX "; draw_text();
+        gn = gholdmax; draw_num();
+        return;
+    }
+    if (gdockmsg == 2u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "+5 FIGHTERS TOT "; draw_text();
+        gn = gfighters; draw_num();
+        return;
+    }
+    if (gdockmsg == 3u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "+5 SHIELDS TOT "; draw_text();
+        gn = gshields; draw_num();
+        return;
+    }
+    if (gdockmsg == 4u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "E-PROBE ABOARD TOT "; draw_text();
+        gn = gprobes; draw_num();
+        return;
+    }
+    if (gdockmsg == 5u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "BEACON ABOARD TOT "; draw_text();
+        gn = gbeacons; draw_num();
+        return;
+    }
+    if (gdockmsg == 7u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "DEPOSITED BAL "; draw_text();
+        gn = gbank; draw_num();
+        return;
+    }
+    if (gdockmsg == 8u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "WITHDREW BAL "; draw_text();
+        gn = gbank; draw_num();
+        return;
+    }
+    if (gdockmsg == 9u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_GRAY;
+        gdstr = "BAL "; draw_text();
+        gdpal = PAL_WHITE; gn = gbank; draw_num();
+        gdpal = PAL_GRAY; gdstr = " INT 3PCT/DAY"; draw_text();
+        return;
+    }
+    if (gdockmsg == 10u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_YEL;
+        gdstr = "FEDERATION COMMISSION"; draw_text();
+        gdx = 0u; gdy = 6u; gdpal = PAL_WHITE;
+        gdstr = "ISS ACCESS (MILESTONE 7)"; draw_text();
+        return;
+    }
+    if (gdockmsg == 11u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "BOUNTY PAID "; draw_text();
+        gn = gtmp; draw_num();
+        gdstr = " CR XP +5"; draw_text();
+        return;
+    }
+    if (gdockmsg == 12u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_GRAY;
+        gdstr = "ALIGN "; draw_text();
+        gdpal = PAL_WHITE;
+        if (galign < 0) {
+            gdstr = "-"; draw_text();
+            gn = (uint16_t)(0 - galign);
+        } else {
+            gn = (uint16_t)galign;
+        }
+        draw_num();
+        gdpal = PAL_GRAY; gdstr = " XP "; draw_text();
+        gdpal = PAL_WHITE; gn = gxp; draw_num();
+        return;
+    }
+    if (gdockmsg == 13u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_YEL;
+        gdstr = "CONTRACT DONE XP +25"; draw_text();
+        gdx = 0u; gdy = 6u; gdpal = PAL_RED;
+        gdstr = "THE UG REMEMBERS YOU"; draw_text();
+        return;
+    }
+    if (gdockmsg == 14u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "FENCED HOT GOODS +150"; draw_text();
+        return;
+    }
+    if (gdockmsg == 15u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "YOU LAY LOW A WHILE"; draw_text();
+        return;
+    }
+    if (gdockmsg == 16u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "ALE WARMS THE CREW XP+1"; draw_text();
+        return;
+    }
+    if (gdockmsg == 17u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_YEL;
+        gtmp = (uint16_t)((gday + gsec) & 3u);
+        if (gtmp == 0u) { gdstr = "GRIMY: FIGS WIN WARS"; }
+        else if (gtmp == 1u) { gdstr = "TRICRON: ORE IS KING"; }
+        else if (gtmp == 2u) { gdstr = "DOC: PROBES SAVE LIVES"; }
+        else { gdstr = "ALIENS BEYOND SECTOR 5"; }
+        draw_text();
+        gtmp = (uint16_t)((gday + gsec) & 7u);
+        if (gtmp == 0u) {
+            gdx = 0u; gdy = 6u; gdpal = PAL_RED;
+            gdstr = "MUGGED IN ALLEY -100 CR"; draw_text();
+            if (gcredits >= 100u) { gcredits -= 100u; }
+            else { gcredits = 0u; }
+        }
+        return;
+    }
+    if (gdockmsg == 18u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_GRAY;
+        gdstr = "ISS: NEED COMMISSION"; draw_text();
+        gdx = 0u; gdy = 6u; gdpal = PAL_GRAY;
+        gdstr = "FREIGHTER 60HL CRUISER 20HL"; draw_text();
+        gdx = 0u; gdy = 7u; gdpal = PAL_GRAY;
+        gdstr = "CORVETTE 85HL ESCORT 12HL"; draw_text();
+        return;
+    }
+    gdx = 0u; gdy = 5u; gdpal = gm1pal;
+    gdstr = gm1; draw_text();
+    gdx = 0u; gdy = 6u; gdpal = PAL_WHITE;
+    gdstr = gm2; draw_text();
+}
+static void draw_dockopts(void) {
+    gi = 0u;
+    dock_count();
+    gj = (uint8_t)gtmp;
+    while (gi < gj) {
+        gdx = 2u; gdy = (uint8_t)(9u + gi);
+        if (gi == gdocksel) {
+            gdpal = PAL_CYAN; gdstr = ">"; draw_text();
+            gdpal = PAL_YEL;
+        } else {
+            gdpal = PAL_WHITE; gdstr = " "; draw_text();
+            gdpal = PAL_WHITE;
+        }
+        gdx = 4u;
+        if (gdept == 0u) {
+            if (gi == 0u) { gdstr = "TRADING POST"; }
+            else if (gi == 1u) { gdstr = "SHIPYARD"; }
+            else if (gi == 2u) { gdstr = "HARDWARE"; }
+            else if (gi == 3u) { gdstr = "GALACTIC BANK"; }
+            else if (gi == 4u) { gdstr = "FED POLICE"; }
+            else if (gi == 5u) { gdstr = "UNDERGROUND"; }
+            else if (gi == 6u) { gdstr = "TAVERN"; }
+            else { gdstr = "LEAVE STARDOCK"; }
+        } else if (gdept == 1u) {
+            if (gi == 0u) { gdstr = "BUY HOLDS 5000"; }
+            else if (gi == 1u) { gdstr = "BUY FIGHTERS 500"; }
+            else if (gi == 2u) { gdstr = "BUY SHIELDS 1000"; }
+            else { gdstr = "BACK"; }
+        } else if (gdept == 2u) {
+            if (gi == 0u) { gdstr = "BUY PROBE 500"; }
+            else if (gi == 1u) { gdstr = "BUY BEACON 100"; }
+            else if (gi == 2u) { gdstr = "BUY GENESIS 5000"; }
+            else { gdstr = "BACK"; }
+        } else if (gdept == 3u) {
+            if (gi == 0u) { gdstr = "DEPOSIT 1000"; }
+            else if (gi == 1u) { gdstr = "WITHDRAW 1000"; }
+            else if (gi == 2u) { gdstr = "LEDGER"; }
+            else { gdstr = "BACK"; }
+        } else if (gdept == 4u) {
+            if (gi == 0u) { gdstr = "COMMISSION"; }
+            else if (gi == 1u) { gdstr = "BOUNTY"; }
+            else if (gi == 2u) { gdstr = "RECORD"; }
+            else { gdstr = "BACK"; }
+        } else if (gdept == 5u) {
+            if (gi == 0u) { gdstr = "SEE BOSS"; }
+            else if (gi == 1u) { gdstr = "FENCE 150"; }
+            else if (gi == 2u) { gdstr = "LAY LOW"; }
+            else { gdstr = "BACK"; }
+        } else {
+            if (gi == 0u) { gdstr = "ALE 10"; }
+            else if (gi == 1u) { gdstr = "GOSSIP"; }
+            else if (gi == 2u) { gdstr = "LIBRARY"; }
+            else { gdstr = "BACK"; }
+        }
+        draw_text();
+        gi++;
+    }
+}
+static void draw_dockfoot(void) {
+    gdpal = PAL_GRAY;
+    gdy = 18u; gdx = 0u;
+    if (gdept == 0u) { gdstr = "A:ENTER B:SECTOR"; }
+    else { gdstr = "A:DO B:HUB"; }
+    draw_text();
+    gdy = 19u; gdx = 0u;
+    if (gdept == 0u) { gdstr = "TRADING POST=PORT MARKET"; }
+    else if (gdept == 1u) { gdstr = "CLASS 0 OUTFITTER"; }
+    else if (gdept == 2u) { gdstr = "STELLAR HARDWARE"; }
+    else if (gdept == 3u) { gdstr = "3PCT DAILY NOMINAL"; }
+    else if (gdept == 4u) { gdstr = "SERVE THE FEDERATION"; }
+    else if (gdept == 5u) { gdstr = "EVIL ONLY BEYOND HERE"; }
+    else { gdstr = "GRIMY TRADER KNOWS ALL"; }
+    draw_text();
+}
+static void show_dock(void) {
+    REG_INIDISP = 0x80u;
+    clear_map();
+    draw_dockhead();
+    draw_dockmsgs();
+    draw_dockopts();
+    draw_dockfoot();
+    REG_TM = 0x01u;
+    REG_INIDISP = 0x0Fu;
+    gstate = ST_DOCK;
+    gframe = 0u;
+}
+static void dock_hub(void) {
+    gtmp = (uint16_t)(gday - gbankday);
+    gi = 0u;
+    while (gtmp > 0u) {
+        gbank += (uint16_t)(gbank >> 5);
+        if (gbank > 60000u) gbank = 60000u;
+        gtmp--;
+        gi++;
+        if (gi >= 32u) { gtmp = 0u; }
+    }
+    gbankday = gday;
+    gdept = 0u;
+    gdocksel = 0u;
+    gdockmsg = 0u;
+    ghubonce = 0u;
+    ghubug = 0u;
+    ghubfence = 0u;
+    gm1 = "WELCOME TO STARDOCK";
+    gm1pal = PAL_YEL;
+    gm2 = "FEDERATION PROTECTED";
+    gcmdopen = 0u;
+    sram_sync();
+    show_dock();
+}
+static void dock_buyholds(void) {
+    if (gholdmax > 95u) {
+        gdockmsg = 0u;
+        gm1 = "HOLDS MAXED OUT";
+        gm1pal = PAL_RED;
+        gm2 = "NO ROOM TO EXPAND";
+        show_dock();
+        return;
+    }
+    if (gcredits < 5000u) {
+        gdockmsg = 0u;
+        gm1 = "NEED 5000 CREDITS";
+        gm1pal = PAL_RED;
+        gm2 = "TRADE AT THE PORT FIRST";
+        show_dock();
+        return;
+    }
+    gcredits -= 5000u;
+    gholdmax += 5u;
+    gdockmsg = 1u;
+    sram_sync();
+    show_dock();
+}
+static void dock_buyftrs(void) {
+    if (gcredits < 500u) {
+        gdockmsg = 0u;
+        gm1 = "NEED 500 CREDITS";
+        gm1pal = PAL_RED;
+        gm2 = "FIGHTERS COST MONEY";
+        show_dock();
+        return;
+    }
+    gcredits -= 500u;
+    gfighters += 5u;
+    gdockmsg = 2u;
+    sram_sync();
+    show_dock();
+}
+static void dock_buyshields(void) {
+    if (gcredits < 1000u) {
+        gdockmsg = 0u;
+        gm1 = "NEED 1000 CREDITS";
+        gm1pal = PAL_RED;
+        gm2 = "SHIELDS COST MONEY";
+        show_dock();
+        return;
+    }
+    gcredits -= 1000u;
+    gshields += 5u;
+    gdockmsg = 3u;
+    sram_sync();
+    show_dock();
+}
+static void dock_buyprobe(void) {
+    if (gprobes >= 99u) {
+        gdockmsg = 0u;
+        gm1 = "PROBE RACKS FULL";
+        gm1pal = PAL_RED;
+        gm2 = "LAUNCH SOME FIRST (M6)";
+        show_dock();
+        return;
+    }
+    if (gcredits < 500u) {
+        gdockmsg = 0u;
+        gm1 = "NEED 500 CREDITS";
+        gm1pal = PAL_RED;
+        gm2 = "PROBES COST MONEY";
+        show_dock();
+        return;
+    }
+    gcredits -= 500u;
+    gprobes++;
+    gdockmsg = 4u;
+    sram_sync();
+    show_dock();
+}
+static void dock_buybeacon(void) {
+    if (gbeacons >= 99u) {
+        gdockmsg = 0u;
+        gm1 = "BEACON RACKS FULL";
+        gm1pal = PAL_RED;
+        gm2 = "DEPLOY SOME FIRST (M6)";
+        show_dock();
+        return;
+    }
+    if (gcredits < 100u) {
+        gdockmsg = 0u;
+        gm1 = "NEED 100 CREDITS";
+        gm1pal = PAL_RED;
+        gm2 = "BEACONS COST MONEY";
+        show_dock();
+        return;
+    }
+    gcredits -= 100u;
+    gbeacons++;
+    gdockmsg = 5u;
+    sram_sync();
+    show_dock();
+}
+static void dock_buygenesis(void) {
+    if (gtorp >= 5u) {
+        gdockmsg = 0u;
+        gm1 = "TORP MAGAZINE FULL";
+        gm1pal = PAL_RED;
+        gm2 = "FIRE SOME FIRST (M6)";
+        show_dock();
+        return;
+    }
+    if (gcredits < 5000u) {
+        gdockmsg = 0u;
+        gm1 = "NEED 5000 CREDITS";
+        gm1pal = PAL_RED;
+        gm2 = "GENESIS AINT CHEAP";
+        show_dock();
+        return;
+    }
+    gcredits -= 5000u;
+    gtorp++;
+    gdockmsg = 6u;
+    gm1 = "GENESIS TORP SECURED";
+    gm1pal = PAL_YEL;
+    gm2 = "USE ON EMPTY SECTOR (M6)";
+    show_dock();
+}
+static void dock_deposit(void) {
+    if (gcredits < 1000u) {
+        gdockmsg = 0u;
+        gm1 = "NEED 1000 TO DEPOSIT";
+        gm1pal = PAL_RED;
+        gm2 = "COME BACK RICHER";
+        show_dock();
+        return;
+    }
+    gcredits -= 1000u;
+    gbank += 1000u;
+    if (gbank > 60000u) gbank = 60000u;
+    gdockmsg = 7u;
+    sram_sync();
+    show_dock();
+}
+static void dock_withdraw(void) {
+    if (gbank < 1000u) {
+        gdockmsg = 0u;
+        gm1 = "BALANCE TOO LOW";
+        gm1pal = PAL_RED;
+        gm2 = "DEPOSIT FIRST";
+        show_dock();
+        return;
+    }
+    gbank -= 1000u;
+    gcredits += 1000u;
+    cap_credits();
+    gdockmsg = 8u;
+    sram_sync();
+    show_dock();
+}
+static void dock_commission(void) {
+    if (galign < 500) {
+        gdockmsg = 0u;
+        gm1 = "NEED 500 ALIGN FOR ISS";
+        gm1pal = PAL_RED;
+        gm2 = "SERVE, THEN RETURN";
+        show_dock();
+        return;
+    }
+    gcomm = 1u;
+    gdockmsg = 10u;
+    sram_sync();
+    show_dock();
+}
+static void dock_bounty(void) {
+    if (galign <= 0) {
+        gdockmsg = 0u;
+        gm1 = "NO FED STANDING";
+        gm1pal = PAL_RED;
+        gm2 = "GOOD DEEDS PAY (ALIGN+)";
+        show_dock();
+        return;
+    }
+    if (ghubonce) {
+        gdockmsg = 0u;
+        gm1 = "ALREADY CLAIMED";
+        gm1pal = PAL_RED;
+        gm2 = "ONE BOUNTY PER VISIT";
+        show_dock();
+        return;
+    }
+    ghubonce = 1u;
+    gtmp = (uint16_t)(galign + galign);
+    gcredits += gtmp;
+    cap_credits();
+    gxp += 5u;
+    gdockmsg = 11u;
+    sram_sync();
+    show_dock();
+}
+static void dock_boss(void) {
+    if (galign > -100) {
+        gdockmsg = 0u;
+        gm1 = "NEED EVIL ALIGN -100";
+        gm1pal = PAL_RED;
+        gm2 = "STEAL AND ROB FIRST";
+        show_dock();
+        return;
+    }
+    if (ghubug) {
+        gdockmsg = 0u;
+        gm1 = "NO MORE WORK TONIGHT";
+        gm1pal = PAL_RED;
+        gm2 = "COME BACK NEXT VISIT";
+        show_dock();
+        return;
+    }
+    ghubug = 1u;
+    gxp += 25u;
+    gdockmsg = 13u;
+    sram_sync();
+    show_dock();
+}
+static void dock_fence(void) {
+    if (ghubfence) {
+        gdockmsg = 0u;
+        gm1 = "FENCE IS DRY";
+        gm1pal = PAL_RED;
+        gm2 = "ONE SALE PER VISIT";
+        show_dock();
+        return;
+    }
+    ghubfence = 1u;
+    gcredits += 150u;
+    cap_credits();
+    gdockmsg = 14u;
+    sram_sync();
+    show_dock();
+}
+static void dock_laylow(void) {
+    if (galign < 0) {
+        galign += 5;
+        if (galign > 0) galign = 0;
+    }
+    gdockmsg = 15u;
+    sram_sync();
+    show_dock();
+}
+static void dock_ale(void) {
+    if (gcredits < 10u) {
+        gdockmsg = 0u;
+        gm1 = "NOT EVEN BAR MONEY";
+        gm1pal = PAL_RED;
+        gm2 = "10 CREDITS FOR ALE";
+        show_dock();
+        return;
+    }
+    gcredits -= 10u;
+    gxp++;
+    gdockmsg = 16u;
+    sram_sync();
+    show_dock();
+}
+static void dock_gossip(void) {
+    gdockmsg = 17u;
+    show_dock();
+}
+static void dock_library(void) {
+    gdockmsg = 18u;
+    show_dock();
+}
+static void dock_back(void) {
+    gdocksel = gdept;
+    gdept = 0u;
+    gdockmsg = 0u;
+    gm1 = "STARDOCK CONCOURSE";
+    gm1pal = PAL_YEL;
+    gm2 = "PICK A DEPARTMENT";
+    show_dock();
+}
+static void dock_leave(void) {
+    gmsgmode = 0u;
+    gm1 = "LEFT STARDOCK: FLY SAFE";
+    gm1pal = PAL_WHITE;
+    gm2 = "";
+    gm3 = "";
+    gm4 = "";
+    gcmdopen = 0u;
+    sram_sync();
+    show_sector();
+}
+static void dock_exec(void) {
+    if (gdept == 0u) {
+        if (gdocksel == 0u) {
+            gportfrom = 1u;
+            port_dock();
+        } else if (gdocksel == 7u) {
+            dock_leave();
+        } else {
+            gdept = (uint8_t)(gdocksel);
+            gdocksel = 0u;
+            gdockmsg = 0u;
+            gm1 = "";
+            gm2 = "";
+            show_dock();
+        }
+        return;
+    }
+    if (gdocksel == 3u) {
+        dock_back();
+        return;
+    }
+    if (gdept == 1u) {
+        if (gdocksel == 0u) { dock_buyholds(); }
+        else if (gdocksel == 1u) { dock_buyftrs(); }
+        else { dock_buyshields(); }
+    } else if (gdept == 2u) {
+        if (gdocksel == 0u) { dock_buyprobe(); }
+        else if (gdocksel == 1u) { dock_buybeacon(); }
+        else { dock_buygenesis(); }
+    } else if (gdept == 3u) {
+        if (gdocksel == 0u) { dock_deposit(); }
+        else if (gdocksel == 1u) { dock_withdraw(); }
+        else {
+            gdockmsg = 9u;
+            show_dock();
+        }
+    } else if (gdept == 4u) {
+        if (gdocksel == 0u) { dock_commission(); }
+        else if (gdocksel == 1u) { dock_bounty(); }
+        else {
+            gdockmsg = 12u;
+            show_dock();
+        }
+    } else if (gdept == 5u) {
+        if (gdocksel == 0u) { dock_boss(); }
+        else if (gdocksel == 1u) { dock_fence(); }
+        else { dock_laylow(); }
+    } else {
+        if (gdocksel == 0u) { dock_ale(); }
+        else if (gdocksel == 1u) { dock_gossip(); }
+        else { dock_library(); }
+    }
+}
+static void tick_dock(void) {
+    wait_vblank();
+    gframe++;
+    read_pads();
+    dock_count();
+    if (gj_dir & PB_UP) {
+        if (gdocksel == 0u) { gdocksel = (uint8_t)(gtmp - 1u); }
+        else { gdocksel--; }
+        show_dock();
+        return;
+    }
+    if (gj_dir & PB_DOWN) {
+        gdocksel++;
+        if (gdocksel >= gtmp) gdocksel = 0u;
+        show_dock();
+        return;
+    }
+    if (gj_new & (PB_A | PB_START)) {
+        dock_exec();
+        return;
+    }
+    if (gj_new & PB_B) {
+        if (gdept == 0u) {
+            dock_leave();
+        } else {
+            dock_back();
+        }
         return;
     }
 }
@@ -2084,6 +2793,10 @@ int main(void) {
     gj_prev = 0u;
     show_title();
     while (1) {
+        tick_once();
+    }
+}
+static void tick_once(void) {
         if (gstate == ST_TITLE) {
             tick_title();
         } else if (gstate == ST_MENU) {
@@ -2104,10 +2817,11 @@ int main(void) {
             tick_sector();
         } else if (gstate == ST_PORT) {
             tick_port();
+        } else if (gstate == ST_DOCK) {
+            tick_dock();
         } else if (gstate == ST_ATTRACT) {
             tick_attract();
         } else {
             tick_simple_back();
         }
-    }
 }

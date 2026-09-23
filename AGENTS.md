@@ -31,6 +31,14 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
   Full economy reconciled across screenshots; SRAM v2 (+gday);
   new game starts with 5 Fuel Ore. See devlog/2026-09-23-milestone-4-port.md.
   Class 0 / Class 9 StarDock hub deferred to M5.
+- ✅ **Milestone 5 COMPLETE 2026-09-23** — Stardock hub (sector-1 P):
+  trading post → M4 port, Class 0 shipyard (holds/fighters/shields),
+  hardware (probe/beacon/genesis for M6), bank (deposit/withdraw/
+  ledger, ~3%/day interest), police (500-align commission gate,
+  bounty), underground (evil-gated contracts), tavern (ale/gossip/
+  library). SRAM v3. New permanent host test harness (tests/host:
+  cc65-6502 + py65, T1/T2 tours + interest, 14/14 green) — use it
+  before emulator screenshots. See devlog/2026-09-23-milestone-5-stardock.md.
 - Do **NOT** trust the 2026-09-21 "title screen working" claim — it was
   inferred from disassembly, never screenshotted; every capture then was black
 
@@ -188,8 +196,8 @@ pvsneslib_extracted/    # Reference material + known-good Mode1Scroll.sfc + font
 
 ## Next Steps
 
-1. Milestone 4 starport trading (see MILESTONES.md) — hooks ready:
-   `gport`/`gportcls`/`cls_str`, `P PORT` palette item, cargo save fields
+1. Milestone 6 planet management (see MILESTONES.md) — hooks ready:
+   gprobes/gbeacons/gtorp (hardware), planet fields in sector view
 
 ## Key References
 
