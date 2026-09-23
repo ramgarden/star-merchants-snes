@@ -41,7 +41,7 @@ genesis/detonator), and SRAM save/load with Continue resume. See
 `MILESTONES.md` for the roadmap, `AGENTS.md` and `devlog/` for the full
 technical state.
 
-Currently working **Milestone 5: Stardock (Central Hub)** —
+Currently working **Milestone 7: Combat System** —
 see `MILESTONES.md` for the roadmap.
 
 ## Quick Start
