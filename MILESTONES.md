@@ -152,12 +152,12 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
   full M6 tour host-proven (claim/deploy/load/quasar/warp/denial)
 
 ## Milestone 7: Combat System
-- [ ] **Ship vs Ship** - Offensive/defensive odds, fighter counts, shields
-- [ ] **Combat Math** - (enemy_ftrs * enemy_odds) / your_odds = min fighters to win
-- [ ] **Ship Types** - 15 classes (MerCru, ScoMar, MisFri, CorBat, CorFla, ColTra, CarTra, MerFre, ImpSta, HavGun, StaMas, ConSte, TkhOri, ThoSen, TauMul)
-- [ ] **Photon Missile** - Destroys port/planet shields, blinds defenses
-- [ ] **Corbomite** - Retaliation damage on ship destruction
-- [ ] **Escape Pod** - Survive destruction, trade for ScoMar + 1000 creds
+- [x] **Ship vs Ship** - Offensive/defensive odds, fighter counts, shields
+- [x] **Combat Math** - (enemy_ftrs * enemy_odds) / your_odds = min fighters to win
+- [x] **Ship Types** - 15 classes (MerCru, ScoMar, MisFri, CorBat, CorFla, ColTra, CarTra, MerFre, ImpSta, HavGun, StaMas, ConSte, TkhOri, ThoSen, TauMul)
+- [x] **Photon Missile** - Destroys port/planet shields, blinds defenses
+- [x] **Corbomite** - Retaliation damage on ship destruction
+- [x] **Escape Pod** - Survive destruction, trade for ScoMar + 1000 creds
 
 ## Milestone 8: Ferrengi & Aliens
 - [ ] **Ferrengal** - L4 planet, 30% sector QC, 40% MRL, 5000 ftrs, 100k treasury
