@@ -66,6 +66,7 @@ typedef short int16_t;
 #define ST_SECTOR 9u
 #define ST_ATTRACT 10u
 #define ST_LOADRET 11u
+#define ST_PORT 12u
 #define PB_UP 0x0008u
 #define PB_DOWN 0x0004u
 #define PB_LEFT 0x0002u
@@ -78,7 +79,7 @@ typedef short int16_t;
 #define PB_L 0x2000u
 #define PB_X 0x4000u
 #define PB_A 0x8000u
-#define SCN 76u
+#define SCN 86u
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -160,6 +161,14 @@ uint8_t gvisited[64];
 uint16_t gsram_a;
 uint8_t gsram_d;
 uint8_t gsram_ck;
+uint8_t gportsel;
+uint8_t gportcom;
+uint8_t gporthag;
+uint8_t gportmsg;
+uint8_t gportn;
+uint16_t gday;
+uint8_t gstock[3];
+uint8_t gprc[3];
 void sram_wr(void);
 void sram_rd(void);
 const uint8_t palc1[16] = {
@@ -169,24 +178,27 @@ const uint8_t palc1[16] = {
 const uint8_t mrows[4] = { 11u, 13u, 15u, 17u };
 const char charset[38] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
 const uint8_t bitmask[8] = { 1u, 2u, 4u, 8u, 16u, 32u, 64u, 128u };
-const uint8_t scf[76] = {
+const uint8_t clsides[9] = { 6u, 5u, 3u, 1u, 2u, 4u, 0u, 7u, 4u };
+const uint8_t scf[86] = {
     3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
     40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
     70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
-    100u, 101u, 106u, 107u, 112u, 113u, 118u, 119u, 124u, 125u,
-    126u, 127u, 130u, 131u, 134u, 135u, 138u, 139u, 142u, 143u,
-    146u, 147u, 150u, 151u, 154u, 155u, 158u, 159u, 162u, 163u,
-    166u, 167u, 170u, 171u, 174u, 175u, 178u, 179u, 182u, 183u,
-    186u, 187u, 190u, 191u, 194u, 195u,
+    100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
+    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 148u, 149u,
+    152u, 153u, 164u, 165u, 168u, 169u, 172u, 173u, 184u, 185u,
+    188u, 189u, 192u, 193u, 196u, 197u, 208u, 209u, 212u, 213u,
+    224u, 225u, 228u, 229u, 232u, 233u, 236u, 237u, 240u, 241u,
+    244u, 245u, 248u, 249u, 252u, 253u,
 };
-const uint8_t scp[76] = {
+const uint8_t scp[86] = {
     1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
     7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
     2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
-    3u, 0u, 2u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
-    8u, 0u, 3u, 0u, 6u, 0u, 9u, 0u, 8u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 8u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 2u, 0u, 5u, 0u, 6u, 0u, 3u, 0u,
+    3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u, 6u, 0u,
+    3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
     7u, 0u, 3u, 0u, 6u, 0u,
 };
 static void show_sum(void);
@@ -196,6 +208,7 @@ static void show_loadret(void);
 static void draw_num(void);
 static void sram_sync(void);
 static void sram_load(void);
+static void port_dock(void);
 static void load_palettes(void) {
     REG_CGADD = 0;
     gp = 0u;
@@ -464,7 +477,7 @@ static void sram_sync(void) {
     gsram_ck = 0u;
     gsram_d = 83u; sram_put();
     gsram_d = 77u; sram_put();
-    gsram_d = 1u; sram_put();
+    gsram_d = 2u; sram_put();
     gi = 0u;
     while (gi < 8u) {
         gsram_d = gname[gi];
@@ -502,6 +515,8 @@ static void sram_sync(void) {
     gsram_d = gore; sram_put();
     gsram_d = gorg; sram_put();
     gsram_d = gequ; sram_put();
+    gsram_d = (uint8_t)(gday & 255u); sram_put();
+    gsram_d = (uint8_t)(gday >> 8); sram_put();
     gsram_d = gsram_ck;
     sram_wr();
 }
@@ -514,7 +529,7 @@ static void sram_load(void) {
     sram_get();
     if (gsram_d != 77u) return;
     sram_get();
-    if (gsram_d != 1u) return;
+    if (gsram_d != 2u) return;
     gi = 0u;
     while (gi < 8u) {
         sram_get();
@@ -554,6 +569,8 @@ static void sram_load(void) {
     sram_get(); gore = gsram_d;
     sram_get(); gorg = gsram_d;
     sram_get(); gequ = gsram_d;
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gday = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
     sram_rd();
     if (gsram_d != gsram_ck) {
         gtmp = 0u;
@@ -562,6 +579,10 @@ static void sram_load(void) {
     gwarpsel = 0u;
     gcmdopen = 0u;
     gcmdsel = 0u;
+    gportsel = 0u;
+    gportcom = 0u;
+    gporthag = 0u;
+    gportmsg = 0u;
     gmsgmode = 0u;
     gm1 = "";
     gm2 = "";
@@ -772,17 +793,22 @@ static void show_launch(void) {
     else { gturns = 1000u; }
     gfighters = 30u;
     gshields = 0u;
-    gholds = 0u;
+    gholds = 5u;
     gholdmax = 20u;
     galign = 0;
     gxp = 0u;
-    gore = 0u;
+    gore = 5u;
     gorg = 0u;
     gequ = 0u;
+    gday = 0u;
     gsec = 1u;
     gwarpsel = 0u;
     gcmdopen = 0u;
     gcmdsel = 0u;
+    gportsel = 0u;
+    gportcom = 0u;
+    gporthag = 0u;
+    gportmsg = 0u;
     gmsgmode = 0u;
     gm1 = "";
     gm2 = "";
@@ -1214,6 +1240,7 @@ static void do_warp(void) {
         return;
     }
     gturns--;
+    gday++;
     gsec = gwarps[gwarpsel];
     gwarpsel = 0u;
     gcmdopen = 0u;
@@ -1237,19 +1264,18 @@ static void exec_cmd(void) {
         gmsgmode = 4u;
         show_sector();
     } else if (gcmdsel == 4u) {
-        gmsgmode = 0u;
+        gcmdopen = 0u;
         if (gport) {
-            gm1 = "DOCKING...";
-            gm1pal = PAL_YEL;
-            gm2 = "MILESTONE 4: TRADE SOON";
+            port_dock();
         } else {
+            gmsgmode = 0u;
             gm1 = "NO PORT IN SECTOR";
             gm1pal = PAL_RED;
             gm2 = "FIND BBS/BSB/SBB PORTS";
+            gm3 = "";
+            gm4 = "";
+            show_sector();
         }
-        gm3 = "";
-        gm4 = "";
-        show_sector();
     } else {
         show_menu();
     }
@@ -1387,6 +1413,435 @@ static void tick_sector(void) {
         gm3 = "";
         gm4 = "";
         show_sector();
+        return;
+    }
+}
+/* ---- Milestone 4: starport trading (TW2002 port loop) ----
+ * Port classes trade Fuel Ore / Organics / Equipment. Per-commodity
+ * side letter: S = port sells (you BUY), B = port buys (you SELL).
+ * Docking costs 1 turn. Haggle shifts prices once per visit (+5 XP).
+ * Steal takes port stock (evil path: alignment hit, bust risk).
+ */
+static void port_side(void) {
+    if (gportcom == 0u) { gj = (uint8_t)((clsides[gportcls] >> 2) & 1u); }
+    else if (gportcom == 1u) { gj = (uint8_t)((clsides[gportcls] >> 1) & 1u); }
+    else { gj = (uint8_t)(clsides[gportcls] & 1u); }
+}
+static void com_name(void) {
+    if (gportcom == 0u) { gdstr = "FUEL ORE"; }
+    else if (gportcom == 1u) { gdstr = "ORGANICS"; }
+    else { gdstr = "EQUIPMENT"; }
+}
+static void cargo_have(void) {
+    if (gportcom == 0u) { gn = gore; }
+    else if (gportcom == 1u) { gn = gorg; }
+    else { gn = gequ; }
+}
+static void cargo_add(void) {
+    if (gportcom == 0u) { gore++; }
+    else if (gportcom == 1u) { gorg++; }
+    else { gequ++; }
+    gholds++;
+}
+static void cargo_sub(void) {
+    if (gportcom == 0u) { gore--; }
+    else if (gportcom == 1u) { gorg--; }
+    else { gequ--; }
+    gholds--;
+}
+static void port_price(void) {
+    gn = gprc[gportcom];
+    if (gporthag == 0u) return;
+    port_side();
+    if (gj == 0u) {
+        gn -= (uint16_t)(gn >> 3);
+        if (gn == 0u) gn = 1u;
+    } else {
+        gn += (uint16_t)(gn >> 3);
+    }
+}
+static void port_genrow(void) {
+    sec_next();
+    if (gportcom == 0u) {
+        gprc[0] = (uint8_t)(18u + (ghash & 15u));
+        gtmp = (uint16_t)(20u + ((ghash >> 6) & 63u));
+    } else if (gportcom == 1u) {
+        gprc[1] = (uint8_t)(10u + (ghash & 7u));
+        gtmp = (uint16_t)(20u + ((ghash >> 6) & 63u));
+    } else {
+        gprc[2] = (uint8_t)(45u + (ghash & 31u));
+        gtmp = (uint16_t)(20u + ((ghash >> 6) & 63u));
+    }
+    if (gday >= 40u) { gtmp += 40u; }
+    else { gtmp += gday; }
+    if (gtmp > 99u) { gtmp = 99u; }
+    gstock[gportcom] = (uint8_t)gtmp;
+}
+static void draw_porthead(void) {
+    gdx = 0u; gdy = 0u; gdpal = PAL_GRAY;
+    gdstr = "PORT "; draw_text();
+    gdpal = PAL_YEL; port_name(); draw_text();
+    gdpal = PAL_GRAY; gdstr = " CLS "; draw_text();
+    gdpal = PAL_WHITE; cls_str(); draw_text();
+    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
+    gdstr = "--------------------------------"; draw_text();
+}
+static void draw_portrows(void) {
+    gi = 0u;
+    while (gi < 3u) {
+        gsav = gportcom;
+        gportcom = gi;
+        port_side();
+        gtmp = gj;
+        if (gi == 0u) { gdstr = "FUEL ORE"; }
+        else if (gi == 1u) { gdstr = "ORGANICS"; }
+        else { gdstr = "EQUIPMENT"; }
+        gdx = 0u; gdy = (uint8_t)(2u + gi);
+        if (gi == gsav) { gdpal = PAL_YEL; }
+        else { gdpal = PAL_GRAY; }
+        draw_text();
+        gdx = 11u;
+        if (gtmp == 0u) { gdpal = PAL_CYAN; gdstr = "S"; }
+        else { gdpal = PAL_YEL; gdstr = "B"; }
+        draw_text();
+        gdx = 13u; gdpal = PAL_WHITE;
+        gn = gprc[gi]; draw_num();
+        if (gtmp == 0u) {
+            gdstr = " STK"; draw_text();
+            gn = gstock[gi]; draw_num();
+        }
+        gportcom = (uint8_t)gsav;
+        gi++;
+    }
+}
+static void draw_portstatus(void) {
+    gdx = 0u; gdy = 5u; gdpal = PAL_GRAY;
+    gdstr = "YOU F"; draw_text();
+    gdpal = PAL_WHITE; gn = gore; draw_num();
+    gdpal = PAL_GRAY; gdstr = " O"; draw_text();
+    gdpal = PAL_WHITE; gn = gorg; draw_num();
+    gdpal = PAL_GRAY; gdstr = " E"; draw_text();
+    gdpal = PAL_WHITE; gn = gequ; draw_num();
+    gdpal = PAL_GRAY; gdstr = " CR "; draw_text();
+    gdpal = PAL_WHITE; gn = gcredits; draw_num();
+    gdy = 6u; gdx = 0u; gdpal = PAL_BLUE;
+    gdstr = "--------------------------------"; draw_text();
+}
+static void draw_portmsgs(void) {
+    if (gportmsg == 1u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_WHITE;
+        gdstr = "BOUGHT 1 "; draw_text();
+        com_name(); draw_text();
+        gdx = 0u; gdy = 8u;
+        gdstr = "PAID "; draw_text();
+        port_price(); draw_num();
+        gdstr = " CR"; draw_text();
+        gdx = 0u; gdy = 9u; gdpal = PAL_GRAY;
+        gdstr = "HOLDS "; draw_text();
+        gdpal = PAL_WHITE; gn = gholds; draw_num();
+        gdstr = "/"; draw_text();
+        gn = gholdmax; draw_num();
+        return;
+    }
+    if (gportmsg == 2u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_WHITE;
+        gdstr = "SOLD 1 "; draw_text();
+        com_name(); draw_text();
+        gdx = 0u; gdy = 8u;
+        gdstr = "GAINED "; draw_text();
+        port_price(); draw_num();
+        gdstr = " CR XP +1"; draw_text();
+        return;
+    }
+    if (gportmsg == 3u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_YEL;
+        gdstr = "HAGGLE ACCEPTED"; draw_text();
+        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+        gdstr = "PRICES SHIFT IN FAVOR"; draw_text();
+        gdx = 0u; gdy = 9u; gdpal = PAL_GRAY;
+        gdstr = "XP +5 TRADE BONUS"; draw_text();
+        return;
+    }
+    if (gportmsg == 4u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_YEL;
+        gdstr = "STOLE "; draw_text();
+        gn = gportn; draw_num();
+        gdstr = " "; draw_text();
+        com_name(); draw_text();
+        gdstr = "!"; draw_text();
+        gdx = 0u; gdy = 8u; gdpal = PAL_RED;
+        gdstr = "ALIGN -5 XP +10"; draw_text();
+        return;
+    }
+    if (gportmsg == 5u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_RED;
+        gdstr = "BUSTED BY PORT AUTHORITY!"; draw_text();
+        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+        gdstr = "FINE 500 CR ALIGN -20"; draw_text();
+        return;
+    }
+    gdx = 0u; gdy = 7u; gdpal = gm1pal;
+    gdstr = gm1; draw_text();
+    gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+    gdstr = gm2; draw_text();
+}
+static void draw_portopts(void) {
+    gi = 0u;
+    while (gi < 5u) {
+        gdx = 2u; gdy = (uint8_t)(12u + gi);
+        if (gi == gportsel) {
+            gdpal = PAL_CYAN; gdstr = ">"; draw_text();
+            gdpal = PAL_YEL;
+        } else {
+            gdpal = PAL_WHITE; gdstr = " "; draw_text();
+            gdpal = PAL_WHITE;
+        }
+        gdx = 4u;
+        if (gi == 0u) { gdstr = "B BUY CARGO"; }
+        else if (gi == 1u) { gdstr = "S SELL CARGO"; }
+        else if (gi == 2u) { gdstr = "H HAGGLE"; }
+        else if (gi == 3u) { gdstr = "R STEAL"; }
+        else { gdstr = "L LEAVE PORT"; }
+        draw_text();
+        gi++;
+    }
+}
+static void draw_portfoot(void) {
+    gdpal = PAL_GRAY;
+    gdy = 18u; gdx = 0u; gdstr = "COM:"; draw_text();
+    gdpal = PAL_WHITE; com_name(); draw_text();
+    gdpal = PAL_GRAY; gdstr = " L/R SELECT"; draw_text();
+    gdy = 19u; gdx = 0u; gdstr = "A:DO IT B:UNDOCK"; draw_text();
+}
+static void show_port(void) {
+    REG_INIDISP = 0x80u;
+    clear_map();
+    draw_porthead();
+    draw_portrows();
+    draw_portstatus();
+    draw_portmsgs();
+    draw_portopts();
+    draw_portfoot();
+    REG_TM = 0x01u;
+    REG_INIDISP = 0x0Fu;
+    gstate = ST_PORT;
+    gframe = 0u;
+}
+static void port_dock(void) {
+    if (gturns == 0u) {
+        gmsgmode = 0u;
+        gm1 = "NEED 1 TURN TO DOCK";
+        gm1pal = PAL_RED;
+        gm2 = "WARP AROUND FIRST";
+        gm3 = "";
+        gm4 = "";
+        gcmdopen = 0u;
+        show_sector();
+        return;
+    }
+    gturns--;
+    gportcom = 0u;
+    port_genrow();
+    gportcom = 1u;
+    port_genrow();
+    gportcom = 2u;
+    port_genrow();
+    gportcom = 0u;
+    gportsel = 0u;
+    gporthag = 0u;
+    gportmsg = 0u;
+    gm1 = "WELCOME, TRADER";
+    gm1pal = PAL_WHITE;
+    gm2 = "ONE TURN DEDUCTED";
+    gcmdopen = 0u;
+    sram_sync();
+    show_port();
+}
+static void port_buy(void) {
+    port_side();
+    if (gj == 1u) {
+        gportmsg = 0u;
+        gm1 = "PORT WON'T SELL THAT";
+        gm1pal = PAL_RED;
+        gm2 = "CHECK B/S CLASS LETTERS";
+        show_port();
+        return;
+    }
+    if (gstock[gportcom] == 0u) {
+        gportmsg = 0u;
+        gm1 = "OUT OF STOCK";
+        gm1pal = PAL_RED;
+        gm2 = "TRY ANOTHER PORT";
+        show_port();
+        return;
+    }
+    port_price();
+    gsav = gn;
+    if (gcredits < gsav) {
+        gportmsg = 0u;
+        gm1 = "NOT ENOUGH CREDITS";
+        gm1pal = PAL_RED;
+        gm2 = "SELL CARGO FIRST";
+        show_port();
+        return;
+    }
+    if (gholds >= gholdmax) {
+        gportmsg = 0u;
+        gm1 = "HOLDS FULL";
+        gm1pal = PAL_RED;
+        gm2 = "SELL OR UPGRADE (SOON)";
+        show_port();
+        return;
+    }
+    gcredits -= gsav;
+    cargo_add();
+    gstock[gportcom]--;
+    gxp++;
+    gportmsg = 1u;
+    sram_sync();
+    show_port();
+}
+static void port_sell(void) {
+    port_side();
+    if (gj == 0u) {
+        gportmsg = 0u;
+        gm1 = "PORT WON'T BUY THAT";
+        gm1pal = PAL_RED;
+        gm2 = "CHECK B/S CLASS LETTERS";
+        show_port();
+        return;
+    }
+    cargo_have();
+    if (gn == 0u) {
+        gportmsg = 0u;
+        gm1 = "NONE ABOARD TO SELL";
+        gm1pal = PAL_RED;
+        gm2 = "YOUR HOLDS ARE EMPTY";
+        show_port();
+        return;
+    }
+    port_price();
+    gsav = gn;
+    gcredits += gsav;
+    cargo_sub();
+    gxp++;
+    gportmsg = 2u;
+    sram_sync();
+    show_port();
+}
+static void port_haggle(void) {
+    if (gporthag) {
+        gportmsg = 0u;
+        gm1 = "ALREADY HAGGLED";
+        gm1pal = PAL_RED;
+        gm2 = "ONE HAGGLE PER VISIT";
+        show_port();
+        return;
+    }
+    gporthag = 1u;
+    gxp += 5u;
+    gportmsg = 3u;
+    sram_sync();
+    show_port();
+}
+static void port_steal(void) {
+    port_side();
+    if (gj == 1u) {
+        gportmsg = 0u;
+        gm1 = "NOTHING TO STEAL";
+        gm1pal = PAL_RED;
+        gm2 = "PORT KEEPS NO STOCK";
+        show_port();
+        return;
+    }
+    if (gstock[gportcom] == 0u) {
+        gportmsg = 0u;
+        gm1 = "NOTHING TO STEAL";
+        gm1pal = PAL_RED;
+        gm2 = "STOCKROOM IS EMPTY";
+        show_port();
+        return;
+    }
+    if (gholds >= gholdmax) {
+        gportmsg = 0u;
+        gm1 = "HOLDS FULL";
+        gm1pal = PAL_RED;
+        gm2 = "SELL OR UPGRADE (SOON)";
+        show_port();
+        return;
+    }
+    gn = gstock[gportcom];
+    if (gn > 2u) gn = 2u;
+    gtmp = (uint16_t)(gholdmax - gholds);
+    if (gn > gtmp) gn = gtmp;
+    gportn = (uint8_t)gn;
+    cargo_add();
+    if (gportn >= 2u) { cargo_add(); }
+    gstock[gportcom] -= gportn;
+    gtmp = (uint16_t)((gday + gsec) & 3u);
+    if (gtmp == 3u) {
+        if (gcredits >= 500u) { gcredits -= 500u; }
+        else { gcredits = 0u; }
+        galign -= 20;
+        gxp++;
+        gportmsg = 5u;
+    } else {
+        galign -= 5;
+        gxp += 10u;
+        gportmsg = 4u;
+    }
+    sram_sync();
+    show_port();
+}
+static void port_leave(void) {
+    gmsgmode = 0u;
+    gm1 = "UNDOCKED: FLY SAFE, TRADER";
+    gm1pal = PAL_WHITE;
+    gm2 = "";
+    gm3 = "";
+    gm4 = "";
+    gcmdopen = 0u;
+    sram_sync();
+    show_sector();
+}
+static void tick_port(void) {
+    wait_vblank();
+    gframe++;
+    read_pads();
+    if (gj_dir & PB_UP) {
+        if (gportsel == 0u) { gportsel = 4u; }
+        else { gportsel--; }
+        show_port();
+        return;
+    }
+    if (gj_dir & PB_DOWN) {
+        gportsel++;
+        if (gportsel >= 5u) gportsel = 0u;
+        show_port();
+        return;
+    }
+    if (gj_dir & PB_LEFT) {
+        if (gportcom == 0u) { gportcom = 2u; }
+        else { gportcom--; }
+        show_port();
+        return;
+    }
+    if (gj_dir & PB_RIGHT) {
+        gportcom++;
+        if (gportcom >= 3u) gportcom = 0u;
+        show_port();
+        return;
+    }
+    if (gj_new & (PB_A | PB_START)) {
+        if (gportsel == 0u) { port_buy(); }
+        else if (gportsel == 1u) { port_sell(); }
+        else if (gportsel == 2u) { port_haggle(); }
+        else if (gportsel == 3u) { port_steal(); }
+        else { port_leave(); }
+        return;
+    }
+    if (gj_new & PB_B) {
+        port_leave();
         return;
     }
 }
@@ -1585,6 +2040,8 @@ int main(void) {
             tick_loadret();
         } else if (gstate == ST_SECTOR) {
             tick_sector();
+        } else if (gstate == ST_PORT) {
+            tick_port();
         } else if (gstate == ST_ATTRACT) {
             tick_attract();
         } else {

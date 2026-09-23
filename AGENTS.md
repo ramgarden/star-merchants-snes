@@ -24,6 +24,13 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
   Screenshot-verified state by state (see devlog/2026-09-23-milestone-3-sector.md).
   New constraint learned: script-tour tables MUST stay 8-bit (frame
   numbers >255 silently truncate and collapse the tail into one tick)
+- ✅ **Milestone 4 COMPLETE 2026-09-23** — starport trading: dock
+  (1 turn), commodity table (S/B side letters, prices, STK stocks),
+  buy/sell with credit/hold/stock/cargo checks, once-per-visit haggle
+  (+5 XP, ±12.5%), steal (2 units, ALIGN -5/XP +10, bust risk), leave.
+  Full economy reconciled across screenshots; SRAM v2 (+gday);
+  new game starts with 5 Fuel Ore. See devlog/2026-09-23-milestone-4-port.md.
+  Class 0 / Class 9 StarDock hub deferred to M5.
 - Do **NOT** trust the 2026-09-21 "title screen working" claim — it was
   inferred from disassembly, never screenshotted; every capture then was black
 

@@ -66,12 +66,29 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
   (HOPS 4 / FUEL 12 TURNS math verified, build/m3m_dense.png), port stub
   hook for Milestone 4 — all verified
 
-## Milestone 4: Starport Trading
-- [ ] **Port Screen** - Class (1-9, 0, S), buy/sell prices, quantities, haggle
-- [ ] **Trading Logic** - Buy (B), Sell (S), Haggle (H), Steal (R), Rob (R)
-- [ ] **Port Classes** - BBS, BSB, SBB, SSB, SBS, BSS, SSS, BBB, Class 0
-- [ ] **Steal/Sell Cycle** - 5XP optimal pricing, psychic probe integration
-- [ ] **Port Regeneration** - 5%/day, 10-day cap, bust records (14-day cycle)
+## Milestone 4: Starport Trading (Complete 2026-09-23)
+- [x] **Port Screen** - "PORT STARDOCK CLS S" header, per-commodity rows
+  (Fuel Ore / Organics / Equipment with S=port-sells cyan / B=port-buys
+  yellow letters, unit price, STK stock for S sides), cargo + credits
+  status, B/S/H/R/L option list, COM select footer — verified
+  (build/m4q_dock.png: B 23 / S 17 STK38 / S 56 STK43, YOU F5 CR 10000)
+- [x] **Trading Logic** - Buy (B): credit/hold/stock checks, "BOUGHT 1
+  ORGANICS / PAID 17 CR / HOLDS 5/20" — verified; Sell (S): cargo/side
+  checks, "SOLD 1 FUEL ORE / GAINED 23 CR XP +1" — verified; Haggle (H):
+  once per visit, ±12.5% prices, +5 XP — verified; Steal/Rob (R): 2
+  units from stock, ALIGN -5 / XP +10, bust risk (fine 500 + ALIGN -20)
+  — "STOLE 2 ORGANICS!" verified
+- [x] **Port Classes** - All 8 commodity classes with authentic B/S side
+  patterns (BBS/BSB/SBB/SSB/SBS/BSS/SSS/BBB) + Stardock "S" special;
+  class gating enforced ("PORT WON'T SELL/BUY THAT"). Class 0
+  (holds/fighters/shields) and Class 9 StarDock hub are M5 (Shipyard/
+  Hardware Emporium) scope
+- [x] **Steal/Sell Cycle** - Full economy reconciled on screenshots
+  (10000 +23 sell -17 buy = 10006; F5→F4, O0→O3; STK38→STK35);
+  psychic-probe integration waits on M5 Hardware Emporium (no probes yet)
+- [x] **Port Regeneration** - Time-based restock adaptation: stocks roll
+  per dock from sector hash + warp-day counter (gday, capped), persisted
+  in SRAM v2 record; docking costs 1 turn, trading auto-saves
 
 ## Milestone 5: Stardock (Central Hub)
 - [ ] **Shipyard** - Buy/sell ships, holds, drives, scanners, cloaks, twarp
@@ -176,9 +193,10 @@ Boot → Title → Main Menu → New Game → Sector View (Main Loop)
 
 ---
 
-## Next Action: Milestone 4 — Starport Trading (see above).
- Port stub hook (`P PORT` → "MILESTONE 4: TRADE SOON") and port-class
- generator (BBS/BSB/SBB/SSB/SBS/BSS/SSS/BBB/S) already in place.
+## Next Action: Milestone 5 — Stardock (see above).
+ Port engine ships the commodity loop; M5 adds the hub: shipyard
+ (holds/fighters/shields = Class 0), Hardware Emporium (probes for
+ psychic-probe stealing), Bank, Police/UG alignment, Tavern/Library.
  Constraints carry over: globals-only C, full CGRAM init, START = bit 4
  of $4218. Checkpoint-bisect with `scripts/capture.ps1` screenshots for
  any future black-screen-style symptom (workflow proven this session).
