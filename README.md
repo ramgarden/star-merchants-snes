@@ -5,7 +5,7 @@ A VibeBrew "spiritual successor" of the old BBS game Tradewars 2002.
 
 All captures are real emulator screenshots (snes9x) of the actual ROM.
 
-| Title screen | Sector view (Stardock) |
+| Title screen | Sector view (warped to Sector 3) |
 |---|---|
 | ![Title screen](docs/screens/title.png) | ![Sector view](docs/screens/sector.png) |
 | ANSI starfield, planet, freighter, blinking PRESS START | Warps (red = unvisited), port/planet/ftrs, status bar, CMD prompt |
