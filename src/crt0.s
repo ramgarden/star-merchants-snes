@@ -36,7 +36,7 @@
     .byte $20                       ; Map mode: LoROM, SlowROM
     .byte $00                       ; Cartridge type: ROM only
     .byte $08                       ; ROM size: 2 Mbit (256 KB)
-    .byte $00                       ; RAM size: none
+    .byte $01                       ; RAM size: 2KB SRAM (battery save)
     .byte $01                       ; Destination: USA
     .byte $00                       ; Fixed value
     .byte $00                       ; ROM version

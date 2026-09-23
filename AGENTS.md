@@ -3,7 +3,7 @@
 SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 **Read `devlog/` for the detailed history of what has been tried and verified.**
 
-## Current Status (2026-09-22)
+## Current Status (2026-09-23)
 
 - ✅ Black screen RESOLVED (two root causes, see
   devlog/2026-09-22-black-screen-root-causes.md)
@@ -13,6 +13,17 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
   lines, gray freighter + cyan windows, credits footer, blinking
   "PRESS START" (blink ON/OFF both captured); main loop runs, waits for
   START (bit 4 of $4218), then holds
+- ✅ **Milestone 1 COMPLETE 2026-09-23** — attract mode (10s idle → Stardock
+  demo, verified), input handler (proven via self-drive through real tick
+  path), SRAM save/load (2KB header, magic+checksum record, auto-save on
+  new game + warp, Continue resume verified: SECTOR 3 / TURNS 499)
+- ✅ **Milestone 3 COMPLETE 2026-09-23** — sector view: ANSI display
+  (red unvisited warps, port/planet/fighter lines), warp nav with turn
+  cost + visited bitmap, density + holo scans, status bar, CMD prompt +
+  command palette (D/H/S/C/P/Q), course plotter, port stub for M4.
+  Screenshot-verified state by state (see devlog/2026-09-23-milestone-3-sector.md).
+  New constraint learned: script-tour tables MUST stay 8-bit (frame
+  numbers >255 silently truncate and collapse the tail into one tick)
 - Do **NOT** trust the 2026-09-21 "title screen working" claim — it was
   inferred from disassembly, never screenshotted; every capture then was black
 
@@ -33,9 +44,10 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 
 ```
 src/                    # C + asm sources (cc65 toolchain, custom crt0 — PVSnesLib NOT linked)
-  main.c                # Title + menu engine (globals-only C, direct PPU registers;
+  main.c                # Title + menu + sector engine (globals-only C, direct PPU registers;
                         # gselfdrive=1 = scripted self-drive tour for testing, SHIP WITH 0)
-  crt0.s                # Custom reset/NMI/IRQ + SNES header + vector table
+  sram.s                # 2 leaf helpers for SRAM byte access ($70:0000+, 16-bit X widened locally)
+  crt0.s                # Custom reset/NMI/IRQ + SNES header (2KB SRAM declared) + vector table
   font.s                # .incbin of PVSnesLib 96-glyph 4bpp font (see devlog for format)
   cpustate.s            # No-stack bring-up probe (unreferenced; paints CPU state as colors)
 scripts/
@@ -169,7 +181,8 @@ pvsneslib_extracted/    # Reference material + known-good Mode1Scroll.sfc + font
 
 ## Next Steps
 
-1. Milestone 1 title screen work complete — proceed to Milestone 2 (see MILESTONES.md)
+1. Milestone 4 starport trading (see MILESTONES.md) — hooks ready:
+   `gport`/`gportcls`/`cls_str`, `P PORT` palette item, cargo save fields
 
 ## Key References
 

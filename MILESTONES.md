@@ -16,13 +16,22 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
 - [x] Input basics (START = bit 4 of $4218 ($10), auto-joy settle on $4212
   bit 0; blinking PRESS START waits for START, then holds)
 
-## Milestone 1: Title Screen & Boot
+## Milestone 1: Title Screen & Boot (Complete 2026-09-23)
 - [x] **Title Screen** - ANSI art logo "STAR MERCHANTS" (white 3D + gray
   shadow), red "2026", planet, freighter, starfield, warp lines, version,
   credits, blinking PRESS START — verified by screenshot in both emulators
-- [ ] **Attract Mode** - Cycle demo screens (sector map, starport, combat)
-- [ ] **Input Handler** - Joypad polling, menu navigation (D-pad, A/B/X/Y, Start/Select)
-- [ ] **Save/Load** - SRAM detection, new game / continue / options
+- [x] **Attract Mode** - 10s idle on title auto-plays a Stardock sector demo
+  ("DEMO: STARDOCK SECTOR" banner); any of A/B/START exits back to title —
+  verified by screenshot (build/m3fin_attract.png)
+- [x] **Input Handler** - Joypad polling ($4218/$4219, auto-joy settle on
+  $4212, edge detect + D-pad repeat), full menu/sector navigation (D-pad,
+  A/B/X/Y, Start/Select) — exercised end-to-end through the real
+  tick/dispatch path by the in-ROM self-drive tour (`gselfdrive`)
+- [x] **Save/Load** - 2KB SRAM declared in header (was ROM-only); 45-byte
+  "SM" magic + checksum record (names, options, sector, turns, credits,
+  ship stats, cargo); auto-save on new game + every warp; Continue loads
+  into a "RETURNING TRADER" resume screen — save→warp→Continue round-trip
+  verified by screenshot (build/m3p_load.png: SECTOR 3, TURNS 499)
 
 ## Milestone 2: Main Menu & Character Creation (Complete 2026-09-22)
 - [x] **Main Menu** - New Game, Continue, Options, Credits; wrap cursor,
@@ -32,18 +41,30 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
 - [x] **Difficulty/Options** - Turn rate, universe size, starting credits,
   Ferrengi aggression (3 values each, L/R adjust, persists) — verified
   incl. summary screen showing all choices + launch stub (Milestone 3 hook)
-- [ ] Continue = "NO SAVED GAME" stub (SRAM is a Milestone 1 open item)
+- [x] Continue = functional SRAM resume (was "NO SAVED GAME" stub)
 - Verified via in-ROM scripted self-drive (`gselfdrive` in main.c: injected
   pad masks through the real tick/dispatch path, PID-tracked screenshots);
   live START-button transition still unverified (no Start keypress arrives
   in either test emulator — see devlog/2026-09-22-milestone-2-menu.md)
 
-## Milestone 3: Sector View (Core Gameplay)
-- [ ] **Sector Display** - ANSI grid: sector #, warps (1-6), port/planet/ftrs icons
-- [ ] **Navigation** - Warp (W), Transwarp (T), Course Plotter (C)
-- [ ] **Sector Scan** - Density scanner (D), Holo-scanner (H), Long-range (L)
-- [ ] **Status Bar** - Credits, holds, fighters, shields, alignment, XP, turns left
-- [ ] **Command Line** - Text input buffer, command parser (P/R/S/T/C/D/M/Q/etc.)
+## Milestone 3: Sector View (Core Gameplay) (Complete 2026-09-23)
+- [x] **Sector Display** - ANSI header (sector # + nebula), warp list
+  (unvisited red like TW ANSI, selected cyan), port (name + class),
+  planet (name + level), fighters (red HOSTILE) — Stardock fixed + hash
+  universe verified (build/m3n_clk1.png, m3k_warp.png)
+- [x] **Navigation** - D-pad/L/R warp cycling, A/START warp (1 turn,
+  "WARP COMPLETE / SECTOR n / TURNS LEFT" report), visited tracking
+  (512-sector bitmap) — warp 1→3 with 500→499 turns verified
+- [x] **Sector Scan** - Density scanner (Y, per-warp 0-99 + red HAZ),
+  Holo-scan (X palette: port/planet/fighter detail) — both verified
+  (build/m3k_holo.png density, m3m_warp.png holo)
+- [x] **Status Bar** - Credits, turns, fighters, shields, holds/max,
+  signed alignment, XP — verified on every sector shot
+- [x] **Command Line** - `CMD:[n] (?=HELP)? :` prompt + `WARP>n` target
+  line, X command palette (D REDISPLAY / H HOLO / S DENSITY / C COURSE /
+  P PORT / Q QUIT), SELECT help, B back to menu, course plotter
+  (HOPS 4 / FUEL 12 TURNS math verified, build/m3m_dense.png), port stub
+  hook for Milestone 4 — all verified
 
 ## Milestone 4: Starport Trading
 - [ ] **Port Screen** - Class (1-9, 0, S), buy/sell prices, quantities, haggle
@@ -155,7 +176,9 @@ Boot → Title → Main Menu → New Game → Sector View (Main Loop)
 
 ---
 
-## Next Action: Milestone 2 — Main Menu & Character Creation (see above).
+## Next Action: Milestone 4 — Starport Trading (see above).
+ Port stub hook (`P PORT` → "MILESTONE 4: TRADE SOON") and port-class
+ generator (BBS/BSB/SBB/SSB/SBS/BSS/SSS/BBB/S) already in place.
  Constraints carry over: globals-only C, full CGRAM init, START = bit 4
  of $4218. Checkpoint-bisect with `scripts/capture.ps1` screenshots for
  any future black-screen-style symptom (workflow proven this session).
