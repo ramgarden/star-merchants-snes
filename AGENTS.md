@@ -39,6 +39,13 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
   library). SRAM v3. New permanent host test harness (tests/host:
   cc65-6502 + py65, T1/T2 tours + interest, 14/14 green) — use it
   before emulator screenshots. See devlog/2026-09-23-milestone-5-stardock.md.
+- ✅ **Milestone 6 COMPLETE 2026-09-23** — planet management (L LAND,
+  7th palette command): citadel claim/L1-L5 upgrades, deploy,
+  colonist transport, quasar setter, genesis torp, detonator,
+  single-colony model + warp production, SRAM v4. Font moved to
+  LoROM bank 1 (far-copy helper; bank-0 ROM was full). Beware:
+  `$018000` is bank $01 — `$180000` is bank $18 (cost an hour).
+  See devlog/2026-09-23-milestone-6-planet.md.
 - Do **NOT** trust the 2026-09-21 "title screen working" claim — it was
   inferred from disassembly, never screenshotted; every capture then was black
 
@@ -196,8 +203,9 @@ pvsneslib_extracted/    # Reference material + known-good Mode1Scroll.sfc + font
 
 ## Next Steps
 
-1. Milestone 6 planet management (see MILESTONES.md) — hooks ready:
-   gprobes/gbeacons/gtorp (hardware), planet fields in sector view
+1. Milestone 7 combat system (see MILESTONES.md) — hooks ready:
+   gpftrs/gpsh + MRL (planetary), gfighters/gshields (ship),
+   gcomm (ISS gate), quasar levels, photon/corbomite/escape design
 
 ## Key References
 

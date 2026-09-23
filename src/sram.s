@@ -11,6 +11,7 @@
 
 .export _sram_wr
 .export _sram_rd
+.export _font_load
 .import _gsram_a
 .import _gsram_d
 
@@ -35,5 +36,29 @@
     .i8
     lda $700000,x
     sta _gsram_d
+    rts
+.endproc
+
+; ---------------------------------------------------------------------------
+; _font_load: bulk-copy 3072 font bytes ($18:0000+) to VRAM data port.
+; Caller presets VMAIN ($80: word writes, increment after high byte);
+; VRAM destination address must already be latched. 8-bit A/X/Y on
+; entry and exit (cc65 convention). Boot use only.
+; ---------------------------------------------------------------------------
+.proc _font_load: near
+    rep #$10
+    .i16
+    ldx #$0000
+floop:
+    lda $018000,x
+    sta $2118
+    inx
+    lda $018000,x
+    sta $2119
+    inx
+    cpx #$0C00
+    bne floop
+    sep #$10
+    .i8
     rts
 .endproc

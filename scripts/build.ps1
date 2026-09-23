@@ -192,11 +192,12 @@ $linkArgs = @(
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # --- Show header + vectors right after linking ---
-# The linker config produces an exactly-32KB image with the SNES header at
-# file offset 0x7FC0 and the vector table at 0x7FE0.
+# The linker config produces a 64KB image: bank 0 (code/rodata) at file
+# offsets 0x0000-0x7FFF with the SNES header at 0x7FC0 and vectors at
+# 0x7FE0, followed by bank 1 (bulk const assets) at 0x8000-0xFFFF.
 $bytes = [System.IO.File]::ReadAllBytes($ROM_FILE)
-if ($bytes.Length -ne 0x8000) {
-    Write-Error "Linked ROM is $($bytes.Length) bytes; expected exactly 0x8000. Check scripts/snes-lorom.cfg."
+if ($bytes.Length -ne 0x10000) {
+    Write-Error "Linked ROM is $($bytes.Length) bytes; expected exactly 0x10000. Check scripts/snes-lorom.cfg."
     exit 1
 }
 Write-Host "Header (0x7FC0) + vectors (0x7FE0) after linking:" -ForegroundColor Yellow

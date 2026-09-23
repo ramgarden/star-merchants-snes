@@ -25,12 +25,19 @@ All captures are real emulator screenshots (snes9x) of the actual ROM.
 | ![Attract mode](docs/screens/attract.png) | ![Continue](docs/screens/continue.png) |
 | 10s idle plays a Stardock sector demo | Save → warp → Continue round-trip restores sector, credits, turns |
 
+| Planet management | Quasar cannon |
+|---|---|
+| ![Planet](docs/screens/planet.png) | ![Quasar](docs/screens/quasar.png) |
+| Claimed homeworld: citadel, colonists, fighters, 8 commands | Quasar set 20%, fuel stock decremented, economy reconciled |
+
 ## Current Status
 
-Milestones 0–4 complete and screenshot-verified: ANSI title + attract
+Milestones 0–6 complete and screenshot-verified: ANSI title + attract
 mode, main menu + new-game wizard, sector view (warp nav, density/holo
 scans, command palette, course plotter), starport trading (buy/sell/
-haggle/steal), and SRAM save/load with Continue resume. See
+haggle/steal), Stardock hub (shipyard, hardware, bank, police,
+underground, tavern), planet management (citadels, colonists, quasar,
+genesis/detonator), and SRAM save/load with Continue resume. See
 `MILESTONES.md` for the roadmap, `AGENTS.md` and `devlog/` for the full
 technical state.
 

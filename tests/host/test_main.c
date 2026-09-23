@@ -65,6 +65,11 @@ extern uint8_t gorg;
 extern uint8_t gequ;
 extern uint16_t gday;
 extern uint16_t gbank;
+extern uint8_t gcitadel;
+extern uint16_t gcolship;
+extern uint8_t gqsec;
+extern uint16_t gfuel;
+extern uint16_t gpftrs;
 extern uint8_t gprobes;
 extern uint8_t gbeacons;
 extern uint8_t gtorp;
@@ -81,6 +86,7 @@ extern void dock_hub(void);
 
 void sram_wr(void) { sram_mem[gsram_a & 2047u] = gsram_d; }
 void sram_rd(void) { gsram_d = sram_mem[gsram_a & 2047u]; }
+void font_load(void) {}
 
 static void boot_init(void) {
     gopt0 = 1u;
@@ -195,5 +201,31 @@ void test_main(void) {
     trep[89] = (uint8_t)(gbank & 255u);
     trep[90] = (uint8_t)((gbank >> 8) & 255u);
     trep[91] = (uint8_t)(gbankday & 255u);
+    /* T4: M6 tour (selfdrive 3) ends at genesis denial */
+    boot_init();
+    gselfdrive = 3u;
+    run_ticks();
+    trep[96] = 0u;
+    if (gstate == 9u) {
+        if (gsec == 3u) {
+            if (gcitadel == 1u) {
+                if (gcolship == 10u) {
+                    if (gqsec == 20u) {
+                        trep[96] = 1u;
+                    }
+                }
+            }
+        }
+    }
+    trep[97] = gstate;
+    trep[98] = (uint8_t)(gsec & 255u);
+    trep[99] = (uint8_t)(gturns & 255u);
+    trep[100] = gcitadel;
+    trep[101] = (uint8_t)(gcolship & 255u);
+    trep[102] = gqsec;
+    trep[103] = (uint8_t)(gfuel & 255u);
+    trep[104] = (uint8_t)(gpftrs & 255u);
+    trep[105] = (uint8_t)(gholds & 255u);
+    trep[106] = (uint8_t)(gxp & 255u);
     trep[15] = 1u;
 }

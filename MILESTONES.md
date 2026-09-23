@@ -117,16 +117,39 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
   v3 host-proven (bank 1165 after 5 days); full tour logic proven on
   host harness (14/14) with zero hangs over 2.2M cycles
 
-## Milestone 6: Planet Management
-- [ ] **Planet Display** - Level, citadel, colonists (Ore/Org/Eq groups), production
-- [ ] **Citadel Upgrades** - L1-L5 requirements, build times, resource costs
-- [ ] **Quasar Cannon** - Sector/Atmosphere levels, fuel consumption (bug: 50% actual)
-- [ ] **Planetary Fighters** - MRL (0% to avoid 6666 bug), offensive/defensive odds
-- [ ] **Shield Generator** - L5 only, 1639+ shields = invulnerable (shield bug)
-- [ ] **Transwarp Generator** - L4+, range in hops
-- [ ] **Colonist Transport** - Load/unload, optimal 1000 holds/group, jettison for -align
-- [ ] **Genesis Torpedo** - Create planet in empty sector
-- [ ] **Atomic Detonator** - Destroy planet, 50 XP, -50 align
+## Milestone 6: Planet Management (Complete 2026-09-23)
+- [x] **Planet Display** - "PLANET STARDOCK LV 5": citadel level, 3
+  colonist groups (COL O120 G80 E60 seeded home colony), fighters,
+  fuel stockpile, shields, quasar S/A levels, MRL 30, TWARP range —
+  verified (build/m6_claim5.png)
+- [x] **Citadel Upgrades** - CLAIM (5 turns, +25 XP) then L1-L5 for
+  credits (2000/5000/10000/20000) + colonist minimums + 1 turn —
+  "CLAIMED! CITADEL LV 1" verified; upgrade path host-proven
+- [x] **Quasar Cannon** - Settable sector/atmosphere level (20% steps,
+  100 fuel per set, wraps at 100) — "QUASAR SET 20PCT / FUEL STOCK
+  400" verified (build/m6_quasar.png)
+- [x] **Planetary Fighters** - DEPLOY moves 10 ship fighters + 5
+  shields per press (availability-checked, capped); MRL 30 displayed
+  for M7 odds — ship 30→20 verified in status
+- [x] **Shield Generator** - L5-gated display, planetary shield stock
+  (5000 cap, invulnerable-note for M7); deploy included in DEPLOY
+- [x] **Transwarp Generator** - Range row (L4+ shows planet level in
+  hops, 0 otherwise) — display-verified, drive itself is M7 scope
+- [x] **Colonist Transport** - LOAD/UNLOAD in 10s (holds-capped,
+  group-select via L/R), JETTISON (frees holds, ALIGN -10) — load
+  verified (ORE 120→110, ship 10, HL 5/20 → host asserts)
+- [x] **Genesis Torpedo** - Sector-L with no planet: denial without
+  torp ("NEED GENESIS TORP (5000)") verified as sticky end
+  (build/m6_claim.png); creation path (+25 XP) reviewed (no tour
+  frames to buy a torp)
+- [x] **Atomic Detonator** - Destroys planet (+50 XP, -50 ALIGN,
+  1-turn cost, 1-shot inventory from new game) — reviewed (same
+  verified action shape as steal/detonate paths); sector re-entry
+  safely re-seeds via the colony-restore guard
+- [x] **Plumbing** - Single-colony model (gcolsec restore/fresh guard,
+  seeded sector-1 colony), warp-day production (fuel + fighters),
+  SRAM v4 (+20B planet record), L LAND added as 7th palette command,
+  full M6 tour host-proven (claim/deploy/load/quasar/warp/denial)
 
 ## Milestone 7: Combat System
 - [ ] **Ship vs Ship** - Offensive/defensive odds, fighter counts, shields
@@ -230,9 +253,6 @@ Boot → Title → Main Menu → New Game → Sector View (Main Loop)
 
 ---
 
-## Next Action: Milestone 6 — Planet Management (see above).
- Hooks ready: gprobes/gbeacons/gtorp (Stardock hardware), planet
- fields (gplanet/gplevel) in the sector view, genesis-torp flow.
- Constraints carry over: globals-only C, full CGRAM init, START = bit 4
- of $4218. Checkpoint-bisect with `scripts/capture.ps1` screenshots for
- any future black-screen-style symptom (workflow proven this session).
+## Next Action: Milestone 7 — Combat System (see above).
+ Hooks ready: gpftrs/gpsh (planetary defenses), MRL display,
+ gfighters/gshields (ship), gcomm (ISS gate), quasar levels.

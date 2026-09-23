@@ -68,6 +68,7 @@ typedef short int16_t;
 #define ST_LOADRET 11u
 #define ST_PORT 12u
 #define ST_DOCK 13u
+#define ST_PLANET 14u
 #define PB_UP 0x0008u
 #define PB_DOWN 0x0004u
 #define PB_LEFT 0x0002u
@@ -82,6 +83,7 @@ typedef short int16_t;
 #define PB_A 0x8000u
 #define SCN 92u
 #define SCN2 106u
+#define SCN3 92u
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -184,8 +186,24 @@ uint8_t gbeacons;
 uint8_t gtorp;
 uint8_t gcomm;
 uint16_t gbankday;
+uint8_t gcitadel;
+uint16_t gcolore;
+uint16_t gcolorg;
+uint16_t gcolequ;
+uint16_t gpftrs;
+uint16_t gpsh;
+uint8_t gqsec;
+uint8_t gqatm;
+uint16_t gfuel;
+uint16_t gcolship;
+uint8_t gadet;
+uint16_t gcolsec;
+uint8_t gcolsel;
+uint8_t gplsel;
+uint8_t gplmsg;
 void sram_wr(void);
 void sram_rd(void);
+void font_load(void);
 const uint8_t palc1[16] = {
     0xFF, 0x7F, 0x10, 0x42, 0x1F, 0x00, 0x0C, 0x00,
     0x00, 0x7C, 0x00, 0x2C, 0xE0, 0x7F, 0xFF, 0x03,
@@ -193,7 +211,9 @@ const uint8_t palc1[16] = {
 const uint8_t mrows[4] = { 11u, 13u, 15u, 17u };
 const char charset[38] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
 const uint8_t bitmask[8] = { 1u, 2u, 4u, 8u, 16u, 32u, 64u, 128u };
+const char rulerow[33] = "--------------------------------";
 const uint8_t clsides[9] = { 6u, 5u, 3u, 1u, 2u, 4u, 0u, 7u, 4u };
+const uint16_t citcost[6] = { 0u, 0u, 2000u, 5000u, 10000u, 20000u };
 const uint8_t scf[92] = {
     3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
     40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
@@ -244,11 +264,38 @@ const uint8_t scp2[106] = {
     6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
     3u, 0u, 6u, 0u, 6u, 0u,
 };
+const uint8_t scf3[92] = {
+    3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
+    40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
+    70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
+    100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
+    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 140u, 141u,
+    144u, 145u, 148u, 149u, 152u, 153u, 156u, 157u, 160u, 161u,
+    164u, 165u, 168u, 169u, 172u, 173u, 176u, 177u, 180u, 181u,
+    184u, 185u, 188u, 189u, 192u, 193u, 196u, 197u, 200u, 201u,
+    204u, 205u, 208u, 209u, 212u, 213u, 216u, 217u, 220u, 221u,
+    224u, 225u,
+};
+const uint8_t scp3[92] = {
+    1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
+    2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
+    3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
+    3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u, 8u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u,
+    6u, 0u,
+};
 static void show_sum(void);
 static void show_sector(void);
 static void show_menu(void);
 static void show_loadret(void);
 static void show_dock(void);
+static void show_planet(void);
+static void planet_fresh(void);
+static void planet_genesis(void);
 static void draw_num(void);
 static void sram_sync(void);
 static void sram_load(void);
@@ -273,10 +320,7 @@ static void load_palettes(void) {
 static void load_font(void) {
     REG_VMADDL = 0x00u;
     REG_VMADDH = 0x30u;
-    for (gw = 0; gw < 1536u; gw++) {
-        REG_VMDATAL = font_pic[gw * 2u];
-        REG_VMDATAH = font_pic[gw * 2u + 1u];
-    }
+    font_load();
 }
 static void clear_map(void) {
     REG_VMADDL = 0x00u;
@@ -308,6 +352,28 @@ static void wait_vblank(void) {
 }
 static void script_pads(void) {
     gsclk = (uint8_t)(gsfr >> 4);
+    if (gselfdrive == 3u) {
+        while (gsi < SCN3) {
+            if (gsclk < scf3[gsi]) break;
+            gact = scp3[gsi];
+            if (gact == 0u) { gj_held = 0u; }
+            else if (gact == 1u) { gj_held = PB_START; }
+            else if (gact == 2u) { gj_held = PB_UP; }
+            else if (gact == 3u) { gj_held = PB_DOWN; }
+            else if (gact == 4u) { gj_held = PB_LEFT; }
+            else if (gact == 5u) { gj_held = PB_RIGHT; }
+            else if (gact == 6u) { gj_held = PB_A; }
+            else if (gact == 7u) { gj_held = PB_B; }
+            else if (gact == 8u) { gj_held = PB_X; }
+            else { gj_held = PB_Y; }
+            gsi++;
+        }
+        gj_pad = gj_held;
+        gj_new = (uint16_t)(gj_pad & (uint16_t)(gj_pad ^ gj_prev));
+        gj_prev = gj_pad;
+        gj_dir = gj_new;
+        return;
+    }
     if (gselfdrive == 2u) {
         while (gsi < SCN2) {
             if (gsclk < scf2[gsi]) break;
@@ -396,8 +462,8 @@ static void draw_planet(void) {
     gdy = 3u; gdx = 21u; gdpal = PAL_CYAN;  gdstr = "##";          draw_text();
 }
 static void draw_lines(void) {
-    gdy = 11u; gdx = 0u; gdpal = PAL_BLUE; gdstr = "--------------------------------"; draw_text();
-    gdy = 13u; gdx = 0u; gdpal = PAL_BLUE; gdstr = "--------------------------------"; draw_text();
+    gdy = 11u; gdx = 0u; gdpal = PAL_BLUE; gdstr = rulerow; draw_text();
+    gdy = 13u; gdx = 0u; gdpal = PAL_BLUE; gdstr = rulerow; draw_text();
 }
 static void draw_title(void) {
     gdx = 13u; gdy = 5u;  gdpal = PAL_GRAY; gdstr = "S T A R";           draw_text();
@@ -453,8 +519,8 @@ static void show_title(void) {
     draw_prompt();
 }
 static void draw_menulines(void) {
-    gdy = 7u;  gdx = 0u; gdpal = PAL_BLUE; gdstr = "--------------------------------"; draw_text();
-    gdy = 21u; gdx = 0u; gdpal = PAL_BLUE; gdstr = "--------------------------------"; draw_text();
+    gdy = 7u;  gdx = 0u; gdpal = PAL_BLUE; gdstr = rulerow; draw_text();
+    gdy = 21u; gdx = 0u; gdpal = PAL_BLUE; gdstr = rulerow; draw_text();
 }
 static void draw_cursor(void) {
     gdpal = PAL_CYAN;
@@ -547,7 +613,7 @@ static void sram_sync(void) {
     gsram_ck = 0u;
     gsram_d = 83u; sram_put();
     gsram_d = 77u; sram_put();
-    gsram_d = 3u; sram_put();
+    gsram_d = 4u; sram_put();
     gi = 0u;
     while (gi < 8u) {
         gsram_d = gname[gi];
@@ -595,6 +661,26 @@ static void sram_sync(void) {
     gsram_d = gcomm; sram_put();
     gsram_d = (uint8_t)(gbankday & 255u); sram_put();
     gsram_d = (uint8_t)(gbankday >> 8); sram_put();
+    gsram_d = gcitadel; sram_put();
+    gsram_d = (uint8_t)(gcolore & 255u); sram_put();
+    gsram_d = (uint8_t)(gcolore >> 8); sram_put();
+    gsram_d = (uint8_t)(gcolorg & 255u); sram_put();
+    gsram_d = (uint8_t)(gcolorg >> 8); sram_put();
+    gsram_d = (uint8_t)(gcolequ & 255u); sram_put();
+    gsram_d = (uint8_t)(gcolequ >> 8); sram_put();
+    gsram_d = (uint8_t)(gpftrs & 255u); sram_put();
+    gsram_d = (uint8_t)(gpftrs >> 8); sram_put();
+    gsram_d = (uint8_t)(gpsh & 255u); sram_put();
+    gsram_d = (uint8_t)(gpsh >> 8); sram_put();
+    gsram_d = gqsec; sram_put();
+    gsram_d = gqatm; sram_put();
+    gsram_d = (uint8_t)(gfuel & 255u); sram_put();
+    gsram_d = (uint8_t)(gfuel >> 8); sram_put();
+    gsram_d = (uint8_t)(gcolship & 255u); sram_put();
+    gsram_d = (uint8_t)(gcolship >> 8); sram_put();
+    gsram_d = gadet; sram_put();
+    gsram_d = (uint8_t)(gcolsec & 255u); sram_put();
+    gsram_d = (uint8_t)(gcolsec >> 8); sram_put();
     gsram_d = gsram_ck;
     sram_wr();
 }
@@ -607,7 +693,7 @@ static void sram_load(void) {
     sram_get();
     if (gsram_d != 77u) return;
     sram_get();
-    if (gsram_d != 3u) return;
+    if (gsram_d != 4u) return;
     gi = 0u;
     while (gi < 8u) {
         sram_get();
@@ -657,6 +743,26 @@ static void sram_load(void) {
     sram_get(); gcomm = gsram_d;
     sram_get(); gtmp = gsram_d;
     sram_get(); gbankday = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gcitadel = gsram_d;
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gcolore = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gcolorg = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gcolequ = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gpftrs = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gpsh = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gqsec = gsram_d;
+    sram_get(); gqatm = gsram_d;
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gfuel = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gcolship = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gadet = gsram_d;
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gcolsec = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
     sram_rd();
     if (gsram_d != gsram_ck) {
         gtmp = 0u;
@@ -673,6 +779,9 @@ static void sram_load(void) {
     gdept = 0u;
     gdocksel = 0u;
     gdockmsg = 0u;
+    gcolsel = 0u;
+    gplsel = 0u;
+    gplmsg = 0u;
     gmsgmode = 0u;
     gm1 = "";
     gm2 = "";
@@ -912,6 +1021,21 @@ static void show_launch(void) {
     gtorp = 0u;
     gcomm = 0u;
     gbankday = 0u;
+    gcitadel = 0u;
+    gcolore = 0u;
+    gcolorg = 0u;
+    gcolequ = 0u;
+    gpftrs = 0u;
+    gpsh = 0u;
+    gqsec = 0u;
+    gqatm = 0u;
+    gfuel = 0u;
+    gcolship = 0u;
+    gadet = 1u;
+    gcolsec = 0u;
+    gcolsel = 0u;
+    gplsel = 0u;
+    gplmsg = 0u;
     gmsgmode = 0u;
     gm1 = "";
     gm2 = "";
@@ -1083,7 +1207,7 @@ static void draw_sec_head(void) {
     gdstr = ":"; draw_text();
     neb_name(); draw_text();
     gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = "--------------------------------"; draw_text();
+    gdstr = rulerow; draw_text();
     gdx = 0u; gdy = 2u; gdpal = PAL_WHITE;
     gdstr = "WARPS:"; draw_text();
     gi = 0u;
@@ -1130,7 +1254,7 @@ static void draw_sec_head(void) {
         gdpal = PAL_GRAY; gdstr = "CLEAR"; draw_text();
     }
     gdy = 7u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = "--------------------------------"; draw_text();
+    gdstr = rulerow; draw_text();
 }
 static void draw_msgs(void) {
     if (gmsgmode == 1u) {
@@ -1254,14 +1378,14 @@ static void draw_status(void) {
     gdpal = PAL_GRAY; gdstr = " XP "; draw_text();
     gdpal = PAL_WHITE; gn = gxp; draw_num();
     gdy = 16u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = "--------------------------------"; draw_text();
+    gdstr = rulerow; draw_text();
 }
 static void draw_cmdarea(void) {
     if (gcmdopen) {
         gdx = 0u; gdy = 17u; gdpal = PAL_CYAN;
         gdstr = "COMMANDS:"; draw_text();
         gi = 0u;
-        while (gi < 6u) {
+        while (gi < 7u) {
             gdx = 4u; gdy = (uint8_t)(18u + gi);
             if (gi == gcmdsel) {
                 gdpal = PAL_CYAN; gdstr = ">"; draw_text();
@@ -1276,6 +1400,7 @@ static void draw_cmdarea(void) {
             else if (gi == 2u) { gdstr = "S DENSITY"; }
             else if (gi == 3u) { gdstr = "C COURSE PLOT"; }
             else if (gi == 4u) { gdstr = "P PORT"; }
+            else if (gi == 5u) { gdstr = "L LAND"; }
             else { gdstr = "Q QUIT"; }
             draw_text();
             gi++;
@@ -1305,6 +1430,11 @@ static void show_sector(void) {
     clear_map();
     gen_sector();
     mark_visited();
+    if (gplanet) {
+        if (gcolsec != gsec) {
+            planet_fresh();
+        }
+    }
     if (gwarpsel >= gwcount) gwarpsel = 0u;
     draw_sec_head();
     draw_msgs();
@@ -1344,6 +1474,15 @@ static void do_warp(void) {
     }
     gturns--;
     gday++;
+    if (gplanet) {
+        gcolsec = gsec;
+        if (gcitadel > 0u) {
+            gfuel += (uint16_t)(gcolore >> 3);
+            if (gfuel > 9999u) gfuel = 9999u;
+            gpftrs += gcitadel;
+            if (gpftrs > 9999u) gpftrs = 9999u;
+        }
+    }
     gsec = gwarps[gwarpsel];
     gwarpsel = 0u;
     gcmdopen = 0u;
@@ -1378,6 +1517,27 @@ static void exec_cmd(void) {
             gm1 = "NO PORT IN SECTOR";
             gm1pal = PAL_RED;
             gm2 = "FIND BBS/BSB/SBB PORTS";
+            gm3 = "";
+            gm4 = "";
+            show_sector();
+        }
+    } else if (gcmdsel == 5u) {
+        gcmdopen = 0u;
+        if (gplanet) {
+            gplsel = 0u;
+            gplmsg = 0u;
+            gm1 = "";
+            gm2 = "";
+            gm3 = "";
+            gm4 = "";
+            show_planet();
+        } else if (gtorp > 0u) {
+            planet_genesis();
+        } else {
+            gmsgmode = 0u;
+            gm1 = "NO PLANET HERE";
+            gm1pal = PAL_RED;
+            gm2 = "NEED GENESIS TORP (5000)";
             gm3 = "";
             gm4 = "";
             show_sector();
@@ -1472,14 +1632,14 @@ static void tick_sector(void) {
     read_pads();
     if (gcmdopen) {
         if (gj_dir & PB_UP) {
-            if (gcmdsel == 0u) { gcmdsel = 5u; }
+            if (gcmdsel == 0u) { gcmdsel = 6u; }
             else { gcmdsel--; }
             show_sector();
             return;
         }
         if (gj_dir & PB_DOWN) {
             gcmdsel++;
-            if (gcmdsel >= 6u) gcmdsel = 0u;
+            if (gcmdsel >= 7u) gcmdsel = 0u;
             show_sector();
             return;
         }
@@ -1529,8 +1689,8 @@ static void tick_sector(void) {
         gmsgmode = 0u;
         gm1 = "D REDISPLAY H HOLO S SCAN";
         gm1pal = PAL_WHITE;
-        gm2 = "C COURSE P PORT Q QUIT";
-        gm3 = "";
+        gm2 = "C COURSE P PORT L LAND";
+        gm3 = "Q QUIT TO MENU";
         gm4 = "";
         show_sector();
         return;
@@ -1604,7 +1764,7 @@ static void draw_porthead(void) {
     gdpal = PAL_GRAY; gdstr = " CLS "; draw_text();
     gdpal = PAL_WHITE; cls_str(); draw_text();
     gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = "--------------------------------"; draw_text();
+    gdstr = rulerow; draw_text();
 }
 static void draw_portrows(void) {
     gi = 0u;
@@ -1645,7 +1805,7 @@ static void draw_portstatus(void) {
     gdpal = PAL_GRAY; gdstr = " CR "; draw_text();
     gdpal = PAL_WHITE; gn = gcredits; draw_num();
     gdy = 6u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = "--------------------------------"; draw_text();
+    gdstr = rulerow; draw_text();
 }
 static void draw_portmsgs(void) {
     if (gportmsg == 1u) {
@@ -1990,7 +2150,7 @@ static void draw_dockhead(void) {
     gdx = 0u; gdy = 0u; gdpal = PAL_CYAN;
     gdstr = "STARDOCK SECTOR 1"; draw_text();
     gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = "--------------------------------"; draw_text();
+    gdstr = rulerow; draw_text();
     gdx = 0u; gdy = 2u; gdpal = PAL_GRAY;
     gdstr = "CR "; draw_text();
     gdpal = PAL_WHITE; gn = gcredits; draw_num();
@@ -2002,7 +2162,7 @@ static void draw_dockhead(void) {
     gdpal = PAL_GRAY; gdstr = " FTRS "; draw_text();
     gdpal = PAL_WHITE; gn = gfighters; draw_num();
     gdy = 4u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = "--------------------------------"; draw_text();
+    gdstr = rulerow; draw_text();
 }
 static void draw_dockmsgs(void) {
     if (gdockmsg == 1u) {
@@ -2616,6 +2776,502 @@ static void tick_dock(void) {
         return;
     }
 }
+/* ---- Milestone 6: planet management (citadels, colonists, cannon) ----
+ * Single-colony model: planet record attaches to its sector via
+ * gcolsec; entering a sector with a planet restores it when the
+ * sectors match, else starts fresh (sector 1 seeds an abandoned
+ * colony). Warp production ticks fuel/fighters for claimed worlds.
+ */
+static void planet_fresh(void) {
+    gcitadel = 0u;
+    gcolore = 0u;
+    gcolorg = 0u;
+    gcolequ = 0u;
+    gpftrs = 0u;
+    gpsh = 0u;
+    gqsec = 0u;
+    gqatm = 0u;
+    gfuel = 0u;
+    if (gsec == 1u) {
+        gcolore = 120u;
+        gcolorg = 80u;
+        gcolequ = 60u;
+        gfuel = 500u;
+    }
+    gcolsec = gsec;
+}
+static void col_group_name(void) {
+    if (gcolsel == 0u) { gdstr = "ORE"; }
+    else if (gcolsel == 1u) { gdstr = "ORG"; }
+    else { gdstr = "EQU"; }
+}
+static void col_have(void) {
+    if (gcolsel == 0u) { gn = gcolore; }
+    else if (gcolsel == 1u) { gn = gcolorg; }
+    else { gn = gcolequ; }
+}
+static void col_take(void) {
+    if (gcolsel == 0u) { gcolore -= gtmp; }
+    else if (gcolsel == 1u) { gcolorg -= gtmp; }
+    else { gcolequ -= gtmp; }
+    gcolship += gtmp;
+    gholds += gtmp;
+}
+static void col_give(void) {
+    if (gcolsel == 0u) { gcolore += gtmp; }
+    else if (gcolsel == 1u) { gcolorg += gtmp; }
+    else { gcolequ += gtmp; }
+    gcolship -= gtmp;
+    gholds -= gtmp;
+}
+static void draw_planhead(void) {
+    gdx = 0u; gdy = 0u; gdpal = PAL_GRAY;
+    gdstr = "PLANET "; draw_text();
+    gdpal = PAL_YEL; port_name(); draw_text();
+    gdpal = PAL_GRAY; gdstr = " LV "; draw_text();
+    gdpal = PAL_WHITE; gn = gplevel; draw_num();
+    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
+    gdstr = rulerow; draw_text();
+    gdx = 0u; gdy = 2u; gdpal = PAL_GRAY;
+    gdstr = "CIT "; draw_text();
+    gdpal = PAL_WHITE;
+    if (gcitadel == 0u) { gdstr = "NONE"; }
+    else { gn = gcitadel; draw_num(); }
+    if (gcitadel > 0u) {
+        gdpal = PAL_GRAY; gdstr = " LV"; draw_text();
+        gdpal = PAL_WHITE; gn = gplevel; draw_num();
+    }
+    gdx = 0u; gdy = 3u; gdpal = PAL_GRAY;
+    gdstr = "COL O"; draw_text();
+    gdpal = PAL_WHITE; gn = gcolore; draw_num();
+    gdpal = PAL_GRAY; gdstr = " G"; draw_text();
+    gdpal = PAL_WHITE; gn = gcolorg; draw_num();
+    gdpal = PAL_GRAY; gdstr = " E"; draw_text();
+    gdpal = PAL_WHITE; gn = gcolequ; draw_num();
+    gdx = 0u; gdy = 4u; gdpal = PAL_GRAY;
+    gdstr = "FTR "; draw_text();
+    gdpal = PAL_WHITE; gn = gpftrs; draw_num();
+    gdpal = PAL_GRAY; gdstr = " FUEL "; draw_text();
+    gdpal = PAL_WHITE; gn = gfuel; draw_num();
+    gdpal = PAL_GRAY; gdstr = " SH "; draw_text();
+    gdpal = PAL_WHITE; gn = gpsh; draw_num();
+    gdx = 0u; gdy = 5u; gdpal = PAL_GRAY;
+    gdstr = "QSR "; draw_text();
+    gdpal = PAL_WHITE; gn = gqsec; draw_num();
+    gdstr = "/"; draw_text();
+    gn = gqatm; draw_num();
+    gdpal = PAL_GRAY; gdstr = " MRL 30 TW "; draw_text();
+    gdpal = PAL_WHITE;
+    if (gcitadel >= 4u) { gn = gplevel; }
+    else { gn = 0u; }
+    draw_num();
+    gdy = 6u; gdx = 0u; gdpal = PAL_BLUE;
+    gdstr = rulerow; draw_text();
+}
+static void draw_planmsgs(void) {
+    if (gplmsg == 1u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_YEL;
+        gdstr = "CLAIMED! CITADEL LV "; draw_text();
+        gn = gcitadel; draw_num();
+        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+        gdstr = "XP +25 BUILD IT UP"; draw_text();
+        return;
+    }
+    if (gplmsg == 3u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_WHITE;
+        gdstr = "DEPLOYED FTRS TOT "; draw_text();
+        gn = gpftrs; draw_num();
+        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+        gdstr = "SH TOT "; draw_text();
+        gn = gpsh; draw_num();
+        gdstr = " SHIP FTR "; draw_text();
+        gn = gfighters; draw_num();
+        return;
+    }
+    if (gplmsg == 4u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_WHITE;
+        gdstr = "LOADED 10 "; draw_text();
+        col_group_name(); draw_text();
+        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+        gdstr = "SHIP COLS "; draw_text();
+        gn = gcolship; draw_num();
+        gdstr = " HL "; draw_text();
+        gn = gholds; draw_num();
+        gdstr = "/"; draw_text();
+        gn = gholdmax; draw_num();
+        return;
+    }
+    if (gplmsg == 5u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_WHITE;
+        gdstr = "UNLOADED 10 "; draw_text();
+        col_group_name(); draw_text();
+        gdx = 0u; gdy = 8u; gdpal = PAL_GRAY;
+        gdstr = "COLONY GROWS STRONGER"; draw_text();
+        return;
+    }
+    if (gplmsg == 6u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_RED;
+        gdstr = "JETTISONED ALIGN -10"; draw_text();
+        gdx = 0u; gdy = 8u; gdpal = PAL_GRAY;
+        gdstr = "THE VOID KEEPS THEM"; draw_text();
+        return;
+    }
+    if (gplmsg == 7u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_YEL;
+        gdstr = "QUASAR SET "; draw_text();
+        gn = gqsec; draw_num();
+        gdstr = "PCT"; draw_text();
+        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+        gdstr = "FUEL STOCK "; draw_text();
+        gn = gfuel; draw_num();
+        return;
+    }
+    gdx = 0u; gdy = 7u; gdpal = gm1pal;
+    gdstr = gm1; draw_text();
+    gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+    gdstr = gm2; draw_text();
+}
+static void draw_planopts(void) {
+    gi = 0u;
+    while (gi < 8u) {
+        gdx = 2u; gdy = (uint8_t)(12u + gi);
+        if (gi == gplsel) {
+            gdpal = PAL_CYAN; gdstr = ">"; draw_text();
+            gdpal = PAL_YEL;
+        } else {
+            gdpal = PAL_WHITE; gdstr = " "; draw_text();
+            gdpal = PAL_WHITE;
+        }
+        gdx = 4u;
+        if (gi == 0u) {
+            if (gcitadel == 0u) { gdstr = "CLAIM PLANET"; }
+            else if (gcitadel >= 5u) { gdstr = "CITADEL MAX"; }
+            else { gdstr = "UPGRADE CITADEL"; }
+        }
+        else if (gi == 1u) { gdstr = "DEPLOY FTRS"; }
+        else if (gi == 2u) { gdstr = "LOAD COLS"; }
+        else if (gi == 3u) { gdstr = "UNLOAD COLS"; }
+        else if (gi == 4u) { gdstr = "JETTISON"; }
+        else if (gi == 5u) { gdstr = "QUASAR SET"; }
+        else if (gi == 6u) { gdstr = "DETONATE"; }
+        else { gdstr = "LEAVE PLANET"; }
+        draw_text();
+        gi++;
+    }
+}
+static void draw_planfoot(void) {
+    gdpal = PAL_GRAY;
+    gdy = 21u; gdx = 0u; gdstr = "GRP:"; draw_text();
+    gdpal = PAL_WHITE; col_group_name(); draw_text();
+    gdpal = PAL_GRAY; gdstr = " L/R SHIP "; draw_text();
+    gdpal = PAL_WHITE; gn = gcolship; draw_num();
+    gdstr = "/"; draw_text();
+    gn = gholdmax; draw_num();
+    gdy = 22u; gdx = 0u; gdstr = "A:DO IT B:SECTOR"; draw_text();
+}
+static void show_planet(void) {
+    if (gplanet == 0u) {
+        show_sector();
+        return;
+    }
+    REG_INIDISP = 0x80u;
+    clear_map();
+    draw_planhead();
+    draw_planmsgs();
+    draw_planopts();
+    draw_planfoot();
+    REG_TM = 0x01u;
+    REG_INIDISP = 0x0Fu;
+    gstate = ST_PLANET;
+    gframe = 0u;
+}
+static void plan_claim(void) {
+    if (gcitadel >= 5u) {
+        gplmsg = 0u;
+        gm1 = "CITADEL MAXED";
+        gm1pal = PAL_RED;
+        gm2 = "L5 IS THE PINNACLE";
+        show_planet();
+        return;
+    }
+    if (gcitadel == 0u) {
+        if (gturns < 5u) {
+            gplmsg = 0u;
+            gm1 = "NEED 5 TURNS TO CLAIM";
+            gm1pal = PAL_RED;
+            gm2 = "COME BACK LATER";
+            show_planet();
+            return;
+        }
+        gturns -= 5u;
+        gcitadel = 1u;
+        gxp += 25u;
+        gplmsg = 1u;
+        sram_sync();
+        show_planet();
+        return;
+    }
+    gtmp = citcost[gcitadel + 1u];
+    if (gcredits < gtmp) {
+        gplmsg = 0u;
+        gm1 = "NOT ENOUGH CREDITS";
+        gm1pal = PAL_RED;
+        gm2 = "TRADE UP FIRST";
+        show_planet();
+        return;
+    }
+    gsav = gcolore + gcolorg + gcolequ;
+    gtmp = 50u;
+    gi = 0u;
+    while (gi < gcitadel) {
+        gtmp += 50u;
+        gi++;
+    }
+    if (gsav < gtmp) {
+        gplmsg = 0u;
+        gm1 = "NEED MORE COLONISTS";
+        gm1pal = PAL_RED;
+        gm2 = "TRANSPORT SETTLERS IN";
+        show_planet();
+        return;
+    }
+    if (gturns == 0u) {
+        gplmsg = 0u;
+        gm1 = "NEED 1 TURN";
+        gm1pal = PAL_RED;
+        gm2 = "TO RAISE CITADEL";
+        show_planet();
+        return;
+    }
+    gcredits -= citcost[gcitadel + 1u];
+    gcitadel++;
+    gturns--;
+    gplmsg = 1u;
+    sram_sync();
+    show_planet();
+}
+static void plan_deploy(void) {
+    gtmp = 10u;
+    if (gfighters < gtmp) gtmp = gfighters;
+    gsav = 5u;
+    if (gshields < gsav) gsav = gshields;
+    if (gtmp == 0u && gsav == 0u) {
+        gplmsg = 0u;
+        gm1 = "NO SHIP FORCES";
+        gm1pal = PAL_RED;
+        gm2 = "BUY FTRS AT STARDOCK";
+        show_planet();
+        return;
+    }
+    gfighters -= gtmp;
+    gpftrs += gtmp;
+    if (gpftrs > 9999u) gpftrs = 9999u;
+    gshields -= gsav;
+    gpsh += gsav;
+    if (gpsh > 5000u) gpsh = 5000u;
+    gplmsg = 3u;
+    sram_sync();
+    show_planet();
+}
+static void plan_load(void) {
+    col_have();
+    gsav = (uint16_t)(gholdmax - gholds);
+    if (gn < 10u || gsav < 10u) {
+        gplmsg = 0u;
+        if (gholds >= gholdmax) {
+            gm1 = "HOLDS FULL";
+        } else {
+            gm1 = "NEED 10 COLONISTS";
+        }
+        gm1pal = PAL_RED;
+        gm2 = "TRY ANOTHER GROUP";
+        show_planet();
+        return;
+    }
+    gtmp = 10u;
+    col_take();
+    gplmsg = 4u;
+    sram_sync();
+    show_planet();
+}
+static void plan_unload(void) {
+    if (gcolship < 10u) {
+        gplmsg = 0u;
+        gm1 = "NEED 10 ABOARD";
+        gm1pal = PAL_RED;
+        gm2 = "LOAD FIRST";
+        show_planet();
+        return;
+    }
+    gtmp = 10u;
+    col_give();
+    gplmsg = 5u;
+    sram_sync();
+    show_planet();
+}
+static void plan_jettison(void) {
+    if (gcolship == 0u) {
+        gplmsg = 0u;
+        gm1 = "HOLDS EMPTY";
+        gm1pal = PAL_RED;
+        gm2 = "NOTHING TO JETTISON";
+        show_planet();
+        return;
+    }
+    gholds -= gcolship;
+    gcolship = 0u;
+    galign -= 10;
+    if (galign < -999) galign = -999;
+    gplmsg = 6u;
+    sram_sync();
+    show_planet();
+}
+static void plan_quasar(void) {
+    if (gfuel < 100u) {
+        gplmsg = 0u;
+        gm1 = "NEED 100 FUEL ORE";
+        gm1pal = PAL_RED;
+        gm2 = "PLANET STOCK EMPTY";
+        show_planet();
+        return;
+    }
+    gfuel -= 100u;
+    gqsec += 20u;
+    if (gqsec > 100u) gqsec = 0u;
+    gqatm = gqsec;
+    gplmsg = 7u;
+    sram_sync();
+    show_planet();
+}
+static void plan_detonate(void) {
+    if (gadet == 0u) {
+        gplmsg = 0u;
+        gm1 = "NO DETONATORS LEFT";
+        gm1pal = PAL_RED;
+        gm2 = "THEY ARE ONE-SHOT";
+        show_planet();
+        return;
+    }
+    if (gturns == 0u) {
+        gplmsg = 0u;
+        gm1 = "NEED 1 TURN";
+        gm1pal = PAL_RED;
+        gm2 = "TO ARM THE DEVICE";
+        show_planet();
+        return;
+    }
+    gadet--;
+    gturns--;
+    gplanet = 0u;
+    gcitadel = 0u;
+    gcolore = 0u;
+    gcolorg = 0u;
+    gcolequ = 0u;
+    gpftrs = 0u;
+    gpsh = 0u;
+    gqsec = 0u;
+    gqatm = 0u;
+    gfuel = 0u;
+    gcolsec = 0u;
+    gxp += 50u;
+    galign -= 50;
+    if (galign < -999) galign = -999;
+    gmsgmode = 0u;
+    gm1 = "PLANET DESTROYED +50XP";
+    gm1pal = PAL_RED;
+    gm2 = "ALIGN -50 THE FEDS NOTICE";
+    gm3 = "";
+    gm4 = "";
+    gcmdopen = 0u;
+    sram_sync();
+    show_sector();
+}
+static void planet_genesis(void) {
+    if (gturns == 0u) {
+        gmsgmode = 0u;
+        gm1 = "NEED 1 TURN";
+        gm1pal = PAL_RED;
+        gm2 = "TO LAUNCH TORPEDO";
+        gm3 = "";
+        gm4 = "";
+        gcmdopen = 0u;
+        show_sector();
+        return;
+    }
+    gtorp--;
+    gturns--;
+    sec_next();
+    gplanet = 1u;
+    gplevel = (uint8_t)(1u + ((ghash >> 4) & 3u));
+    gcitadel = 0u;
+    gcolore = 0u;
+    gcolorg = 0u;
+    gcolequ = 0u;
+    gpftrs = 0u;
+    gpsh = 0u;
+    gqsec = 0u;
+    gqatm = 0u;
+    gfuel = 0u;
+    gcolsec = gsec;
+    gxp += 25u;
+    gmsgmode = 0u;
+    gm1 = "GENESIS SUCCESS +25XP";
+    gm1pal = PAL_YEL;
+    gm2 = "A NEW WORLD AWAITS LAND";
+    gm3 = "";
+    gm4 = "";
+    gcmdopen = 0u;
+    sram_sync();
+    show_sector();
+}
+static void plan_leave(void) {
+    sram_sync();
+    show_sector();
+}
+static void tick_planet(void) {
+    wait_vblank();
+    gframe++;
+    read_pads();
+    if (gj_dir & PB_UP) {
+        if (gplsel == 0u) { gplsel = 7u; }
+        else { gplsel--; }
+        show_planet();
+        return;
+    }
+    if (gj_dir & PB_DOWN) {
+        gplsel++;
+        if (gplsel >= 8u) gplsel = 0u;
+        show_planet();
+        return;
+    }
+    if (gj_dir & PB_LEFT) {
+        if (gcolsel == 0u) { gcolsel = 2u; }
+        else { gcolsel--; }
+        show_planet();
+        return;
+    }
+    if (gj_dir & PB_RIGHT) {
+        gcolsel++;
+        if (gcolsel >= 3u) gcolsel = 0u;
+        show_planet();
+        return;
+    }
+    if (gj_new & (PB_A | PB_START)) {
+        if (gplsel == 0u) { plan_claim(); }
+        else if (gplsel == 1u) { plan_deploy(); }
+        else if (gplsel == 2u) { plan_load(); }
+        else if (gplsel == 3u) { plan_unload(); }
+        else if (gplsel == 4u) { plan_jettison(); }
+        else if (gplsel == 5u) { plan_quasar(); }
+        else if (gplsel == 6u) { plan_detonate(); }
+        else { plan_leave(); }
+        return;
+    }
+    if (gj_new & PB_B) {
+        plan_leave();
+        return;
+    }
+}
 static void tick_menu(void) {
     wait_vblank();
     gframe++;
@@ -2819,6 +3475,8 @@ static void tick_once(void) {
             tick_port();
         } else if (gstate == ST_DOCK) {
             tick_dock();
+        } else if (gstate == ST_PLANET) {
+            tick_planet();
         } else if (gstate == ST_ATTRACT) {
             tick_attract();
         } else {

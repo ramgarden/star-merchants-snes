@@ -37,9 +37,9 @@ def main():
     smoke = "--smoke" in args
 
     blob = (OUT / "test.bin").read_bytes()
-    assert len(blob) == 32768, len(blob)
+    assert len(blob) == 61440, len(blob)
     mpu = MPU()
-    mpu.memory[0x8000:0x8000 + len(blob)] = blob
+    mpu.memory[0x1000:0x1000 + len(blob)] = blob
     mpu.reset()
     # py65 reset() leaves PC at $0000; fetch the reset vector manually
     mpu.pc = mpu.memory[0xFFFC] | (mpu.memory[0xFFFD] << 8)
@@ -114,6 +114,18 @@ def main():
           "T3 interest: flag=%d bank=%d bankday=%d" % (t3[0], bk, t3[3]))
     if not ok3:
         fails.append("T3 interest")
+    t4 = [mpu.memory[trep + 96 + i] for i in range(11)]
+    exp4 = [(0, 1, "flag"), (1, 9, "gstate"), (2, 3, "gsec"),
+            (3, 494 - 256, "gturns"), (4, 1, "gcitadel"),
+            (5, 10, "gcolship"), (6, 20, "gqsec"), (7, 413 - 256,
+                                                   "gfuel"),
+            (8, 11, "gpftrs"), (9, 15, "gholds"), (10, 25, "gxp")]
+    for idx, want, label in exp4:
+        ok = (t4[idx] == want)
+        print(("PASS " if ok else "FAIL ") + "T4 %s: got %d want %d"
+              % (label, t4[idx], want))
+        if not ok:
+            fails.append("T4 " + label)
     return 1 if fails else 0
 
 
