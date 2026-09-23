@@ -135,13 +135,33 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
 ## Milestone 10: Endgame & Polish
 - [ ] **Victory Conditions** - Credits, planets, XP, alignment leaderboards
 - [ ] **High Score / Hall of Fame** - SRAM persistence
-- [ ] **Music/SFX** - SPC700: title, sector, port, combat, stardock themes
-- [ ] **ANSI Animations** - Starfield, warp, combat, port entry
+- [ ] **ANSI Animations** - Starfield, warp, combat, port entry (see
+  devlog/2026-09-23-ansi-graphics-path.md for the researched upgrade
+  path: solid-bg tiles, full palette ramps, backdrop BG layer, sprites
+  for cursor/starfield only — full-screen sprites are impossible on
+  hardware: 128 sprites / 32-per-scanline max)
 - [ ] **Bug Fixes** - 6666 bug (MRL=0), holds bug, shield bug, cloak reliability
 - [ ] **Options Menu** - ANSI on/off, sound, difficulty, controller config
 - [ ] **Cartridge Build** - Header, checksum, LoROM/HiROM, FastROM toggle
 
-## Milestone 11: Physical Release Prep
+## Milestone 11: Sound & Music (SPC700)
+
+Own milestone (promoted from the old M10 Music/SFX line): driving the
+SPC700 is a full workstream, not polish. No PVSnesLib linkage, so the
+audio driver (BRR samples + tracker/song data, e.g. SNESMod-style)
+must be wired into the custom crt0/NMI setup manually.
+
+- [ ] **SPC700 Driver** - Boot the SPC, upload BRR samples + song data,
+  mixer/tick integration with NMI-safe communication ports ($2140-$2143)
+- [ ] **Music** - Title, sector, port, combat, stardock themes (BBS-door
+  spirit: spare FM-ish loops, not orchestral)
+- [ ] **SFX** - Warp whoosh, cash-register trade blip, scan sweep,
+  docking clunk, steal alarm, UI cursor tick
+- [ ] **Verification** - SPC playback captured in emulator per theme;
+  mute toggle in Options; CPU budget check (audio tick must not break
+  the vblank-driven render path)
+
+## Milestone 12: Physical Release Prep
 - [ ] **ROM Validation** - bsnes/higan accuracy, hardware flashcart test
 - [ ] **Manual/Box Art** - ANSI-style manual, cartridge label
 - [ ] **Build Pipeline** - Clean/release builds, versioning, checksums
