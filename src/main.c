@@ -373,18 +373,12 @@ static void read_pads(void) {
         script_pads();
         return;
     }
-    while (!(REG_HVBJOY & 0x01u)) {
-    }
-    while (REG_HVBJOY & 0x01u) {
-    }
     gj_pad = (uint16_t)REG_JOY1L;
     gj_pad |= (uint16_t)((uint16_t)REG_JOY1H << 8);
     gj_new = (uint16_t)(gj_pad & (uint16_t)(gj_pad ^ gj_prev));
     gj_prev = gj_pad;
     gj_dir = gj_new;
-    if ((gframe & 15u) == 0u) {
-        gj_dir |= (uint16_t)(gj_pad & 0x000Fu);
-    }
+    gj_dir |= (uint16_t)(gj_pad & 0x000Fu);
 }
 static void draw_stars(void) {
     gseed = 1234u;
@@ -1533,20 +1527,6 @@ static void tick_title(void) {
         draw_prompt();
     }
     read_pads();
-    if (gj_pad & PB_SEL) {
-        gdx = 0u; gdy = 26u; gdpal = PAL_GRAY;
-        gdstr = "PAD "; draw_text();
-        gdpal = PAL_WHITE;
-        gn = (uint16_t)(gj_pad & 255u); draw_num();
-        gdstr = " "; draw_text();
-        gn = (uint16_t)(gj_pad >> 8); draw_num();
-    } else if ((gframe & 31u) == 0u) {
-        gdx = 0u; gdy = 26u; gdpal = PAL_GRAY;
-        gdstr = "         "; draw_text();
-        if (gshow) { gshow = 0u; }
-        else { gshow = 1u; }
-        draw_prompt();
-    }
     if (gj_new & (PB_START | PB_A)) {
         gsel = 0u;
         show_menu();

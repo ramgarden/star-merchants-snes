@@ -234,7 +234,7 @@ Before committing changes or making a release, follow this workflow to verify th
 3. **Use self-drive mode for automated testing** (set gselfdrive=1 in main.c temporarily)
    - Rebuild with self-drive enabled to run through predefined test sequences
    - Verify the automated tour completes without issues
-   - Remember to set gselfdrive=0 before committing (SHIP WITH 0)
+   - **MANDATORY: Set gselfdrive=0 in main.c before committing/pushing** (SHIP WITH 0) — otherwise the game auto-plays and cannot be played manually
 
 4. **Verify critical functionality**
    - Title screen displays correctly and waits for START
