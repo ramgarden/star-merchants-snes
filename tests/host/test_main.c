@@ -24,6 +24,8 @@ extern uint8_t gsram_d;
 extern uint8_t gstate;
 extern uint8_t gselfdrive;
 extern uint8_t gsi;
+extern uint8_t gsiprev;
+extern uint8_t grpt;
 extern uint8_t gdemo;
 extern uint8_t gcmdopen;
 extern uint8_t gcmdsel;
@@ -96,6 +98,8 @@ static void boot_init(void) {
     gdemo = 0u;
     gcmdopen = 0u;
     gsi = 0u;
+    gsiprev = 0u;
+    grpt = 25u;
     gsfr = 0u;
     gj_held = 0u;
     gj_prev = 0u;

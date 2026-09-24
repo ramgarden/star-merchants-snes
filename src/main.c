@@ -70,18 +70,34 @@ typedef short int16_t;
 #define ST_DOCK 13u
 #define ST_PLANET 14u
 #define ST_FIGHT 15u
-#define PB_UP 0x0008u
-#define PB_DOWN 0x0004u
-#define PB_LEFT 0x0002u
-#define PB_RIGHT 0x0001u
-#define PB_START 0x0010u
-#define PB_SEL 0x0020u
-#define PB_Y 0x0040u
-#define PB_B 0x0080u
-#define PB_R 0x1000u
-#define PB_L 0x2000u
-#define PB_X 0x4000u
-#define PB_A 0x8000u
+/* Joypad buttons: PVSnesLib KEYPAD_BITS layout (include/snes/input.h:
+ * KEY_A=BIT(7) KEY_B=BIT(15) KEY_SELECT=BIT(13) KEY_START=BIT(12)
+ * KEY_RIGHT=BIT(8) KEY_LEFT=BIT(9) KEY_DOWN=BIT(10) KEY_UP=BIT(11)
+ * KEY_R=BIT(4) KEY_L=BIT(5) KEY_X=BIT(6) KEY_Y=BIT(14)).
+ * The SNES auto-read word ($4219<<8|$4218) already arrives in exactly
+ * this layout ($4218: A/X/L/R+id, $4219: B/Y/Sel/Start/U/D/L/R), so the
+ * raw register word is used directly with NO conversion (cf. PVSnesLib
+ * padsCurrent/padsDown and the controller.c demo; superfamicom.org
+ * polling-controller-input cheat sheet; SNESdev wiki controller
+ * reading). read_pads() below is the single global entry point every
+ * tick_* screen handler calls: gj_pad = held (padsCurrent), gj_new =
+ * fresh presses (padsDown), gj_dir = gj_new (edge). Press semantics are
+ * one-shot everywhere: a held button never auto-repeats (holding Up on
+ * the menu moves one item, not a turbo scroll). The only hold-repeat in
+ * the game is Up/Down letter scrolling in tick_name, which implements
+ * its own initial-delay + interval timer (grpt) on top of edges. */
+#define KEY_A 0x0080u
+#define KEY_B 0x8000u
+#define KEY_SELECT 0x2000u
+#define KEY_START 0x1000u
+#define KEY_RIGHT 0x0100u
+#define KEY_LEFT 0x0200u
+#define KEY_DOWN 0x0400u
+#define KEY_UP 0x0800u
+#define KEY_R 0x0010u
+#define KEY_L 0x0020u
+#define KEY_X 0x0040u
+#define KEY_Y 0x4000u
 #define SCN 92u
 #define SCN2 106u
 #define SCN3 92u
@@ -132,6 +148,8 @@ uint16_t gj_new;
 uint16_t gj_dir;
 uint16_t gj_held;
 uint8_t gsi;
+uint8_t gsiprev;
+uint8_t grpt;
 uint8_t gselfdrive;
 uint16_t gsfr;
 uint8_t gsclk;
@@ -345,6 +363,7 @@ static void script_pads(void) {
     } else {
         gscr_f = 1u; gscr_b = FT_SC; gscr_b2 = FT_SCP; gflim = SCN;
     }
+    gsiprev = gsi;
     while (gsi < gflim) {
         gfar_o = (uint16_t)(gscr_b + gsi);
         gact = farbyt();
@@ -352,33 +371,47 @@ static void script_pads(void) {
         gfar_o = (uint16_t)(gscr_b2 + gsi);
         gact = farbyt();
         if (gact == 0u) { gj_held = 0u; }
-        else if (gact == 1u) { gj_held = PB_START; }
-        else if (gact == 2u) { gj_held = PB_UP; }
-        else if (gact == 3u) { gj_held = PB_DOWN; }
-        else if (gact == 4u) { gj_held = PB_LEFT; }
-        else if (gact == 5u) { gj_held = PB_RIGHT; }
-        else if (gact == 6u) { gj_held = PB_A; }
-        else if (gact == 7u) { gj_held = PB_B; }
-        else if (gact == 8u) { gj_held = PB_X; }
-        else { gj_held = PB_Y; }
+        else if (gact == 1u) { gj_held = KEY_START; }
+        else if (gact == 2u) { gj_held = KEY_UP; }
+        else if (gact == 3u) { gj_held = KEY_DOWN; }
+        else if (gact == 4u) { gj_held = KEY_LEFT; }
+        else if (gact == 5u) { gj_held = KEY_RIGHT; }
+        else if (gact == 6u) { gj_held = KEY_A; }
+        else if (gact == 7u) { gj_held = KEY_B; }
+        else if (gact == 8u) { gj_held = KEY_X; }
+        else { gj_held = KEY_Y; }
         gsi++;
     }
+    /* Tap emulation: each due tour step presents its button for exactly
+     * one frame, like a human tap. Without this, a step's 16-frame hold
+     * would re-fire gj_dir navigation every frame while held (the
+     * hardware path intentionally repeats held D-pad for menu
+     * scrolling, but a script step is a single discrete press). */
+    if (gsi == gsiprev) { gj_held = 0u; }
     gj_pad = gj_held;
     gj_new = (uint16_t)(gj_pad & (uint16_t)(gj_pad ^ gj_prev));
     gj_prev = gj_pad;
     gj_dir = gj_new;
 }
+/* THE global pad entry point: every tick_* handler calls this once per
+ * frame, then reads gj_new (fresh-press edge, for A/B/START/SELECT/X/Y
+ * actions) and gj_dir (same edge, for cursor/warp/menu movement: one
+ * step per press, never auto-repeat). Hardware path: wait out the $4212
+ * auto-read busy bit (wikibooks/superfamicom.org pattern), then latch
+ * the $4218/$4219 word which is already in KEY_* layout. Selfdrive
+ * path: scripted tour. */
 static void read_pads(void) {
     if (gselfdrive) {
         script_pads();
         return;
+    }
+    while (REG_HVBJOY & 0x01u) {
     }
     gj_pad = (uint16_t)REG_JOY1L;
     gj_pad |= (uint16_t)((uint16_t)REG_JOY1H << 8);
     gj_new = (uint16_t)(gj_pad & (uint16_t)(gj_pad ^ gj_prev));
     gj_prev = gj_pad;
     gj_dir = gj_new;
-    gj_dir |= (uint16_t)(gj_pad & 0x000Fu);
 }
 static void draw_stars(void) {
     gseed = 1234u;
@@ -1527,7 +1560,7 @@ static void tick_title(void) {
         draw_prompt();
     }
     read_pads();
-    if (gj_new & (PB_START | PB_A)) {
+    if (gj_new & (KEY_START | KEY_A)) {
         gsel = 0u;
         show_menu();
         return;
@@ -1541,7 +1574,7 @@ static void tick_attract(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_new & (PB_A | PB_B | PB_START)) {
+    if (gj_new & (KEY_A | KEY_B | KEY_START)) {
         gdemo = 0u;
         show_title();
         return;
@@ -1556,7 +1589,7 @@ static void tick_launch(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_new & (PB_A | PB_START)) {
+    if (gj_new & (KEY_A | KEY_START)) {
         gmsgmode = 0u;
         gm1 = "";
         gm2 = "";
@@ -1566,7 +1599,7 @@ static void tick_launch(void) {
         show_sector();
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         show_sum();
         return;
     }
@@ -1575,11 +1608,11 @@ static void tick_loadret(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_new & (PB_A | PB_START)) {
+    if (gj_new & (KEY_A | KEY_START)) {
         show_sector();
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         show_menu();
         return;
     }
@@ -1589,61 +1622,61 @@ static void tick_sector(void) {
     gframe++;
     read_pads();
     if (gcmdopen) {
-        if (gj_dir & PB_UP) {
+        if (gj_dir & KEY_UP) {
             if (gcmdsel == 0u) { gcmdsel = 7u; }
             else { gcmdsel--; }
             show_sector();
             return;
         }
-        if (gj_dir & PB_DOWN) {
+        if (gj_dir & KEY_DOWN) {
             gcmdsel++;
             if (gcmdsel >= 8u) gcmdsel = 0u;
             show_sector();
             return;
         }
-        if (gj_new & (PB_A | PB_START)) {
+        if (gj_new & (KEY_A | KEY_START)) {
             exec_cmd();
             return;
         }
-        if (gj_new & (PB_B | PB_X)) {
+        if (gj_new & (KEY_B | KEY_X)) {
             gcmdopen = 0u;
             show_sector();
             return;
         }
         return;
     }
-    if (gj_dir & (PB_UP | PB_LEFT)) {
+    if (gj_dir & (KEY_UP | KEY_LEFT)) {
         if (gwarpsel == 0u) { gwarpsel = (uint8_t)(gwcount - 1u); }
         else { gwarpsel--; }
         show_sector();
         return;
     }
-    if (gj_dir & (PB_DOWN | PB_RIGHT)) {
+    if (gj_dir & (KEY_DOWN | KEY_RIGHT)) {
         gwarpsel++;
         if (gwarpsel >= gwcount) gwarpsel = 0u;
         show_sector();
         return;
     }
-    if (gj_new & (PB_A | PB_START)) {
+    if (gj_new & (KEY_A | KEY_START)) {
         do_warp();
         return;
     }
-    if (gj_new & PB_X) {
+    if (gj_new & KEY_X) {
         gcmdopen = 1u;
         gcmdsel = 0u;
         show_sector();
         return;
     }
-    if (gj_new & PB_Y) {
+    if (gj_new & KEY_Y) {
         gmsgmode = 2u;
         show_sector();
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         show_menu();
         return;
     }
-    if (gj_new & PB_SEL) {
+    if (gj_new & KEY_SELECT) {
         gmsgmode = 0u;
         gm1 = "D REDISPLAY H HOLO S SCAN";
         gm1pal = PAL_WHITE;
@@ -2054,31 +2087,31 @@ static void tick_port(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_dir & PB_UP) {
+    if (gj_dir & KEY_UP) {
         if (gportsel == 0u) { gportsel = 4u; }
         else { gportsel--; }
         show_port();
         return;
     }
-    if (gj_dir & PB_DOWN) {
+    if (gj_dir & KEY_DOWN) {
         gportsel++;
         if (gportsel >= 5u) gportsel = 0u;
         show_port();
         return;
     }
-    if (gj_dir & PB_LEFT) {
+    if (gj_dir & KEY_LEFT) {
         if (gportcom == 0u) { gportcom = 2u; }
         else { gportcom--; }
         show_port();
         return;
     }
-    if (gj_dir & PB_RIGHT) {
+    if (gj_dir & KEY_RIGHT) {
         gportcom++;
         if (gportcom >= 3u) gportcom = 0u;
         show_port();
         return;
     }
-    if (gj_new & (PB_A | PB_START)) {
+    if (gj_new & (KEY_A | KEY_START)) {
         if (gportsel == 0u) { port_buy(); }
         else if (gportsel == 1u) { port_sell(); }
         else if (gportsel == 2u) { port_haggle(); }
@@ -2086,7 +2119,7 @@ static void tick_port(void) {
         else { port_leave(); }
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         port_leave();
         return;
     }
@@ -2747,23 +2780,23 @@ static void tick_dock(void) {
     gframe++;
     read_pads();
     dock_count();
-    if (gj_dir & PB_UP) {
+    if (gj_dir & KEY_UP) {
         if (gdocksel == 0u) { gdocksel = (uint8_t)(gtmp - 1u); }
         else { gdocksel--; }
         show_dock();
         return;
     }
-    if (gj_dir & PB_DOWN) {
+    if (gj_dir & KEY_DOWN) {
         gdocksel++;
         if (gdocksel >= gtmp) gdocksel = 0u;
         show_dock();
         return;
     }
-    if (gj_new & (PB_A | PB_START)) {
+    if (gj_new & (KEY_A | KEY_START)) {
         dock_exec();
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         if (gdept == 0u) {
             dock_leave();
         } else {
@@ -3228,31 +3261,31 @@ static void tick_planet(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_dir & PB_UP) {
+    if (gj_dir & KEY_UP) {
         if (gplsel == 0u) { gplsel = 7u; }
         else { gplsel--; }
         show_planet();
         return;
     }
-    if (gj_dir & PB_DOWN) {
+    if (gj_dir & KEY_DOWN) {
         gplsel++;
         if (gplsel >= 8u) gplsel = 0u;
         show_planet();
         return;
     }
-    if (gj_dir & PB_LEFT) {
+    if (gj_dir & KEY_LEFT) {
         if (gcolsel == 0u) { gcolsel = 2u; }
         else { gcolsel--; }
         show_planet();
         return;
     }
-    if (gj_dir & PB_RIGHT) {
+    if (gj_dir & KEY_RIGHT) {
         gcolsel++;
         if (gcolsel >= 3u) gcolsel = 0u;
         show_planet();
         return;
     }
-    if (gj_new & (PB_A | PB_START)) {
+    if (gj_new & (KEY_A | KEY_START)) {
         if (gplsel == 0u) { plan_claim(); }
         else if (gplsel == 1u) { plan_deploy(); }
         else if (gplsel == 2u) { plan_load(); }
@@ -3263,7 +3296,7 @@ static void tick_planet(void) {
         else { plan_leave(); }
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         plan_leave();
         return;
     }
@@ -3528,7 +3561,7 @@ static void tick_fight(void) {
     gframe++;
     read_pads();
     if (gfightover) {
-        if (gj_new & (PB_A | PB_START | PB_B)) {
+        if (gj_new & (KEY_A | KEY_START | KEY_B)) {
             if (gfightover == 1u) {
                 gfightover = 0u;
                 gcmdopen = 0u;
@@ -3549,19 +3582,19 @@ static void tick_fight(void) {
         }
         return;
     }
-    if (gj_dir & PB_UP) {
+    if (gj_dir & KEY_UP) {
         if (gfightsel == 0u) { gfightsel = 4u; }
         else { gfightsel--; }
         show_fight();
         return;
     }
-    if (gj_dir & PB_DOWN) {
+    if (gj_dir & KEY_DOWN) {
         gfightsel++;
         if (gfightsel >= 5u) gfightsel = 0u;
         show_fight();
         return;
     }
-    if (gj_new & (PB_A | PB_START)) {
+    if (gj_new & (KEY_A | KEY_START)) {
         if (gfightsel == 0u) { fight_attack(); }
         else if (gfightsel == 1u) { fight_photon(); }
         else if (gfightsel == 2u) { fight_corbomite(); }
@@ -3569,7 +3602,7 @@ static void tick_fight(void) {
         else { fight_retreat(); }
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         fight_retreat();
         return;
     }
@@ -3578,19 +3611,19 @@ static void tick_menu(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_dir & PB_UP) {
+    if (gj_dir & KEY_UP) {
         if (gsel == 0u) { gsel = 3u; }
         else { gsel--; }
         show_menu();
         return;
     }
-    if (gj_dir & PB_DOWN) {
+    if (gj_dir & KEY_DOWN) {
         gsel++;
         if (gsel >= 4u) gsel = 0u;
         show_menu();
         return;
     }
-    if (gj_new & (PB_A | PB_START)) {
+    if (gj_new & (KEY_A | KEY_START)) {
         if (gsel == 0u) {
             gentry = 0u;
             gslot = 0u;
@@ -3605,7 +3638,7 @@ static void tick_menu(void) {
         }
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         show_title();
         return;
     }
@@ -3614,7 +3647,7 @@ static void tick_simple_back(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_new & (PB_A | PB_B | PB_START)) {
+    if (gj_new & (KEY_A | KEY_B | KEY_START)) {
         show_menu();
         return;
     }
@@ -3623,29 +3656,29 @@ static void tick_options(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_dir & PB_UP) {
+    if (gj_dir & KEY_UP) {
         if (gosel == 0u) { gosel = 3u; }
         else { gosel--; }
         show_options_keep();
         return;
     }
-    if (gj_dir & PB_DOWN) {
+    if (gj_dir & KEY_DOWN) {
         gosel++;
         if (gosel >= 4u) gosel = 0u;
         show_options_keep();
         return;
     }
-    if (gj_dir & PB_LEFT) {
+    if (gj_dir & KEY_LEFT) {
         opt_dec();
         show_options_keep();
         return;
     }
-    if (gj_dir & PB_RIGHT) {
+    if (gj_dir & KEY_RIGHT) {
         opt_inc();
         show_options_keep();
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         show_menu();
         return;
     }
@@ -3654,7 +3687,7 @@ static void tick_name(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_dir & PB_UP) {
+    if (gj_dir & KEY_UP) {
         name_index();
         gci++;
         if (gci >= 37u) gci = 0u;
@@ -3662,7 +3695,7 @@ static void tick_name(void) {
         show_name();
         return;
     }
-    if (gj_dir & PB_DOWN) {
+    if (gj_dir & KEY_DOWN) {
         name_index();
         if (gci == 0u) { gci = 37u; }
         gci--;
@@ -3670,17 +3703,17 @@ static void tick_name(void) {
         show_name();
         return;
     }
-    if (gj_dir & PB_LEFT) {
+    if (gj_dir & KEY_LEFT) {
         if (gslot > 0u) gslot--;
         show_name();
         return;
     }
-    if (gj_dir & PB_RIGHT) {
+    if (gj_dir & KEY_RIGHT) {
         if (gslot < 7u) gslot++;
         show_name();
         return;
     }
-    if (gj_new & PB_A) {
+    if (gj_new & KEY_A) {
         if (gslot < 7u) {
             gslot++;
             show_name();
@@ -3689,11 +3722,11 @@ static void tick_name(void) {
         }
         return;
     }
-    if (gj_new & PB_START) {
+    if (gj_new & KEY_START) {
         name_confirm();
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         if (gentry == 0u) {
             show_menu();
         } else {
@@ -3703,16 +3736,44 @@ static void tick_name(void) {
         }
         return;
     }
+    /* The only hold-repeat in the game: holding Up/Down scrolls letters
+     * (25-frame initial delay, then 6-frame interval). Release re-arms
+     * the delay. Everything else on every screen is edge-only. */
+    if (gj_pad & KEY_UP) {
+        if (grpt == 0u) {
+            name_index();
+            gci++;
+            if (gci >= 37u) gci = 0u;
+            gbuf[gslot] = charset[gci];
+            grpt = 6u;
+            show_name();
+            return;
+        }
+        grpt--;
+    } else if (gj_pad & KEY_DOWN) {
+        if (grpt == 0u) {
+            name_index();
+            if (gci == 0u) { gci = 37u; }
+            gci--;
+            gbuf[gslot] = charset[gci];
+            grpt = 6u;
+            show_name();
+            return;
+        }
+        grpt--;
+    } else {
+        grpt = 25u;
+    }
 }
 static void tick_sum(void) {
     wait_vblank();
     gframe++;
     read_pads();
-    if (gj_new & (PB_A | PB_START)) {
+    if (gj_new & (KEY_A | KEY_START)) {
         show_launch();
         return;
     }
-    if (gj_new & PB_B) {
+    if (gj_new & KEY_B) {
         gentry = 1u;
         gslot = 0u;
         show_name();
@@ -3738,6 +3799,8 @@ int main(void) {
     gdemo = 0u;
     gcmdopen = 0u;
     gsi = 0u;
+    gsiprev = 0u;
+    grpt = 25u;
     gj_held = 0u;
     gr = 0u;
     while (gr < 8u) {
