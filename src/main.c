@@ -69,6 +69,7 @@ typedef short int16_t;
 #define ST_PORT 12u
 #define ST_DOCK 13u
 #define ST_PLANET 14u
+#define ST_FIGHT 15u
 #define PB_UP 0x0008u
 #define PB_DOWN 0x0004u
 #define PB_LEFT 0x0002u
@@ -84,6 +85,9 @@ typedef short int16_t;
 #define SCN 92u
 #define SCN2 106u
 #define SCN3 92u
+#define SCN4 64u
+#define SCN5 8u
+#define SCN6 14u
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -116,6 +120,9 @@ uint8_t gselfdrive;
 uint16_t gsfr;
 uint8_t gsclk;
 uint8_t gact;
+const uint8_t *gftab;
+const uint8_t *gatab;
+uint8_t gflim;
 char gname[9];
 char gship[9];
 char *gbuf;
@@ -201,6 +208,16 @@ uint16_t gcolsec;
 uint8_t gcolsel;
 uint8_t gplsel;
 uint8_t gplmsg;
+uint8_t gphotons;
+uint8_t gencls;
+uint16_t genftrs;
+uint16_t gensh;
+uint8_t gencorb;
+uint8_t gblind;
+uint16_t gbounty;
+uint8_t gfightover;
+uint8_t gfightsel;
+uint16_t glastsec;
 void sram_wr(void);
 void sram_rd(void);
 void font_load(void);
@@ -288,12 +305,58 @@ const uint8_t scp3[92] = {
     3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u,
     6u, 0u,
 };
+/* M7 combat: 15 ship classes, offensive/defensive odds (TW2002 tables) */
+const uint8_t shipoff[15] = {
+    10u, 8u, 11u, 12u, 10u, 6u, 10u, 10u,
+    12u, 13u, 11u, 11u, 12u, 13u, 7u,
+};
+const uint8_t shipdef[15] = {
+    10u, 8u, 10u, 11u, 12u, 6u, 10u, 11u,
+    12u, 10u, 12u, 13u, 12u, 11u, 9u,
+};
+/* M7 combat tour (selfdrive 4): new game -> photon buy -> warp sec 3 ->
+   ATTACK -> photon -> attack -> victory. 84 steps, 8-bit frames. */
+const uint8_t scf4[84] = {
+    3u, 4u, 10u, 11u, 16u, 17u, 22u, 23u, 28u, 29u,
+    34u, 35u, 40u, 41u, 44u, 45u, 48u, 49u, 52u, 53u,
+    56u, 57u, 60u, 61u, 64u, 65u, 68u, 69u, 72u, 73u,
+    76u, 77u, 80u, 81u, 84u, 85u, 88u, 89u, 92u, 93u,
+    96u, 97u, 100u, 101u, 104u, 105u, 108u, 109u, 112u, 113u,
+    116u, 117u, 120u, 121u, 126u, 127u, 132u, 133u, 138u, 139u,
+    142u, 143u, 146u, 147u, 150u, 151u, 154u, 155u, 158u, 159u,
+    162u, 163u, 166u, 167u, 172u, 173u, 176u, 177u, 182u, 183u,
+    186u, 187u, 192u, 193u,
+};
+const uint8_t scp4[84] = {
+    1u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
+    6u, 0u, 8u, 0u, 3u, 0u, 3u, 0u, 3u, 0u,
+    3u, 0u, 6u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u,
+    6u, 0u, 5u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    3u, 0u, 6u, 0u, 2u, 0u, 6u, 0u, 6u, 0u,
+};
+/* M7 defeat tour (selfdrive 5): attack -> destroyed -> escape pod -> menu */
+const uint8_t scf5[4] = { 2u, 3u, 8u, 9u };
+const uint8_t scp5[4] = { 6u, 0u, 6u, 0u };
+/* M7 corbomite tour (selfdrive 6): corbomite -> attack -> victory */
+const uint8_t scf6[14] = {
+    2u, 3u, 4u, 5u, 8u, 9u, 12u, 13u,
+    14u, 15u, 18u, 19u, 24u, 25u,
+};
+const uint8_t scp6[14] = {
+    3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u,
+    2u, 0u, 6u, 0u, 6u, 0u,
+};
 static void show_sum(void);
 static void show_sector(void);
 static void show_menu(void);
 static void show_loadret(void);
 static void show_dock(void);
 static void show_planet(void);
+static void show_fight(void);
+static void gen_enemy(void);
 static void planet_fresh(void);
 static void planet_genesis(void);
 static void draw_num(void);
@@ -352,53 +415,22 @@ static void wait_vblank(void) {
 }
 static void script_pads(void) {
     gsclk = (uint8_t)(gsfr >> 4);
-    if (gselfdrive == 3u) {
-        while (gsi < SCN3) {
-            if (gsclk < scf3[gsi]) break;
-            gact = scp3[gsi];
-            if (gact == 0u) { gj_held = 0u; }
-            else if (gact == 1u) { gj_held = PB_START; }
-            else if (gact == 2u) { gj_held = PB_UP; }
-            else if (gact == 3u) { gj_held = PB_DOWN; }
-            else if (gact == 4u) { gj_held = PB_LEFT; }
-            else if (gact == 5u) { gj_held = PB_RIGHT; }
-            else if (gact == 6u) { gj_held = PB_A; }
-            else if (gact == 7u) { gj_held = PB_B; }
-            else if (gact == 8u) { gj_held = PB_X; }
-            else { gj_held = PB_Y; }
-            gsi++;
-        }
-        gj_pad = gj_held;
-        gj_new = (uint16_t)(gj_pad & (uint16_t)(gj_pad ^ gj_prev));
-        gj_prev = gj_pad;
-        gj_dir = gj_new;
-        return;
+    if (gselfdrive == 4u) {
+        gftab = scf4; gatab = scp4; gflim = SCN4;
+    } else if (gselfdrive == 5u) {
+        gftab = scf5; gatab = scp5; gflim = SCN5;
+    } else if (gselfdrive == 6u) {
+        gftab = scf6; gatab = scp6; gflim = SCN6;
+    } else if (gselfdrive == 3u) {
+        gftab = scf3; gatab = scp3; gflim = SCN3;
+    } else if (gselfdrive == 2u) {
+        gftab = scf2; gatab = scp2; gflim = SCN2;
+    } else {
+        gftab = scf; gatab = scp; gflim = SCN;
     }
-    if (gselfdrive == 2u) {
-        while (gsi < SCN2) {
-            if (gsclk < scf2[gsi]) break;
-            gact = scp2[gsi];
-            if (gact == 0u) { gj_held = 0u; }
-            else if (gact == 1u) { gj_held = PB_START; }
-            else if (gact == 2u) { gj_held = PB_UP; }
-            else if (gact == 3u) { gj_held = PB_DOWN; }
-            else if (gact == 4u) { gj_held = PB_LEFT; }
-            else if (gact == 5u) { gj_held = PB_RIGHT; }
-            else if (gact == 6u) { gj_held = PB_A; }
-            else if (gact == 7u) { gj_held = PB_B; }
-            else if (gact == 8u) { gj_held = PB_X; }
-            else { gj_held = PB_Y; }
-            gsi++;
-        }
-        gj_pad = gj_held;
-        gj_new = (uint16_t)(gj_pad & (uint16_t)(gj_pad ^ gj_prev));
-        gj_prev = gj_pad;
-        gj_dir = gj_new;
-        return;
-    }
-    while (gsi < SCN) {
-        if (gsclk < scf[gsi]) break;
-        gact = scp[gsi];
+    while (gsi < gflim) {
+        if (gsclk < gftab[gsi]) break;
+        gact = gatab[gsi];
         if (gact == 0u) { gj_held = 0u; }
         else if (gact == 1u) { gj_held = PB_START; }
         else if (gact == 2u) { gj_held = PB_UP; }
@@ -597,7 +629,7 @@ static void show_continue(void) {
     }
     show_loadret();
 }
-/* ---- SRAM save/load ($70:0000+, 45 bytes, sum checksum) ---- */
+/* ---- SRAM save/load ($70:0000+, 75 bytes, sum checksum) ---- */
 static void sram_put(void) {
     sram_wr();
     gsram_ck += gsram_d;
@@ -613,7 +645,7 @@ static void sram_sync(void) {
     gsram_ck = 0u;
     gsram_d = 83u; sram_put();
     gsram_d = 77u; sram_put();
-    gsram_d = 4u; sram_put();
+    gsram_d = 5u; sram_put();
     gi = 0u;
     while (gi < 8u) {
         gsram_d = gname[gi];
@@ -681,6 +713,7 @@ static void sram_sync(void) {
     gsram_d = gadet; sram_put();
     gsram_d = (uint8_t)(gcolsec & 255u); sram_put();
     gsram_d = (uint8_t)(gcolsec >> 8); sram_put();
+    gsram_d = gphotons; sram_put();
     gsram_d = gsram_ck;
     sram_wr();
 }
@@ -693,7 +726,7 @@ static void sram_load(void) {
     sram_get();
     if (gsram_d != 77u) return;
     sram_get();
-    if (gsram_d != 4u) return;
+    if (gsram_d != 5u) return;
     gi = 0u;
     while (gi < 8u) {
         sram_get();
@@ -763,6 +796,7 @@ static void sram_load(void) {
     sram_get(); gadet = gsram_d;
     sram_get(); gtmp = gsram_d;
     sram_get(); gcolsec = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
+    sram_get(); gphotons = gsram_d;
     sram_rd();
     if (gsram_d != gsram_ck) {
         gtmp = 0u;
@@ -1020,6 +1054,7 @@ static void show_launch(void) {
     gbeacons = 0u;
     gtorp = 0u;
     gcomm = 0u;
+    gphotons = 0u;
     gbankday = 0u;
     gcitadel = 0u;
     gcolore = 0u;
@@ -1385,7 +1420,7 @@ static void draw_cmdarea(void) {
         gdx = 0u; gdy = 17u; gdpal = PAL_CYAN;
         gdstr = "COMMANDS:"; draw_text();
         gi = 0u;
-        while (gi < 7u) {
+        while (gi < 8u) {
             gdx = 4u; gdy = (uint8_t)(18u + gi);
             if (gi == gcmdsel) {
                 gdpal = PAL_CYAN; gdstr = ">"; draw_text();
@@ -1401,6 +1436,7 @@ static void draw_cmdarea(void) {
             else if (gi == 3u) { gdstr = "C COURSE PLOT"; }
             else if (gi == 4u) { gdstr = "P PORT"; }
             else if (gi == 5u) { gdstr = "L LAND"; }
+            else if (gi == 6u) { gdstr = "A ATTACK"; }
             else { gdstr = "Q QUIT"; }
             draw_text();
             gi++;
@@ -1542,6 +1578,28 @@ static void exec_cmd(void) {
             gm4 = "";
             show_sector();
         }
+    } else if (gcmdsel == 6u) {
+        gcmdopen = 0u;
+        if (gftrs > 0u) {
+            glastsec = gsec;
+            gen_enemy();
+            gfightsel = 0u;
+            gfightover = 0u;
+            gm1 = "ENGAGING ENEMY!";
+            gm1pal = PAL_RED;
+            gm2 = "PREPARE FOR BATTLE";
+            gm3 = "";
+            gm4 = "";
+            show_fight();
+        } else {
+            gmsgmode = 0u;
+            gm1 = "NO HOSTILES HERE";
+            gm1pal = PAL_GRAY;
+            gm2 = "SECTOR IS CLEAR";
+            gm3 = "";
+            gm4 = "";
+            show_sector();
+        }
     } else {
         show_menu();
     }
@@ -1632,14 +1690,14 @@ static void tick_sector(void) {
     read_pads();
     if (gcmdopen) {
         if (gj_dir & PB_UP) {
-            if (gcmdsel == 0u) { gcmdsel = 6u; }
+            if (gcmdsel == 0u) { gcmdsel = 7u; }
             else { gcmdsel--; }
             show_sector();
             return;
         }
         if (gj_dir & PB_DOWN) {
             gcmdsel++;
-            if (gcmdsel >= 7u) gcmdsel = 0u;
+            if (gcmdsel >= 8u) gcmdsel = 0u;
             show_sector();
             return;
         }
@@ -1690,7 +1748,7 @@ static void tick_sector(void) {
         gm1 = "D REDISPLAY H HOLO S SCAN";
         gm1pal = PAL_WHITE;
         gm2 = "C COURSE P PORT L LAND";
-        gm3 = "Q QUIT TO MENU";
+        gm3 = "A ATTACK Q QUIT TO MENU";
         gm4 = "";
         show_sector();
         return;
@@ -2144,6 +2202,7 @@ static void cap_credits(void) {
 }
 static void dock_count(void) {
     if (gdept == 0u) { gtmp = 8u; }
+    else if (gdept == 2u) { gtmp = 5u; }
     else { gtmp = 4u; }
 }
 static void draw_dockhead(void) {
@@ -2205,6 +2264,12 @@ static void draw_dockmsgs(void) {
         gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
         gdstr = "WITHDREW BAL "; draw_text();
         gn = gbank; draw_num();
+        return;
+    }
+    if (gdockmsg == 20u) {
+        gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+        gdstr = "PHOTON ABOARD TOT "; draw_text();
+        gn = gphotons; draw_num();
         return;
     }
     if (gdockmsg == 9u) {
@@ -2328,6 +2393,7 @@ static void draw_dockopts(void) {
             if (gi == 0u) { gdstr = "BUY PROBE 500"; }
             else if (gi == 1u) { gdstr = "BUY BEACON 100"; }
             else if (gi == 2u) { gdstr = "BUY GENESIS 5000"; }
+            else if (gi == 3u) { gdstr = "BUY PHOTON 500"; }
             else { gdstr = "BACK"; }
         } else if (gdept == 3u) {
             if (gi == 0u) { gdstr = "DEPOSIT 1000"; }
@@ -2530,6 +2596,29 @@ static void dock_buygenesis(void) {
     gm2 = "USE ON EMPTY SECTOR (M6)";
     show_dock();
 }
+static void dock_buyphoton(void) {
+    if (gphotons >= 3u) {
+        gdockmsg = 0u;
+        gm1 = "PHOTON RACKS FULL";
+        gm1pal = PAL_RED;
+        gm2 = "MAX 3 ABOARD";
+        show_dock();
+        return;
+    }
+    if (gcredits < 500u) {
+        gdockmsg = 0u;
+        gm1 = "NEED 500 CREDITS";
+        gm1pal = PAL_RED;
+        gm2 = "PHOTON MISSILE PRICE";
+        show_dock();
+        return;
+    }
+    gcredits -= 500u;
+    gphotons++;
+    gdockmsg = 20u;
+    sram_sync();
+    show_dock();
+}
 static void dock_deposit(void) {
     if (gcredits < 1000u) {
         gdockmsg = 0u;
@@ -2710,6 +2799,17 @@ static void dock_exec(void) {
         }
         return;
     }
+    if (gdept == 2u) {
+        if (gdocksel == 4u) {
+            dock_back();
+            return;
+        }
+        if (gdocksel == 0u) { dock_buyprobe(); }
+        else if (gdocksel == 1u) { dock_buybeacon(); }
+        else if (gdocksel == 2u) { dock_buygenesis(); }
+        else { dock_buyphoton(); }
+        return;
+    }
     if (gdocksel == 3u) {
         dock_back();
         return;
@@ -2718,10 +2818,6 @@ static void dock_exec(void) {
         if (gdocksel == 0u) { dock_buyholds(); }
         else if (gdocksel == 1u) { dock_buyftrs(); }
         else { dock_buyshields(); }
-    } else if (gdept == 2u) {
-        if (gdocksel == 0u) { dock_buyprobe(); }
-        else if (gdocksel == 1u) { dock_buybeacon(); }
-        else { dock_buygenesis(); }
     } else if (gdept == 3u) {
         if (gdocksel == 0u) { dock_deposit(); }
         else if (gdocksel == 1u) { dock_withdraw(); }
@@ -3272,6 +3368,312 @@ static void tick_planet(void) {
         return;
     }
 }
+/* ---- Milestone 7: Combat System (TradeWars 2002 ship combat) ----
+ * Enemy = the sector's fighter force (gftrs * 3, reinforced when
+ * engaged) in a random ship class with class odds.
+ * Combat math: (enemy_ftrs * enemy_odds) / your_odds = min fighters
+ * to win. Photon missile strips shields and blinds defenses (odds
+ * halved). Corbomite detonates mutually. Escape pod survives a
+ * destroyed ship (buy a new one at the shipyard).
+ */
+static void ship_name(void) {
+    if (gencls == 0u) { gdstr = "MER CRU"; }
+    else if (gencls == 1u) { gdstr = "SCO MAR"; }
+    else if (gencls == 2u) { gdstr = "MIS FRI"; }
+    else if (gencls == 3u) { gdstr = "COR BAT"; }
+    else if (gencls == 4u) { gdstr = "COR FLA"; }
+    else if (gencls == 5u) { gdstr = "COL TRA"; }
+    else if (gencls == 6u) { gdstr = "CAR TRA"; }
+    else if (gencls == 7u) { gdstr = "MER FRE"; }
+    else if (gencls == 8u) { gdstr = "IMP STA"; }
+    else if (gencls == 9u) { gdstr = "HAV GUN"; }
+    else if (gencls == 10u) { gdstr = "STA MAS"; }
+    else if (gencls == 11u) { gdstr = "CON STE"; }
+    else if (gencls == 12u) { gdstr = "TKH ORI"; }
+    else if (gencls == 13u) { gdstr = "THO SEN"; }
+    else { gdstr = "TAU MUL"; }
+}
+static void gen_enemy(void) {
+    sec_seed();
+    gencls = (uint8_t)((ghash >> 8) & 15u);
+    if (gencls >= 15u) gencls = 14u;
+    genftrs = (uint16_t)((uint16_t)gftrs * 3u);
+    gensh = (uint16_t)((ghash & 15u) * 10u);
+    gencorb = (uint8_t)((ghash >> 12) & 3u);
+    gblind = 0u;
+}
+static void fight_odds(void) {
+    gtmp = (uint16_t)shipoff[gencls];
+    gn = (uint16_t)shipdef[gencls];
+    gsav = (uint16_t)((genftrs * gtmp) / (gn == 0u ? 1u : gn));
+    if (gblind) {
+        gsav = (uint16_t)(gsav >> 1);
+    }
+    if (gsav < 1u) gsav = 1u;
+    if (gsav > 9999u) gsav = 9999u;
+}
+static void draw_fighthead(void) {
+    gdx = 0u; gdy = 0u; gdpal = PAL_RED;
+    gdstr = "COMBAT: "; draw_text();
+    gdpal = PAL_YEL; ship_name(); draw_text();
+    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
+    gdstr = rulerow; draw_text();
+    gdx = 0u; gdy = 2u; gdpal = PAL_GRAY;
+    gdstr = "ENEMY FTRS "; draw_text();
+    gdpal = PAL_WHITE; gn = genftrs; draw_num();
+    gdpal = PAL_GRAY; gdstr = " SH "; draw_text();
+    gdpal = PAL_WHITE; gn = gensh; draw_num();
+    gdx = 0u; gdy = 3u; gdpal = PAL_GRAY;
+    gdstr = "ODDS "; draw_text();
+    gdpal = PAL_WHITE; gn = (uint16_t)shipoff[gencls]; draw_num();
+    gdstr = "/"; draw_text();
+    gn = (uint16_t)shipdef[gencls]; draw_num();
+    gdx = 0u; gdy = 4u; gdpal = PAL_GRAY;
+    gdstr = "YOUR FTRS "; draw_text();
+    gdpal = PAL_WHITE; gn = gfighters; draw_num();
+    gdpal = PAL_GRAY; gdstr = " SH "; draw_text();
+    gdpal = PAL_WHITE; gn = gshields; draw_num();
+    gdx = 0u; gdy = 5u; gdpal = PAL_BLUE;
+    gdstr = rulerow; draw_text();
+}
+static void draw_fightmsgs(void) {
+    if (gfightover == 1u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_YEL;
+        gdstr = "ENEMY DESTROYED!"; draw_text();
+        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+        gdstr = "BOUNTY "; draw_text(); gn = gbounty; draw_num();
+        gdstr = " CR XP +"; draw_text(); gn = (gbounty / 100u) + 5u; draw_num();
+        return;
+    }
+    if (gfightover == 2u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_RED;
+        gdstr = "YOU WERE DESTROYED!"; draw_text();
+        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+        if (gphotons > 0u) {
+            gdstr = "PHOTON SAVES POD!"; draw_text();
+        } else if (gencorb) {
+            gdstr = "CORBOMITE RETALIATES!"; draw_text();
+        } else {
+            gdstr = "ESCAPE POD LAUNCHED"; draw_text();
+        }
+        return;
+    }
+    if (gfightover == 3u) {
+        gdx = 0u; gdy = 7u; gdpal = PAL_CYAN;
+        gdstr = "ESCAPED TO SECTOR "; draw_text();
+        gn = glastsec; draw_num();
+        return;
+    }
+    gdx = 0u; gdy = 7u; gdpal = gm1pal;
+    gdstr = gm1; draw_text();
+    gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
+    gdstr = gm2; draw_text();
+    gdx = 0u; gdy = 9u; gdpal = PAL_WHITE;
+    gdstr = gm3; draw_text();
+    gdx = 0u; gdy = 10u; gdpal = PAL_WHITE;
+    gdstr = gm4; draw_text();
+}
+static void draw_fightopts(void) {
+    gi = 0u;
+    while (gi < 5u) {
+        gdx = 2u; gdy = (uint8_t)(12u + gi);
+        if (gi == gfightsel) {
+            gdpal = PAL_CYAN; gdstr = ">"; draw_text();
+            gdpal = PAL_YEL;
+        } else {
+            gdpal = PAL_WHITE; gdstr = " "; draw_text();
+            gdpal = PAL_WHITE;
+        }
+        gdx = 4u;
+        if (gi == 0u) { gdstr = "A ATTACK"; }
+        else if (gi == 1u) { gdstr = "P PHOTON"; }
+        else if (gi == 2u) { gdstr = "C CORBOMITE"; }
+        else if (gi == 3u) { gdstr = "E ESCAPE"; }
+        else { gdstr = "R RETREAT"; }
+        draw_text();
+        gi++;
+    }
+}
+static void draw_fightfoot(void) {
+    gdpal = PAL_GRAY;
+    gdy = 18u; gdx = 0u; gdstr = "MIN TO WIN "; draw_text();
+    fight_odds();
+    gdpal = PAL_WHITE; gn = gsav; draw_num();
+    gdy = 19u; gdx = 0u; gdstr = "A:DO IT B:SECTOR"; draw_text();
+}
+static void show_fight(void) {
+    REG_INIDISP = 0x80u;
+    clear_map();
+    draw_fighthead();
+    draw_fightmsgs();
+    draw_fightopts();
+    draw_fightfoot();
+    REG_TM = 0x01u;
+    REG_INIDISP = 0x0Fu;
+    gstate = ST_FIGHT;
+    gframe = 0u;
+}
+static void fight_attack(void) {
+    fight_odds();
+    if (gfighters >= gsav) {
+        gfighters -= gsav;
+        genftrs = 0u;
+        gfightover = 1u;
+        gbounty = (uint16_t)((uint16_t)gencls * 100u + 500u);
+        gcredits += gbounty;
+        gxp += (uint16_t)(gbounty / 100u) + 5u;
+        gm1 = "VICTORY!";
+        gm1pal = PAL_YEL;
+        gm2 = "ENEMY VAPORIZED";
+        gm3 = "";
+        gm4 = "";
+        sram_sync();
+    } else {
+        gfighters = 0u;
+        gfightover = 2u;
+        if (gphotons > 0u) {
+            gphotons--;
+            gm1 = "PHOTON USED!";
+            gm2 = "POD ESCAPES, SHIP LOST";
+            gm3 = "";
+            gm4 = "";
+        } else if (gencorb) {
+            gencorb--;
+            galign -= 10;
+            if (galign < -999) galign = -999;
+            gm1 = "CORBOMITE FIRES!";
+            gm2 = "SHIP LOST ALIGN -10";
+            gm3 = "";
+            gm4 = "";
+        } else {
+            gm1 = "ESCAPE POD...";
+            gm2 = "YOU SURVIVE, SHIP LOST";
+            gm3 = "";
+            gm4 = "";
+        }
+        sram_sync();
+    }
+    show_fight();
+}
+static void fight_photon(void) {
+    if (gphotons == 0u) {
+        gm1 = "NO PHOTONS";
+        gm1pal = PAL_RED;
+        gm2 = "BUY AT STARDOCK HARDWARE";
+        gm3 = "";
+        gm4 = "";
+        show_fight();
+        return;
+    }
+    gphotons--;
+    gensh = 0u;
+    gblind = 1u;
+    gm1 = "PHOTON LAUNCHED!";
+    gm1pal = PAL_YEL;
+    gm2 = "ENEMY SHIELDS DOWN";
+    gm3 = "DEFENSES BLINDED";
+    gm4 = "";
+    sram_sync();
+    show_fight();
+}
+static void fight_corbomite(void) {
+    if (gencorb == 0u) {
+        gm1 = "NO CORBOMITE";
+        gm1pal = PAL_RED;
+        gm2 = "ENEMY HAS NONE";
+        gm3 = "";
+        gm4 = "";
+        show_fight();
+        return;
+    }
+    gencorb--;
+    gfighters = (uint16_t)(gfighters / 2u);
+    genftrs = (uint16_t)(genftrs / 2u);
+    gm1 = "CORBOMITE DETONATED!";
+    gm1pal = PAL_YEL;
+    gm2 = "BOTH SIDES HALVED";
+    gm3 = "";
+    gm4 = "";
+    show_fight();
+}
+static void fight_escape(void) {
+    if (gfighters == 0u) {
+        gm1 = "NO FIGHTERS LEFT";
+        gm1pal = PAL_RED;
+        gm2 = "CANNOT ESCAPE";
+        gm3 = "";
+        gm4 = "";
+        show_fight();
+        return;
+    }
+    gfighters = (uint16_t)(gfighters / 2u);
+    gturns--;
+    gsec = gwarps[0];
+    if (gsec == 0u || gsec > guniv) gsec = 1u;
+    glastsec = gsec;
+    gfightover = 3u;
+    gwarpsel = 0u;
+    gcmdopen = 0u;
+    sram_sync();
+    show_fight();
+}
+static void fight_retreat(void) {
+    gturns--;
+    gfightover = 0u;
+    gcmdopen = 0u;
+    show_sector();
+}
+static void tick_fight(void) {
+    wait_vblank();
+    gframe++;
+    read_pads();
+    if (gfightover) {
+        if (gj_new & (PB_A | PB_START | PB_B)) {
+            if (gfightover == 1u) {
+                gfightover = 0u;
+                gcmdopen = 0u;
+                show_sector();
+            } else if (gfightover == 2u) {
+                if (gphotons > 0u || gencorb) {
+                    gfightover = 0u;
+                    gcmdopen = 0u;
+                    show_sector();
+                } else {
+                    show_menu();
+                }
+            } else {
+                gfightover = 0u;
+                gcmdopen = 0u;
+                show_sector();
+            }
+        }
+        return;
+    }
+    if (gj_dir & PB_UP) {
+        if (gfightsel == 0u) { gfightsel = 4u; }
+        else { gfightsel--; }
+        show_fight();
+        return;
+    }
+    if (gj_dir & PB_DOWN) {
+        gfightsel++;
+        if (gfightsel >= 5u) gfightsel = 0u;
+        show_fight();
+        return;
+    }
+    if (gj_new & (PB_A | PB_START)) {
+        if (gfightsel == 0u) { fight_attack(); }
+        else if (gfightsel == 1u) { fight_photon(); }
+        else if (gfightsel == 2u) { fight_corbomite(); }
+        else if (gfightsel == 3u) { fight_escape(); }
+        else { fight_retreat(); }
+        return;
+    }
+    if (gj_new & PB_B) {
+        fight_retreat();
+        return;
+    }
+}
 static void tick_menu(void) {
     wait_vblank();
     gframe++;
@@ -3477,6 +3879,8 @@ static void tick_once(void) {
             tick_dock();
         } else if (gstate == ST_PLANET) {
             tick_planet();
+        } else if (gstate == ST_FIGHT) {
+            tick_fight();
         } else if (gstate == ST_ATTRACT) {
             tick_attract();
         } else {
