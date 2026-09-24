@@ -1,24 +1,14 @@
-; Far bank data for self-drive script tables (BANK1, CPU $018000+)
-; These tables are too large for bank 0 ROM, so they live in BANK1
-; and are read via the _far_tbl leaf helper (16-bit X offset from
-; $018000). C never takes their addresses directly (16-bit C refs
-; would truncate the bank); it passes per-table offsets.
+; Self-drive tour 1-3 script tables (BANK1, FARRODATA segment).
+; Too large for bank 0 ROM; read via the _farbyt leaf helper in
+; far_tbl.s (16-bit X offset from $018000). C passes per-table
+; offsets (FT_* in main.c); it never takes these symbols'
+; addresses directly (16-bit refs would truncate the bank).
 ;
-; Layout (offset from $018000):
-;   _scf   0    _scf4  580   _scf5  748   _scf6  756
-;   _scp   92   _scp4  664   _scp5  752   _scp6  770
+; FARRODATA starts at $018C00: right after the 3072-byte FARFONT
+; ($018000-$018BFF). If the font size changes, the FT_* bases move.
 
-.export _scf, _scp, _scf2, _scp2, _scf3, _scp3, _scf4, _scp4, _scf5, _scp5, _scf6, _scp6
-.export _far_tbl
-
-.proc _far_tbl: near
-    rep #$10
-    .i16
-    lda $018000,x
-    sep #$10
-    .i8
-    rts
-.endproc
+.export _scf, _scp, _scf2, _scp2, _scf3, _scp3
+.export _scf4, _scp4, _scf5, _scp5, _scf6, _scp6
 
 .segment "FARRODATA"
 
@@ -95,3 +85,40 @@ _scp3:
     .byte 3,0,6,0,3,0,6,0,8,0
     .byte 3,0,3,0,3,0,3,0,3,0
     .byte 6,0
+
+; Tour 4 (gselfdrive=4): scf4[84], scp4[84]
+_scf4:
+    .byte 3,4,9,10,15,16,21,22,27,28
+    .byte 40,41,46,47,52,53,58,59,64,65
+    .byte 70,71,76,77,82,83,88,89,94,95
+    .byte 100,101,106,107,112,113,116,117,120,121
+    .byte 124,125,128,129,132,133,136,137,140,141
+    .byte 144,145,148,149,152,153,156,157,160,161
+    .byte 164,165,168,169,172,173,176,177,180,181
+    .byte 184,185
+
+_scp4:
+    .byte 1,0,3,0,3,0,3,0,6,0
+    .byte 7,0,2,0,2,0,6,0,7,0
+    .byte 2,0,6,0,1,0,1,0,6,0
+    .byte 3,0,2,0,6,0,8,0,3,0
+    .byte 3,0,3,0,3,0,3,0,6,0
+    .byte 6,0,3,0,6,0,3,0,6,0
+    .byte 3,0,3,0,3,0,6,0,3,0
+    .byte 3,0,6,0,3,0,6,0,8,0
+    .byte 3,0,3,0,3,0,3,0,3,0
+    .byte 6,0
+
+; Tour 5 (gselfdrive=5): scf5[4], scp5[4]
+_scf5:
+    .byte 2,3,8,9
+
+_scp5:
+    .byte 6,0,6,0
+
+; Tour 6 (gselfdrive=6): scf6[14], scp6[14]
+_scf6:
+    .byte 2,3,8,9,14,15,20,21,26,27,32,33,38,39
+
+_scp6:
+    .byte 6,0,6,0,6,0,6,0,6,0,6,0,6,0

@@ -85,9 +85,25 @@ typedef short int16_t;
 #define SCN 92u
 #define SCN2 106u
 #define SCN3 92u
-#define SCN4 64u
-#define SCN5 8u
+#define SCN4 84u
+#define SCN5 4u
 #define SCN6 14u
+/* Bank-1 tour table bases (FARRODATA starts at $018C00, right after
+   the 3072-byte FARFONT at $018000-$018BFF); see far_data.s/far_tbl.s.
+   C reads these tables only through farbyt(); no 16-bit addressing. */
+#define FT_BASE 0x0C00u
+#define FT_SC   (FT_BASE + 0u)
+#define FT_SCP  (FT_BASE + 92u)
+#define FT_SC2  (FT_BASE + 184u)
+#define FT_SCP2 (FT_BASE + 290u)
+#define FT_SC3  (FT_BASE + 396u)
+#define FT_SCP3 (FT_BASE + 488u)
+#define FT_SC4  (FT_BASE + 584u)
+#define FT_SCP4 (FT_BASE + 668u)
+#define FT_SC5  (FT_BASE + 752u)
+#define FT_SCP5 (FT_BASE + 756u)
+#define FT_SC6  (FT_BASE + 760u)
+#define FT_SCP6 (FT_BASE + 774u)
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -123,6 +139,10 @@ uint8_t gact;
 const uint8_t *gftab;
 const uint8_t *gatab;
 uint8_t gflim;
+uint8_t gscr_f;
+uint16_t gscr_b;
+uint16_t gscr_b2;
+uint16_t gfar_o;
 char gname[9];
 char gship[9];
 char *gbuf;
@@ -221,6 +241,7 @@ uint16_t glastsec;
 void sram_wr(void);
 void sram_rd(void);
 void font_load(void);
+uint8_t farbyt(void);
 const uint8_t palc1[16] = {
     0xFF, 0x7F, 0x10, 0x42, 0x1F, 0x00, 0x0C, 0x00,
     0x00, 0x7C, 0x00, 0x2C, 0xE0, 0x7F, 0xFF, 0x03,
@@ -231,80 +252,6 @@ const uint8_t bitmask[8] = { 1u, 2u, 4u, 8u, 16u, 32u, 64u, 128u };
 const char rulerow[33] = "--------------------------------";
 const uint8_t clsides[9] = { 6u, 5u, 3u, 1u, 2u, 4u, 0u, 7u, 4u };
 const uint16_t citcost[6] = { 0u, 0u, 2000u, 5000u, 10000u, 20000u };
-const uint8_t scf[92] = {
-    3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
-    40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
-    70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
-    100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
-    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 140u, 141u,
-    148u, 149u, 152u, 153u, 160u, 161u, 164u, 165u, 168u, 169u,
-    176u, 177u, 180u, 181u, 184u, 185u, 188u, 189u, 196u, 197u,
-    200u, 201u, 208u, 209u, 212u, 213u, 216u, 217u, 220u, 221u,
-    224u, 225u, 228u, 229u, 232u, 233u, 236u, 237u, 240u, 241u,
-    244u, 245u,
-};
-const uint8_t scp[92] = {
-    1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
-    7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
-    2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
-    3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 6u, 0u,
-    3u, 0u, 6u, 0u, 2u, 0u, 5u, 0u, 6u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u,
-    6u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u,
-    6u, 0u, 3u, 0u, 6u, 0u, 7u, 0u, 3u, 0u,
-    6u, 0u,
-};
-const uint8_t scf2[106] = {
-    3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
-    40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
-    70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
-    100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
-    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 140u, 141u,
-    144u, 145u, 148u, 149u, 152u, 153u, 156u, 157u, 160u, 161u,
-    164u, 165u, 168u, 169u, 172u, 173u, 176u, 177u, 180u, 181u,
-    184u, 185u, 188u, 189u, 192u, 193u, 196u, 197u, 200u, 201u,
-    204u, 205u, 208u, 209u, 212u, 213u, 216u, 217u, 220u, 221u,
-    224u, 225u, 228u, 229u, 232u, 233u, 236u, 237u, 240u, 241u,
-    244u, 245u, 248u, 249u, 252u, 253u,
-};
-const uint8_t scp2[106] = {
-    1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
-    7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
-    2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
-    3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
-    6u, 0u, 6u, 0u, 2u, 0u, 6u, 0u, 3u, 0u,
-    6u, 0u, 6u, 0u, 2u, 0u, 6u, 0u, 3u, 0u,
-    6u, 0u, 6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
-    6u, 0u, 3u, 0u, 6u, 0u, 6u, 0u, 3u, 0u,
-    6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
-    3u, 0u, 6u, 0u, 6u, 0u,
-};
-const uint8_t scf3[92] = {
-    3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
-    40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
-    70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
-    100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
-    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 140u, 141u,
-    144u, 145u, 148u, 149u, 152u, 153u, 156u, 157u, 160u, 161u,
-    164u, 165u, 168u, 169u, 172u, 173u, 176u, 177u, 180u, 181u,
-    184u, 185u, 188u, 189u, 192u, 193u, 196u, 197u, 200u, 201u,
-    204u, 205u, 208u, 209u, 212u, 213u, 216u, 217u, 220u, 221u,
-    224u, 225u,
-};
-const uint8_t scp3[92] = {
-    1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
-    7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
-    2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
-    3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
-    6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
-    3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u, 8u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u,
-    6u, 0u,
-};
 /* M7 combat: 15 ship classes, offensive/defensive odds (TW2002 tables) */
 const uint8_t shipoff[15] = {
     10u, 8u, 11u, 12u, 10u, 6u, 10u, 10u,
@@ -316,39 +263,6 @@ const uint8_t shipdef[15] = {
 };
 /* M7 combat tour (selfdrive 4): new game -> photon buy -> warp sec 3 ->
    ATTACK -> photon -> attack -> victory. 84 steps, 8-bit frames. */
-const uint8_t scf4[84] = {
-    3u, 4u, 10u, 11u, 16u, 17u, 22u, 23u, 28u, 29u,
-    34u, 35u, 40u, 41u, 44u, 45u, 48u, 49u, 52u, 53u,
-    56u, 57u, 60u, 61u, 64u, 65u, 68u, 69u, 72u, 73u,
-    76u, 77u, 80u, 81u, 84u, 85u, 88u, 89u, 92u, 93u,
-    96u, 97u, 100u, 101u, 104u, 105u, 108u, 109u, 112u, 113u,
-    116u, 117u, 120u, 121u, 126u, 127u, 132u, 133u, 138u, 139u,
-    142u, 143u, 146u, 147u, 150u, 151u, 154u, 155u, 158u, 159u,
-    162u, 163u, 166u, 167u, 172u, 173u, 176u, 177u, 182u, 183u,
-    186u, 187u, 192u, 193u,
-};
-const uint8_t scp4[84] = {
-    1u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
-    6u, 0u, 8u, 0u, 3u, 0u, 3u, 0u, 3u, 0u,
-    3u, 0u, 6u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
-    6u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u,
-    6u, 0u, 5u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
-    3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
-    3u, 0u, 6u, 0u, 2u, 0u, 6u, 0u, 6u, 0u,
-};
-/* M7 defeat tour (selfdrive 5): attack -> destroyed -> escape pod -> menu */
-const uint8_t scf5[4] = { 2u, 3u, 8u, 9u };
-const uint8_t scp5[4] = { 6u, 0u, 6u, 0u };
-/* M7 corbomite tour (selfdrive 6): corbomite -> attack -> victory */
-const uint8_t scf6[14] = {
-    2u, 3u, 4u, 5u, 8u, 9u, 12u, 13u,
-    14u, 15u, 18u, 19u, 24u, 25u,
-};
-const uint8_t scp6[14] = {
-    3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u,
-    2u, 0u, 6u, 0u, 6u, 0u,
-};
 static void show_sum(void);
 static void show_sector(void);
 static void show_menu(void);
@@ -413,24 +327,30 @@ static void wait_vblank(void) {
     }
     gsfr++;
 }
+/* Tours 1-3: tables in bank 1 (FARRODATA), read via farbyt().
+   Tours 4-6 (M7): small tables in bank 0, indexed directly. */
+/* All tours (1-6) now use bank-1 FARRODATA tables via farbyt(). */
 static void script_pads(void) {
     gsclk = (uint8_t)(gsfr >> 4);
     if (gselfdrive == 4u) {
-        gftab = scf4; gatab = scp4; gflim = SCN4;
+        gscr_f = 1u; gscr_b = FT_SC4; gscr_b2 = FT_SCP4; gflim = SCN4;
     } else if (gselfdrive == 5u) {
-        gftab = scf5; gatab = scp5; gflim = SCN5;
+        gscr_f = 1u; gscr_b = FT_SC5; gscr_b2 = FT_SCP5; gflim = SCN5;
     } else if (gselfdrive == 6u) {
-        gftab = scf6; gatab = scp6; gflim = SCN6;
+        gscr_f = 1u; gscr_b = FT_SC6; gscr_b2 = FT_SCP6; gflim = SCN6;
     } else if (gselfdrive == 3u) {
-        gftab = scf3; gatab = scp3; gflim = SCN3;
+        gscr_f = 1u; gscr_b = FT_SC3; gscr_b2 = FT_SCP3; gflim = SCN3;
     } else if (gselfdrive == 2u) {
-        gftab = scf2; gatab = scp2; gflim = SCN2;
+        gscr_f = 1u; gscr_b = FT_SC2; gscr_b2 = FT_SCP2; gflim = SCN2;
     } else {
-        gftab = scf; gatab = scp; gflim = SCN;
+        gscr_f = 1u; gscr_b = FT_SC; gscr_b2 = FT_SCP; gflim = SCN;
     }
     while (gsi < gflim) {
-        if (gsclk < gftab[gsi]) break;
-        gact = gatab[gsi];
+        gfar_o = (uint16_t)(gscr_b + gsi);
+        gact = farbyt();
+        if (gsclk < gact) break;
+        gfar_o = (uint16_t)(gscr_b2 + gsi);
+        gact = farbyt();
         if (gact == 0u) { gj_held = 0u; }
         else if (gact == 1u) { gj_held = PB_START; }
         else if (gact == 2u) { gj_held = PB_UP; }
