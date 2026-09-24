@@ -69,7 +69,6 @@ typedef short int16_t;
 #define ST_PORT 12u
 #define ST_DOCK 13u
 #define ST_PLANET 14u
-#define ST_FIGHT 15u
 #define PB_UP 0x0008u
 #define PB_DOWN 0x0004u
 #define PB_LEFT 0x0002u
@@ -202,18 +201,6 @@ uint16_t gcolsec;
 uint8_t gcolsel;
 uint8_t gplsel;
 uint8_t gplmsg;
-uint16_t gunivseed;
-uint8_t gshipcls;
-uint8_t gphotons;
-uint16_t glastsec;
-uint8_t gencls;
-uint16_t genftrs;
-uint16_t gensh;
-uint8_t gencorb;
-uint8_t gblind;
-uint16_t gbounty;
-uint8_t gfightover;
-uint8_t gfightsel;
 void sram_wr(void);
 void sram_rd(void);
 void font_load(void);
@@ -227,44 +214,88 @@ const uint8_t bitmask[8] = { 1u, 2u, 4u, 8u, 16u, 32u, 64u, 128u };
 const char rulerow[33] = "--------------------------------";
 const uint8_t clsides[9] = { 6u, 5u, 3u, 1u, 2u, 4u, 0u, 7u, 4u };
 const uint16_t citcost[6] = { 0u, 0u, 2000u, 5000u, 10000u, 20000u };
-const uint8_t shipholds[15] = {
-    20u, 10u, 30u, 40u, 85u, 250u, 60u, 60u,
-    150u, 50u, 70u, 40u, 45u, 55u, 80u,
+const uint8_t scf[92] = {
+    3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
+    40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
+    70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
+    100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
+    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 140u, 141u,
+    148u, 149u, 152u, 153u, 160u, 161u, 164u, 165u, 168u, 169u,
+    176u, 177u, 180u, 181u, 184u, 185u, 188u, 189u, 196u, 197u,
+    200u, 201u, 208u, 209u, 212u, 213u, 216u, 217u, 220u, 221u,
+    224u, 225u, 228u, 229u, 232u, 233u, 236u, 237u, 240u, 241u,
+    244u, 245u,
 };
-const uint16_t shipftrs[15] = {
-    500u, 100u, 800u, 1500u, 2500u, 300u, 1200u, 1000u,
-    3000u, 2500u, 2000u, 1800u, 2000u, 2200u, 600u,
+const uint8_t scp[92] = {
+    1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
+    2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
+    3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 6u, 0u,
+    3u, 0u, 6u, 0u, 2u, 0u, 5u, 0u, 6u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u,
+    6u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 2u, 0u,
+    6u, 0u, 3u, 0u, 6u, 0u, 7u, 0u, 3u, 0u,
+    6u, 0u,
 };
-const uint16_t shipsh[15] = {
-    200u, 50u, 300u, 500u, 400u, 100u, 400u, 500u,
-    800u, 700u, 600u, 600u, 650u, 700u, 300u,
+const uint8_t scf2[106] = {
+    3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
+    40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
+    70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
+    100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
+    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 140u, 141u,
+    144u, 145u, 148u, 149u, 152u, 153u, 156u, 157u, 160u, 161u,
+    164u, 165u, 168u, 169u, 172u, 173u, 176u, 177u, 180u, 181u,
+    184u, 185u, 188u, 189u, 192u, 193u, 196u, 197u, 200u, 201u,
+    204u, 205u, 208u, 209u, 212u, 213u, 216u, 217u, 220u, 221u,
+    224u, 225u, 228u, 229u, 232u, 233u, 236u, 237u, 240u, 241u,
+    244u, 245u, 248u, 249u, 252u, 253u,
 };
-extern const uint8_t scf[92];
-extern const uint8_t scp[92];
-extern const uint8_t scf2[106];
-extern const uint8_t scp2[106];
-extern const uint8_t scf3[92];
-extern const uint8_t scp3[92];
-const uint8_t shipoff[15] = {
-    10u, 8u, 11u, 12u, 10u, 6u, 10u, 10u,
-    12u, 13u, 11u, 11u, 12u, 13u, 7u,
+const uint8_t scp2[106] = {
+    1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
+    2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
+    3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 6u, 0u, 2u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 6u, 0u, 2u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 3u, 0u, 6u, 0u, 6u, 0u, 3u, 0u,
+    6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
+    3u, 0u, 6u, 0u, 6u, 0u,
 };
-const uint8_t shipdef[15] = {
-    10u, 8u, 10u, 11u, 12u, 6u, 10u, 11u,
-    12u, 10u, 12u, 13u, 12u, 11u, 9u,
+const uint8_t scf3[92] = {
+    3u, 4u, 9u, 10u, 15u, 16u, 21u, 22u, 27u, 28u,
+    40u, 41u, 46u, 47u, 52u, 53u, 58u, 59u, 64u, 65u,
+    70u, 71u, 76u, 77u, 82u, 83u, 88u, 89u, 94u, 95u,
+    100u, 101u, 106u, 107u, 112u, 113u, 116u, 117u, 120u, 121u,
+    124u, 125u, 128u, 129u, 132u, 133u, 136u, 137u, 140u, 141u,
+    144u, 145u, 148u, 149u, 152u, 153u, 156u, 157u, 160u, 161u,
+    164u, 165u, 168u, 169u, 172u, 173u, 176u, 177u, 180u, 181u,
+    184u, 185u, 188u, 189u, 192u, 193u, 196u, 197u, 200u, 201u,
+    204u, 205u, 208u, 209u, 212u, 213u, 216u, 217u, 220u, 221u,
+    224u, 225u,
 };
-#pragma rodata-name ("FARRODATA")
+const uint8_t scp3[92] = {
+    1u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    7u, 0u, 2u, 0u, 2u, 0u, 6u, 0u, 7u, 0u,
+    2u, 0u, 6u, 0u, 1u, 0u, 1u, 0u, 6u, 0u,
+    3u, 0u, 2u, 0u, 6u, 0u, 8u, 0u, 3u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u,
+    6u, 0u, 3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 6u, 0u, 3u, 0u,
+    3u, 0u, 6u, 0u, 3u, 0u, 6u, 0u, 8u, 0u,
+    3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u, 3u, 0u,
+    6u, 0u,
+};
 static void show_sum(void);
 static void show_sector(void);
 static void show_menu(void);
 static void show_loadret(void);
 static void show_dock(void);
 static void show_planet(void);
-static void show_fight(void);
 static void planet_fresh(void);
 static void planet_genesis(void);
-static void fight_start(void);
-static void gen_enemy(void);
 static void draw_num(void);
 static void sram_sync(void);
 static void sram_load(void);
@@ -1046,7 +1077,6 @@ static void univ_size(void) {
 }
 static void sec_seed(void) {
     ghash = gsec;
-    ghash ^= gunivseed;
     ghash ^= (uint16_t)(ghash << 7);
     ghash ^= (uint16_t)(ghash >> 5);
     ghash ^= (uint16_t)(ghash << 3);
@@ -1355,7 +1385,7 @@ static void draw_cmdarea(void) {
         gdx = 0u; gdy = 17u; gdpal = PAL_CYAN;
         gdstr = "COMMANDS:"; draw_text();
         gi = 0u;
-        while (gi < 8u) {
+        while (gi < 7u) {
             gdx = 4u; gdy = (uint8_t)(18u + gi);
             if (gi == gcmdsel) {
                 gdpal = PAL_CYAN; gdstr = ">"; draw_text();
@@ -1371,7 +1401,6 @@ static void draw_cmdarea(void) {
             else if (gi == 3u) { gdstr = "C COURSE PLOT"; }
             else if (gi == 4u) { gdstr = "P PORT"; }
             else if (gi == 5u) { gdstr = "L LAND"; }
-            else if (gi == 6u) { gdstr = "A ATTACK"; }
             else { gdstr = "Q QUIT"; }
             draw_text();
             gi++;
@@ -1509,28 +1538,6 @@ static void exec_cmd(void) {
             gm1 = "NO PLANET HERE";
             gm1pal = PAL_RED;
             gm2 = "NEED GENESIS TORP (5000)";
-            gm3 = "";
-            gm4 = "";
-            show_sector();
-        }
-    } else if (gcmdsel == 6u) {
-        gcmdopen = 0u;
-        if (gftrs > 0u) {
-            glastsec = gsec;
-            gen_enemy();
-            gfightsel = 0u;
-            gfightover = 0u;
-            gm1 = "ENGAGING ENEMY!";
-            gm1pal = PAL_RED;
-            gm2 = "PREPARE FOR BATTLE";
-            gm3 = "";
-            gm4 = "";
-            show_fight();
-        } else {
-            gmsgmode = 0u;
-            gm1 = "NO HOSTILES HERE";
-            gm1pal = PAL_GRAY;
-            gm2 = "SECTOR IS CLEAR";
             gm3 = "";
             gm4 = "";
             show_sector();
@@ -3265,317 +3272,6 @@ static void tick_planet(void) {
         return;
     }
 }
-
-/* ---- Milestone 7: Combat System (TradeWars 2002 ship combat) ----
- * Ship vs Ship: offensive/defensive odds, fighters, shields.
- * Combat math: (enemy_ftrs * enemy_odds) / your_odds = min fighters to win.
- * 15 ship classes with unique stats. Photon missiles, corbomite, escape pod.
- */
-static void ship_name(void) {
-    if (gencls == 0u) { gdstr = "MER CRU"; }
-    else if (gencls == 1u) { gdstr = "SCO MAR"; }
-    else if (gencls == 2u) { gdstr = "MIS FRI"; }
-    else if (gencls == 3u) { gdstr = "COR BAT"; }
-    else if (gencls == 4u) { gdstr = "COR FLA"; }
-    else if (gencls == 5u) { gdstr = "COL TRA"; }
-    else if (gencls == 6u) { gdstr = "CAR TRA"; }
-    else if (gencls == 7u) { gdstr = "MER FRE"; }
-    else if (gencls == 8u) { gdstr = "IMP STA"; }
-    else if (gencls == 9u) { gdstr = "HAV GUN"; }
-    else if (gencls == 10u) { gdstr = "STA MAS"; }
-    else if (gencls == 11u) { gdstr = "CON STE"; }
-    else if (gencls == 12u) { gdstr = "TKH ORI"; }
-    else if (gencls == 13u) { gdstr = "THO SEN"; }
-    else { gdstr = "TAU MUL"; }
-}
-
-static void gen_enemy(void) {
-    sec_seed();
-    gencls = (uint8_t)((ghash >> 8) & 15u);
-    if (gencls >= 15u) gencls = 14u;
-    genftrs = (uint16_t)(10u + ((ghash >> 4) & 255u));
-    gensh = (uint16_t)((ghash & 15u) * 10u);
-    gencorb = (uint8_t)((ghash >> 12) & 3u);
-    gblind = 0u;
-}
-
-static void fight_odds(void) {
-    gtmp = (uint16_t)shipoff[gencls];
-    gn = (uint16_t)shipdef[gencls];
-    gsav = (uint16_t)((genftrs * gtmp) / (gn == 0u ? 1u : gn));
-    if (gsav < 1u) gsav = 1u;
-    if (gsav > 9999u) gsav = 9999u;
-}
-
-static void draw_fighthead(void) {
-    gdx = 0u; gdy = 0u; gdpal = PAL_RED;
-    gdstr = "COMBAT: "; draw_text();
-    gdpal = PAL_YEL; ship_name(); draw_text();
-    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = rulerow; draw_text();
-    gdx = 0u; gdy = 2u; gdpal = PAL_GRAY;
-    gdstr = "ENEMY FTRS "; draw_text();
-    gdpal = PAL_WHITE; gn = genftrs; draw_num();
-    gdpal = PAL_GRAY; gdstr = " SH "; draw_text();
-    gdpal = PAL_WHITE; gn = gensh; draw_num();
-    gdx = 0u; gdy = 3u; gdpal = PAL_GRAY;
-    gdstr = "ODDS "; draw_text();
-    gdpal = PAL_WHITE; gn = (uint16_t)shipoff[gencls]; draw_num();
-    gdstr = "/"; draw_text();
-    gn = (uint16_t)shipdef[gencls]; draw_num();
-    gdx = 0u; gdy = 4u; gdpal = PAL_GRAY;
-    gdstr = "YOUR FTRS "; draw_text();
-    gdpal = PAL_WHITE; gn = gfighters; draw_num();
-    gdpal = PAL_GRAY; gdstr = " SH "; draw_text();
-    gdpal = PAL_WHITE; gn = gshields; draw_num();
-    gdx = 0u; gdy = 5u; gdpal = PAL_BLUE;
-    gdstr = rulerow; draw_text();
-}
-
-static void draw_fightmsgs(void) {
-    if (gfightover == 1u) {
-        gdx = 0u; gdy = 7u; gdpal = PAL_YEL;
-        gdstr = "ENEMY DESTROYED!"; draw_text();
-        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
-        gdstr = "BOUNTY "; draw_text(); gn = gbounty; draw_num();
-        gdstr = " CR XP +"; draw_text(); gn = (gbounty / 100u) + 5u; draw_num();
-        return;
-    }
-    if (gfightover == 2u) {
-        gdx = 0u; gdy = 7u; gdpal = PAL_RED;
-        gdstr = "YOU WERE DESTROYED!"; draw_text();
-        gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
-        if (gphotons > 0u) {
-            gdstr = "PHOTON SAVES POD!"; draw_text();
-        } else if (gencorb) {
-            gdstr = "CORBOMITE RETALIATES!"; draw_text();
-        } else {
-            gdstr = "ESCAPE POD LAUNCHED"; draw_text();
-        }
-        return;
-    }
-    if (gfightover == 3u) {
-        gdx = 0u; gdy = 7u; gdpal = PAL_CYAN;
-        gdstr = "ESCAPED TO SECTOR "; draw_text();
-        gn = glastsec; draw_num();
-        return;
-    }
-    gdx = 0u; gdy = 7u; gdpal = gm1pal;
-    gdstr = gm1; draw_text();
-    gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
-    gdstr = gm2; draw_text();
-    gdx = 0u; gdy = 9u; gdpal = PAL_WHITE;
-    gdstr = gm3; draw_text();
-    gdx = 0u; gdy = 10u; gdpal = PAL_WHITE;
-    gdstr = gm4; draw_text();
-}
-
-static void draw_fightopts(void) {
-    gi = 0u;
-    while (gi < 5u) {
-        gdx = 2u; gdy = (uint8_t)(12u + gi);
-        if (gi == gfightsel) {
-            gdpal = PAL_CYAN; gdstr = ">"; draw_text();
-            gdpal = PAL_YEL;
-        } else {
-            gdpal = PAL_WHITE; gdstr = " "; draw_text();
-            gdpal = PAL_WHITE;
-        }
-        gdx = 4u;
-        if (gi == 0u) { gdstr = "A ATTACK"; }
-        else if (gi == 1u) { gdstr = "P PHOTON"; }
-        else if (gi == 2u) { gdstr = "C CORBOMITE"; }
-        else if (gi == 3u) { gdstr = "E ESCAPE"; }
-        else { gdstr = "R RETREAT"; }
-        draw_text();
-        gi++;
-    }
-}
-
-static void draw_fightfoot(void) {
-    gdpal = PAL_GRAY;
-    gdy = 18u; gdx = 0u; gdstr = "MIN TO WIN "; draw_text();
-    fight_odds();
-    gdpal = PAL_WHITE; gn = gsav; draw_num();
-    gdy = 19u; gdx = 0u; gdstr = "A:DO IT B:SECTOR"; draw_text();
-}
-
-static void show_fight(void) {
-    REG_INIDISP = 0x80u;
-    clear_map();
-    draw_fighthead();
-    draw_fightmsgs();
-    draw_fightopts();
-    draw_fightfoot();
-    REG_TM = 0x01u;
-    REG_INIDISP = 0x0Fu;
-    gstate = ST_FIGHT;
-    gframe = 0u;
-}
-
-static void fight_attack(void) {
-    fight_odds();
-    if (gfighters >= gsav) {
-        gfighters -= gsav;
-        genftrs = 0u;
-        gfightover = 1u;
-        gbounty = (uint16_t)(gencls * 100u + 500u);
-        gcredits += gbounty;
-        gxp += (uint16_t)(gbounty / 100u) + 5u;
-        gm1 = "VICTORY!";
-        gm1pal = PAL_YEL;
-        gm2 = "ENEMY VAPORIZED";
-        gm3 = "";
-        gm4 = "";
-        sram_sync();
-    } else {
-        gfighters = 0u;
-        gfightover = 2u;
-        if (gphotons > 0u) {
-            gphotons--;
-            gm1 = "PHOTON USED!";
-            gm2 = "POD ESCAPES";
-            gm3 = "";
-            gm4 = "";
-        } else if (gencorb) {
-            gencorb--;
-            galign -= 10;
-            gm1 = "CORBOMITE FIRES!";
-            gm2 = "SHIP LOST ALIGN -10";
-            gm3 = "";
-            gm4 = "";
-        } else {
-            gm1 = "ESCAPE POD...";
-            gm2 = "YOU SURVIVE";
-            gm3 = "";
-            gm4 = "";
-        }
-    }
-    show_fight();
-}
-
-static void fight_photon(void) {
-    if (gphotons == 0u) {
-        gm1 = "NO PHOTONS";
-        gm1pal = PAL_RED;
-        gm2 = "BUY AT STARDOCK";
-        gm3 = "";
-        gm4 = "";
-        show_fight();
-        return;
-    }
-    gphotons--;
-    gensh = 0u;
-    gblind = 1u;
-    gm1 = "PHOTON LAUNCHED!";
-    gm1pal = PAL_YEL;
-    gm2 = "ENEMY SHIELDS DOWN";
-    gm3 = "DEFENSES BLINDED";
-    gm4 = "";
-    show_fight();
-}
-
-static void fight_corbomite(void) {
-    if (gencorb == 0u) {
-        gm1 = "NO CORBOMITE";
-        gm1pal = PAL_RED;
-        gm2 = "ENEMY HAS NONE";
-        gm3 = "";
-        gm4 = "";
-        show_fight();
-        return;
-    }
-    gencorb--;
-    gfighters = (uint16_t)(gfighters / 2u);
-    genftrs = (uint16_t)(genftrs / 2u);
-    gm1 = "CORBOMITE DETONATED!";
-    gm1pal = PAL_YEL;
-    gm2 = "BOTH SIDES HALVED";
-    gm3 = "";
-    gm4 = "";
-    show_fight();
-}
-
-static void fight_escape(void) {
-    if (gfighters == 0u) {
-        gm1 = "NO FIGHTERS LEFT";
-        gm1pal = PAL_RED;
-        gm2 = "CANNOT ESCAPE";
-        gm3 = "";
-        gm4 = "";
-        show_fight();
-        return;
-    }
-    gfighters = (uint16_t)(gfighters / 2u);
-    gturns--;
-    glastsec = gsec;
-    gsec = gwarps[0];
-    if (gsec == 0u || gsec > guniv) gsec = 1u;
-    gfightover = 3u;
-    gwarpsel = 0u;
-    gcmdopen = 0u;
-    sram_sync();
-    show_fight();
-}
-
-static void fight_retreat(void) {
-    gturns--;
-    gfightover = 0u;
-    gcmdopen = 0u;
-    show_sector();
-}
-
-static void tick_fight(void) {
-    wait_vblank();
-    gframe++;
-    read_pads();
-    if (gfightover) {
-        if (gj_new & (PB_A | PB_START | PB_B)) {
-            if (gfightover == 1u) {
-                gfightover = 0u;
-                gcmdopen = 0u;
-                show_sector();
-            } else if (gfightover == 2u) {
-                if (gphotons > 0u || gencorb) {
-                    gfightover = 0u;
-                    gcmdopen = 0u;
-                    show_sector();
-                } else {
-                    show_menu();
-                }
-            } else {
-                gfightover = 0u;
-                gcmdopen = 0u;
-                show_sector();
-            }
-        }
-        return;
-    }
-    if (gj_dir & PB_UP) {
-        if (gfightsel == 0u) { gfightsel = 4u; }
-        else { gfightsel--; }
-        show_fight();
-        return;
-    }
-    if (gj_dir & PB_DOWN) {
-        gfightsel++;
-        if (gfightsel >= 5u) gfightsel = 0u;
-        show_fight();
-        return;
-    }
-    if (gj_new & (PB_A | PB_START)) {
-        if (gfightsel == 0u) { fight_attack(); }
-        else if (gfightsel == 1u) { fight_photon(); }
-        else if (gfightsel == 2u) { fight_corbomite(); }
-        else if (gfightsel == 3u) { fight_escape(); }
-        else { fight_retreat(); }
-        return;
-    }
-    if (gj_new & PB_B) {
-        fight_retreat();
-        return;
-    }
-}
 static void tick_menu(void) {
     wait_vblank();
     gframe++;
@@ -3781,8 +3477,6 @@ static void tick_once(void) {
             tick_dock();
         } else if (gstate == ST_PLANET) {
             tick_planet();
-        } else if (gstate == ST_FIGHT) {
-            tick_fight();
         } else if (gstate == ST_ATTRACT) {
             tick_attract();
         } else {

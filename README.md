@@ -32,15 +32,20 @@ All captures are real emulator screenshots (snes9x) of the actual ROM.
 
 ## Current Status
 
-Milestones 0–7 complete and screenshot-verified: ANSI title + attract
+Milestones 0–6 complete and screenshot-verified: ANSI title + attract
 mode, main menu + new-game wizard, sector view (warp nav, density/holo
 scans, command palette, course plotter), starport trading (buy/sell/
 haggle/steal), Stardock hub (shipyard, hardware, bank, police,
 underground, tavern), planet management (citadels, colonists, quasar,
-genesis/detonator), combat system (ship vs ship, photon missiles,
-corbomite, escape pods), and SRAM save/load with Continue resume. See
+genesis/detonator), and SRAM save/load with Continue resume. See
 `MILESTONES.md` for the roadmap, `AGENTS.md` and `devlog/` for the full
 technical state.
+
+**Milestone 7 (combat) rolled back 2026-09-24**: the first M7 commit
+broke text rendering (a bank-1 rodata pragma moved all C string
+literals out of bank 0 -> garbled text on every screen). Code was
+reverted to the screenshot-verified M6 state and M7 is being
+re-implemented from that base. See `devlog/2026-09-24-m7-rollback.md`.
 
 ## Quick Start
 

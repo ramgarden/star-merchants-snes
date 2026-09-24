@@ -43,6 +43,17 @@ $CL65 = "$CC65_HOME\bin\cl65.exe"
 $CA65 = "$CC65_HOME\bin\ca65.exe"
 $LD65 = "$CC65_HOME\bin\ld65.exe"
 
+# Run a native toolchain exe without letting stderr warnings become
+# terminating errors (EAP=Stop + native stderr = death in PS 5.1;
+# see devlog/2026-09-24-m7-rollback.md). Exit code is checked by caller.
+function Invoke-Toolchain {
+    param([string]$Exe, [Parameter(ValueFromRemainingArguments = $true)]$ToolArgs)
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    & $Exe @ToolArgs
+    $ErrorActionPreference = $prevEap
+}
+
 # Exact port of Mesen-S BaseCartridge::GetHeaderScore (Core/BaseCartridge.cpp).
 # The emulator scores header candidates; only a score >= 0 gets loaded.
 function Get-SnesHeaderScore([byte[]]$rom, [int]$addr) {
@@ -152,7 +163,7 @@ $ObjFiles = @()
 foreach ($c in $CFiles) {
     $obj = "$BUILD_DIR\$([IO.Path]::GetFileNameWithoutExtension($c)).o"
     Write-Host "Compiling $c..." -ForegroundColor Green
-    & $CL65 -t none --cpu 65816 -I"$SRC_DIR" -O -c -o $obj $c
+    Invoke-Toolchain $CL65 @("-t", "none", "--cpu", "65816", "-I$SRC_DIR", "-O", "-c", "-o", $obj, $c)
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     $ObjFiles += $obj
 }
@@ -161,7 +172,7 @@ foreach ($c in $CFiles) {
 foreach ($asm in $ASMFiles) {
     $obj = "$BUILD_DIR\$([IO.Path]::GetFileNameWithoutExtension($asm)).o"
     Write-Host "Assembling $asm..." -ForegroundColor Green
-    & $CA65 --cpu 65816 -I"$SRC_DIR" -o $obj $asm
+    Invoke-Toolchain $CA65 @("--cpu", "65816", "-I$SRC_DIR", "-o", $obj, $asm)
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     $ObjFiles += $obj
 }
@@ -169,7 +180,7 @@ foreach ($asm in $ASMFiles) {
 foreach ($s in $SFiles) {
     $obj = "$BUILD_DIR\$([IO.Path]::GetFileNameWithoutExtension($s)).o"
     Write-Host "Assembling $s..." -ForegroundColor Green
-    & $CA65 --cpu 65816 -I"$SRC_DIR" -o $obj $s
+    Invoke-Toolchain $CA65 @("--cpu", "65816", "-I$SRC_DIR", "-o", $obj, $s)
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     $ObjFiles += $obj
 }
@@ -188,7 +199,9 @@ $linkArgs = @(
     $ObjFiles
 )
 
-& $CL65 @linkArgs
+& { $prevEap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    & $CL65 @linkArgs
+    $ErrorActionPreference = $prevEap }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # --- Show header + vectors right after linking ---

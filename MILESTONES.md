@@ -152,12 +152,17 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
   full M6 tour host-proven (claim/deploy/load/quasar/warp/denial)
 
 ## Milestone 7: Combat System
-- [x] **Ship vs Ship** - Offensive/defensive odds, fighter counts, shields
-- [x] **Combat Math** - (enemy_ftrs * enemy_odds) / your_odds = min fighters to win
-- [x] **Ship Types** - 15 classes (MerCru, ScoMar, MisFri, CorBat, CorFla, ColTra, CarTra, MerFre, ImpSta, HavGun, StaMas, ConSte, TkhOri, ThoSen, TauMul)
-- [x] **Photon Missile** - Destroys port/planet shields, blinds defenses
-- [x] **Corbomite** - Retaliation damage on ship destruction
-- [x] **Escape Pod** - Survive destruction, trade for ScoMar + 1000 creds
+- ROLLED BACK 2026-09-24: first implementation (commit 6f1d999) shipped a
+  `#pragma rodata-name` that pushed all C string literals to bank 1 ->
+  garbled text on every screen. Code reverted to verified M6 state
+  (b9eef19); re-implementing from that base. See
+  devlog/2026-09-24-m7-rollback.md
+- [ ] **Ship vs Ship** - Offensive/defensive odds, fighter counts, shields
+- [ ] **Combat Math** - (enemy_ftrs * enemy_odds) / your_odds = min fighters to win
+- [ ] **Ship Types** - 15 classes (MerCru, ScoMar, MisFri, CorBat, CorFla, ColTra, CarTra, MerFre, ImpSta, HavGun, StaMas, ConSte, TkhOri, ThoSen, TauMul)
+- [ ] **Photon Missile** - Destroys port/planet shields, blinds defenses
+- [ ] **Corbomite** - Retaliation damage on ship destruction
+- [ ] **Escape Pod** - Survive destruction, trade for ScoMar + 1000 creds
 
 ## Milestone 8: Ferrengi & Aliens
 - [ ] **Ferrengal** - L4 planet, 30% sector QC, 40% MRL, 5000 ftrs, 100k treasury

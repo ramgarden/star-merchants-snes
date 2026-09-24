@@ -45,7 +45,16 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
   single-colony model + warp production, SRAM v4. Font moved to
   LoROM bank 1 (far-copy helper; bank-0 ROM was full). Beware:
   `$018000` is bank $01 — `$180000` is bank $18 (cost an hour).
-  See devlog/2026-09-23-milestone-6-planet.md.
+   See devlog/2026-09-23-milestone-6-planet.md.
+- ⚠️ **Milestone 7 ROLLED BACK 2026-09-24** — the first M7 attempt
+  (commit 6f1d999) added `#pragma rodata-name ("FARRODATA")` in main.c;
+  that pragma moved ALL subsequent C string literals to bank 1 while
+  C code references them with 16-bit bank-0 addresses -> every screen
+  rendered garbled. Code reverted to the verified M6 state (b9eef19)
+  and screenshot-verified again. Hard rule: never use
+  `#pragma rodata-name` in main.c — C strings must stay in bank-0
+  RODATA; bank-1 const data needs explicit far/banked access in C.
+  See devlog/2026-09-24-m7-rollback.md.
 - Do **NOT** trust the 2026-09-21 "title screen working" claim — it was
   inferred from disassembly, never screenshotted; every capture then was black
 
