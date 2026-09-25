@@ -84,8 +84,9 @@ typedef short int16_t;
  * fresh presses (padsDown), gj_dir = gj_new (edge). Press semantics are
  * one-shot everywhere: a held button never auto-repeats (holding Up on
  * the menu moves one item, not a turbo scroll). The only hold-repeat in
- * the game is Up/Down letter scrolling in tick_name, which implements
- * its own initial-delay + interval timer (grpt) on top of edges. */
+ * the game is Up/Down letter scrolling in tick_name, which reuses the
+ * gframe-since-redraw counter (first repeat at 25 frames, then every
+ * 8 frames) on top of edges. */
 #define KEY_A 0x0080u
 #define KEY_B 0x8000u
 #define KEY_SELECT 0x2000u
@@ -148,8 +149,6 @@ uint16_t gj_new;
 uint16_t gj_dir;
 uint16_t gj_held;
 uint8_t gsi;
-uint8_t gsiprev;
-uint8_t grpt;
 uint8_t gselfdrive;
 uint16_t gsfr;
 uint8_t gsclk;
@@ -363,7 +362,6 @@ static void script_pads(void) {
     } else {
         gscr_f = 1u; gscr_b = FT_SC; gscr_b2 = FT_SCP; gflim = SCN;
     }
-    gsiprev = gsi;
     while (gsi < gflim) {
         gfar_o = (uint16_t)(gscr_b + gsi);
         gact = farbyt();
@@ -382,12 +380,6 @@ static void script_pads(void) {
         else { gj_held = KEY_Y; }
         gsi++;
     }
-    /* Tap emulation: each due tour step presents its button for exactly
-     * one frame, like a human tap. Without this, a step's 16-frame hold
-     * would re-fire gj_dir navigation every frame while held (the
-     * hardware path intentionally repeats held D-pad for menu
-     * scrolling, but a script step is a single discrete press). */
-    if (gsi == gsiprev) { gj_held = 0u; }
     gj_pad = gj_held;
     gj_new = (uint16_t)(gj_pad & (uint16_t)(gj_pad ^ gj_prev));
     gj_prev = gj_pad;
@@ -409,6 +401,12 @@ static void read_pads(void) {
     }
     gj_pad = (uint16_t)REG_JOY1L;
     gj_pad |= (uint16_t)((uint16_t)REG_JOY1H << 8);
+    /* Shoulders double as D-pad Left/Right: the port ("L/R SELECT"),
+     * planet ("L/R SHIP") and options ("L/R:CHANGE") hints promise L/R,
+     * so fold shoulder bits into the pad word and every screen's
+     * Left/Right handling answers to both, still edge-style one-shot. */
+    if (gj_pad & KEY_L) { gj_pad |= KEY_LEFT; }
+    if (gj_pad & KEY_R) { gj_pad |= KEY_RIGHT; }
     gj_new = (uint16_t)(gj_pad & (uint16_t)(gj_pad ^ gj_prev));
     gj_prev = gj_pad;
     gj_dir = gj_new;
@@ -3736,33 +3734,26 @@ static void tick_name(void) {
         }
         return;
     }
-    /* The only hold-repeat in the game: holding Up/Down scrolls letters
-     * (25-frame initial delay, then 6-frame interval). Release re-arms
-     * the delay. Everything else on every screen is edge-only. */
-    if (gj_pad & KEY_UP) {
-        if (grpt == 0u) {
-            name_index();
-            gci++;
-            if (gci >= 37u) gci = 0u;
-            gbuf[gslot] = charset[gci];
-            grpt = 6u;
-            show_name();
-            return;
-        }
-        grpt--;
-    } else if (gj_pad & KEY_DOWN) {
-        if (grpt == 0u) {
-            name_index();
-            if (gci == 0u) { gci = 37u; }
-            gci--;
-            gbuf[gslot] = charset[gci];
-            grpt = 6u;
-            show_name();
-            return;
-        }
-        grpt--;
-    } else {
-        grpt = 25u;
+    /* The only hold-repeat in the game: holding Up/Down on the name
+     * screens scrolls letters. gframe counts frames since the last
+     * redraw (every step redraws and zeroes it), so the first repeat
+     * lands 25 frames after the press and the rest every 8 frames.
+     * Releasing keys stops it; every other screen is edge-only. */
+    if ((gj_pad & KEY_UP) && gframe >= 25u && ((gframe & 7u) == 1u)) {
+        name_index();
+        gci++;
+        if (gci >= 37u) gci = 0u;
+        gbuf[gslot] = charset[gci];
+        show_name();
+        return;
+    }
+    if ((gj_pad & KEY_DOWN) && gframe >= 25u && ((gframe & 7u) == 1u)) {
+        name_index();
+        if (gci == 0u) { gci = 37u; }
+        gci--;
+        gbuf[gslot] = charset[gci];
+        show_name();
+        return;
     }
 }
 static void tick_sum(void) {
@@ -3799,8 +3790,6 @@ int main(void) {
     gdemo = 0u;
     gcmdopen = 0u;
     gsi = 0u;
-    gsiprev = 0u;
-    grpt = 25u;
     gj_held = 0u;
     gr = 0u;
     while (gr < 8u) {
