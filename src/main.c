@@ -115,12 +115,12 @@ typedef short int16_t;
 #define FT_SCP2 (FT_BASE + 290u)
 #define FT_SC3  (FT_BASE + 396u)
 #define FT_SCP3 (FT_BASE + 488u)
-#define FT_SC4  (FT_BASE + 584u)
-#define FT_SCP4 (FT_BASE + 668u)
-#define FT_SC5  (FT_BASE + 752u)
-#define FT_SCP5 (FT_BASE + 756u)
-#define FT_SC6  (FT_BASE + 760u)
-#define FT_SCP6 (FT_BASE + 774u)
+#define FT_SC4  (FT_BASE + 580u)
+#define FT_SCP4 (FT_BASE + 664u)
+#define FT_SC5  (FT_BASE + 748u)
+#define FT_SCP5 (FT_BASE + 752u)
+#define FT_SC6  (FT_BASE + 756u)
+#define FT_SCP6 (FT_BASE + 770u)
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -149,6 +149,8 @@ uint16_t gj_new;
 uint16_t gj_dir;
 uint16_t gj_held;
 uint8_t gsi;
+uint16_t gom;
+uint8_t goc;
 uint8_t gselfdrive;
 uint16_t gsfr;
 uint8_t gsclk;
@@ -278,8 +280,10 @@ const uint8_t shipdef[15] = {
     10u, 8u, 10u, 11u, 12u, 6u, 10u, 11u,
     12u, 10u, 12u, 13u, 12u, 11u, 9u,
 };
-/* M7 combat tour (selfdrive 4): new game -> photon buy -> warp sec 3 ->
-   ATTACK -> photon -> attack -> victory. 84 steps, 8-bit frames. */
+/* M7 combat tour (selfdrive 4): new game -> Stardock hardware ->
+   photon buy -> leave hub -> warp sector 3 (11 hostiles, class 13) ->
+   command palette -> ATTACK -> photon (blind) -> attack (victory,
+   bounty 1800) -> leave. 37 presses + 5 release pairs; 8-bit frames. */
 static void show_sum(void);
 static void show_sector(void);
 static void show_menu(void);
@@ -344,9 +348,7 @@ static void wait_vblank(void) {
     }
     gsfr++;
 }
-/* Tours 1-3: tables in bank 1 (FARRODATA), read via farbyt().
-   Tours 4-6 (M7): small tables in bank 0, indexed directly. */
-/* All tours (1-6) now use bank-1 FARRODATA tables via farbyt(). */
+/* All tours (1-6) use bank-1 FARRODATA tables via farbyt(). */
 static void script_pads(void) {
     gsclk = (uint8_t)(gsfr >> 4);
     if (gselfdrive == 4u) {
@@ -3334,14 +3336,36 @@ static void gen_enemy(void) {
     gblind = 0u;
 }
 static void fight_odds(void) {
+    /* gsav = (genftrs * shipoff) / shipdef, blind-halved, clamped to
+     * 1..9999. Hand-rolled shift-add multiply + subtract division in
+     * globals-only steps: the cc65 TOS multiply/divide helpers take
+     * the C stack and misbehaved on hardware (see devlog), while every
+     * op used here (shift/add/sub/compare) is straight-line inline.
+     * Bit-exact vs MUL/DIV for our ranges (product < 65536 always:
+     * ship combat genftrs <= 48, odds <= 13). gom/goc are scratch. */
     gtmp = (uint16_t)shipoff[gencls];
     gn = (uint16_t)shipdef[gencls];
-    gsav = (uint16_t)((genftrs * gtmp) / (gn == 0u ? 1u : gn));
-    if (gblind) {
-        gsav = (uint16_t)(gsav >> 1);
+    if (gn == 0u) { gn = 1u; }
+    gom = genftrs;
+    gsav = 0u;
+    goc = 16u;
+    while (goc > 0u) {
+        goc--;
+        if (gom & 1u) { gsav += gtmp; }
+        gom >>= 1u;
+        gtmp <<= 1u;
     }
-    if (gsav < 1u) gsav = 1u;
-    if (gsav > 9999u) gsav = 9999u;
+    goc = 0u;
+    while (gsav >= gn) {
+        gsav -= gn;
+        goc++;
+    }
+    gsav = goc;
+    if (gblind) {
+        gsav >>= 1u;
+    }
+    if (gsav < 1u) { gsav = 1u; }
+    if (gsav > 9999u) { gsav = 9999u; }
 }
 static void draw_fighthead(void) {
     gdx = 0u; gdy = 0u; gdpal = PAL_RED;
@@ -3373,7 +3397,16 @@ static void draw_fightmsgs(void) {
         gdstr = "ENEMY DESTROYED!"; draw_text();
         gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
         gdstr = "BOUNTY "; draw_text(); gn = gbounty; draw_num();
-        gdstr = " CR XP +"; draw_text(); gn = (gbounty / 100u) + 5u; draw_num();
+        gdstr = " CR XP +"; draw_text();
+        goc = 0u;
+        gom = gbounty;
+        while (gom >= 100u) {
+            gom -= 100u;
+            goc++;
+        }
+        gn = goc;
+        gn += 5u;
+        draw_num();
         return;
     }
     if (gfightover == 2u) {
@@ -3450,9 +3483,30 @@ static void fight_attack(void) {
         gfighters -= gsav;
         genftrs = 0u;
         gfightover = 1u;
-        gbounty = (uint16_t)((uint16_t)gencls * 100u + 500u);
+        /* gbounty = gencls * 100 + 500 via shifts (64+32+4): exact,
+         * no multiply helper (see fight_odds note). */
+        gbounty = 0u;
+        gom = (uint16_t)gencls;
+        gom <<= 6u;
+        gbounty += gom;
+        gom = (uint16_t)gencls;
+        gom <<= 5u;
+        gbounty += gom;
+        gom = (uint16_t)gencls;
+        gom <<= 2u;
+        gbounty += gom;
+        gbounty += 500u;
         gcredits += gbounty;
-        gxp += (uint16_t)(gbounty / 100u) + 5u;
+        /* gxp += bounty / 100 + 5 via subtract division (bounty <=
+         * 1900, so <= 19 iterations): exact, no divide helper. */
+        goc = 0u;
+        gom = gbounty;
+        while (gom >= 100u) {
+            gom -= 100u;
+            goc++;
+        }
+        gxp += goc;
+        gxp += 5u;
         gm1 = "VICTORY!";
         gm1pal = PAL_YEL;
         gm2 = "ENEMY VAPORIZED";
@@ -3538,7 +3592,7 @@ static void fight_escape(void) {
         return;
     }
     gfighters = (uint16_t)(gfighters / 2u);
-    gturns--;
+    if (gturns > 0u) { gturns--; }
     gsec = gwarps[0];
     if (gsec == 0u || gsec > guniv) gsec = 1u;
     glastsec = gsec;
@@ -3549,7 +3603,7 @@ static void fight_escape(void) {
     show_fight();
 }
 static void fight_retreat(void) {
-    gturns--;
+    if (gturns > 0u) { gturns--; }
     gfightover = 0u;
     gcmdopen = 0u;
     show_sector();

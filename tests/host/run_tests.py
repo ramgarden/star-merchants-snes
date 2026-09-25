@@ -75,7 +75,20 @@ def main():
         print("  gsfr~%d: %s" % (2880 + (i // 4) * 64,
                                  (traj[i], traj[i + 1], traj[i + 2],
                                   traj[i + 3])))
+    t5 = [mpu.memory[trep + 116 + i] for i in range(10)]
+    exp5 = [(0, 9, "gstate ST_SECTOR"), (1, 3, "gsec"),
+            (2, 499 & 255, "gturns lo"), (3, 499 >> 8, "gturns hi"),
+            (4, 11300 & 255, "credits lo"),
+            (5, 11300 >> 8, "credits hi"), (6, 23, "gxp"),
+            (7, 11, "gfighters left"), (8, 0, "gphotons spent"),
+            (9, 0, "gfightover cleared")]
     fails = []
+    for idx, want, label in exp5:
+        ok = (t5[idx] == want)
+        print(("PASS " if ok else "FAIL ") + "T5 %s: got %d want %d"
+              % (label, t5[idx], want))
+        if not ok:
+            fails.append("T5 " + label)
     exp = {
         0: ("T1 M4 tour reaches loadret", 1),
         1: ("T1 gstate ST_LOADRET", 11),

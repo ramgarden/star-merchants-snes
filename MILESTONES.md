@@ -151,18 +151,35 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
   SRAM v4 (+20B planet record), L LAND added as 7th palette command,
   full M6 tour host-proven (claim/deploy/load/quasar/warp/denial)
 
-## Milestone 7: Combat System
+## Milestone 7: Combat System (in verification 2026-09-25)
 - ROLLED BACK 2026-09-24: first implementation (commit 6f1d999) shipped a
   `#pragma rodata-name` that pushed all C string literals to bank 1 ->
   garbled text on every screen. Code reverted to verified M6 state
   (b9eef19); re-implementing from that base. See
   devlog/2026-09-24-m7-rollback.md
-- [ ] **Ship vs Ship** - Offensive/defensive odds, fighter counts, shields
-- [ ] **Combat Math** - (enemy_ftrs * enemy_odds) / your_odds = min fighters to win
-- [ ] **Ship Types** - 15 classes (MerCru, ScoMar, MisFri, CorBat, CorFla, ColTra, CarTra, MerFre, ImpSta, HavGun, StaMas, ConSte, TkhOri, ThoSen, TauMul)
-- [ ] **Photon Missile** - Destroys port/planet shields, blinds defenses
-- [ ] **Corbomite** - Retaliation damage on ship destruction
-- [ ] **Escape Pod** - Survive destruction, trade for ScoMar + 1000 creds
+- Combat tour tables were placeholders (wrong sizes/offsets/content for
+  tours 4-6); restored from pre-move arrays, `FT_*` fixed, all 12
+  table/offset pairs machine-verified. New 37-press combat demo tour
+  (Stardock photon buy -> warp sector 3 -> ATTACK -> photon blind ->
+  attack victory -> leave). See devlog/2026-09-25-m7-combat-verification.md
+- [x] **Ship vs Ship** - Offensive/defensive odds, fighter counts, shields
+  (host-proven: class 13 THO SEN, 33 fighters, odds 13/11)
+- [x] **Combat Math** - (enemy_ftrs * enemy_odds) / your_odds = min fighters to win
+  (host-proven exact: blind 39->19, fighters 30->11, bounty 1800, +23 XP)
+- [x] **Ship Types** - 15 classes (MerCru, ScoMar, MisFri, CorBat, CorFla, ColTra, CarTra, MerFre, ImpSta, HavGun, StaMas, ConSte, TkhOri, ThoSen, TauMul)
+  (THO SEN + stats screenshot-verified on hardware)
+- [x] **Photon Missile** - Destroys port/planet shields, blinds defenses
+  (screenshot-verified blind path to victory; buy path seen on hardware)
+- [ ] **Corbomite** - Retaliation damage on ship destruction (reviewed only)
+- [ ] **Escape Pod** - Survive destruction, trade for ScoMar + 1000 creds (reviewed only)
+- [x] **Turn guards** - Escape/retreat clamp at 0 turns (was unguarded wrap to 65535)
+- [x] **Fight screenshots** - Intro (COMBAT: THO SEN, 33/70, 13/11, MIN TO WIN 39),
+  victory (ENEMY DESTROYED, BOUNTY 1800 CR XP +23), sector aftermath
+  (11300cr/11ftrs/499t) — all captured on Mesen-S, stable across runs
+- [x] **C-stack purge** - Root-caused the fight automatism reboots to cc65's TOS
+  multiply/divide helpers (`pushax`/`tosumulax`/`tosudivax`, used only in
+  fight math); rewrote odds/bounty/XP with shift-add/subtract step math.
+  Helpers fully unlinked; host still byte-exact (see devlog)
 
 ## Milestone 8: Ferrengi & Aliens
 - [ ] **Ferrengal** - L4 planet, 30% sector QC, 40% MRL, 5000 ftrs, 100k treasury

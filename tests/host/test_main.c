@@ -73,6 +73,8 @@ extern uint16_t gpftrs;
 extern uint8_t gprobes;
 extern uint8_t gbeacons;
 extern uint8_t gtorp;
+extern uint8_t gphotons;
+extern uint8_t gfightover;
 extern uint8_t gcomm;
 extern uint16_t gbankday;
 extern uint16_t gsfr;
@@ -227,5 +229,26 @@ void test_main(void) {
     trep[104] = (uint8_t)(gpftrs & 255u);
     trep[105] = (uint8_t)(gholds & 255u);
     trep[106] = (uint8_t)(gxp & 255u);
-    trep[15] = 1u;
+    /* T5: M7 combat tour (selfdrive 4) end state. Expected: victory
+       over sector-3 hostiles (class 13): sector 3, 499 turns, 11300
+       credits, 23 XP, 11 fighters left, 0 photons, back in
+       sector view. */
+    boot_init();
+    gselfdrive = 4u;
+    gtest_t = 0u;
+    while (gtest_t < 4600u) {
+        tick_once();
+        gtest_t++;
+    }
+    trep[116] = gstate;
+    trep[117] = (uint8_t)(gsec & 255u);
+    trep[118] = (uint8_t)(gturns & 255u);
+    trep[119] = (uint8_t)((gturns >> 8) & 255u);
+    trep[120] = (uint8_t)(gcredits & 255u);
+    trep[121] = (uint8_t)((gcredits >> 8) & 255u);
+    trep[122] = (uint8_t)(gxp & 255u);
+    trep[123] = (uint8_t)(gfighters & 255u);
+    trep[124] = gphotons;
+    trep[125] = gfightover;
+trep[15] = 1u;
 }
