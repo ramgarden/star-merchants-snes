@@ -19,6 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src" / "main.c"
 OUT = Path(__file__).resolve().parent / "out" / "game.c"
+SRC_M8 = ROOT / "src" / "m8.c"
+OUT_M8 = Path(__file__).resolve().parent / "out" / "m8.c"
 
 REGS_DUMMY = ["INIDISP", "BGMODE", "BG1SC", "BG12NBA", "BG1HOFS",
               "BG1VOFS", "VMAIN", "VMADDL", "VMADDH", "VMDATAL",
@@ -28,10 +30,30 @@ REGS_DUMMY = ["INIDISP", "BGMODE", "BG1SC", "BG12NBA", "BG1HOFS",
 # Offset of FARRODATA tour data from $018000 (must match FT_BASE in
 # src/main.c: bank-1 FARFONT occupies $018000-$018BFF).
 FAR_BASE = 0x0C00
-# Highest reachable tour index: FT_SCP6 + 13 (selfdrive 6 tail). The
-# image is zero-padded to cover it (hardware would return bank-1
+# Highest reachable far index: FT_M8 end (784 tour + 288 M8 tables).
+# The image is zero-padded to cover it (hardware would return bank-1
 # padding bytes there).
-FAR_SIZE = FAR_BASE + 788
+FAR_SIZE = FAR_BASE + 1080
+
+
+def parse_far_bytes(s: str) -> list:
+    """Split a .byte operand list honoring quoted strings (M8 text is
+    authored as .byte "TEXT", 0, ... in far_data.s)."""
+    out = []
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c == '"':
+            j = s.index('"', i + 1)
+            out += [ord(ch) for ch in s[i + 1:j]]
+            i = j + 1
+        elif c in ", \t":
+            i += 1
+        else:
+            m = re.match(r"(-?\d+)", s[i:])
+            out.append(int(m.group(1)) & 0xFF)
+            i += m.end()
+    return out
 
 
 def far_image() -> list:
@@ -44,7 +66,7 @@ def far_image() -> list:
     for line in (ROOT / "src" / "far_data.s").read_text().splitlines():
         m = re.match(r"\s*\.byte\s+(.*)", line)
         if m:
-            vals += [int(x) & 0xFF for x in m.group(1).split(",")]
+            vals += parse_far_bytes(m.group(1))
     img = [0] * FAR_BASE + vals
     while len(img) < FAR_SIZE:
         img.append(0)
@@ -106,10 +128,32 @@ def transform(src: str) -> str:
     return src
 
 
+def transform_m8(src: str) -> str:
+    """Light transform for src/m8.c (bank-1 far code).
+    Same globals-only rules; hardware segments:
+    - farbyt1() (bank-1 twin leaf on hardware) is defined here as a
+      wrapper over the host farbyt() table lookup in game.c (flat
+      image on host: no banks, so the twin is trivially exact)
+    - far_exec() (bank-0 jsl trampoline on hardware, never linked on
+      host) is defined here as a direct same-image call.
+    """
+    src = re.sub(r"^static ", "", src, flags=re.M)
+    src += ("\nuint8_t farbyt(void);\n"
+            "uint8_t farbyt1(void) {\n"
+            "    return farbyt();\n"
+            "}\n"
+            "void far_exec(void) {\n"
+            "    m8dispatch();\n"
+            "}\n")
+    return src
+
+
 def main() -> None:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(transform(SRC.read_text()))
     print("wrote", OUT)
+    OUT_M8.write_text(transform_m8(SRC_M8.read_text()))
+    print("wrote", OUT_M8)
 
 
 if __name__ == "__main__":

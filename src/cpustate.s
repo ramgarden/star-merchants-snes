@@ -8,7 +8,11 @@
 .export _read_csp
 .export _probe
 
-.segment "CODE"
+; Lives in bank 1 (FARCODE): bank-0 ROM is full (12B spare as of M7).
+; Safe to relocate: position-independent absolute addressing, _probe never
+; returns (bra forever), and crt0 only .imports _probe as a link anchor
+; (never jsr'd). See devlog M8 FARCODE notes.
+.segment "FARCODE"
 
 .a8
 .i8

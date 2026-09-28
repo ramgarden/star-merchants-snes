@@ -76,10 +76,13 @@ def main():
                                  (traj[i], traj[i + 1], traj[i + 2],
                                   traj[i + 3])))
     t5 = [mpu.memory[trep + 116 + i] for i in range(10)]
+    # M8 changes the M7-tour outcome by design: the sector-3 victory now
+    # also rolls a KRULL alien (evil rank 3: align +10, xp +12), so XP is
+    # 23 + 12 = 35 (exact). All other M7 numbers are unchanged.
     exp5 = [(0, 9, "gstate ST_SECTOR"), (1, 3, "gsec"),
             (2, 499 & 255, "gturns lo"), (3, 499 >> 8, "gturns hi"),
             (4, 11300 & 255, "credits lo"),
-            (5, 11300 >> 8, "credits hi"), (6, 23, "gxp"),
+            (5, 11300 >> 8, "credits hi"), (6, 35, "gxp incl KRULL"),
             (7, 11, "gfighters left"), (8, 0, "gphotons spent"),
             (9, 0, "gfightover cleared")]
     fails = []
@@ -139,6 +142,38 @@ def main():
               % (label, t4[idx], want))
         if not ok:
             fails.append("T4 " + label)
+    t6 = [mpu.memory[trep + 107 + i] for i in range(7)]
+    exp6 = [(0, 0xA5, "gfarmagic"), (1, ord("F"), "msg[0]"),
+            (2, ord("A"), "msg[1]"), (3, ord("R"), "msg[2]"),
+            (4, ord("-"), "msg[3]"), (5, ord("O"), "msg[4]"),
+            (6, ord("K"), "msg[5]")]
+    for idx, want, label in exp6:
+        ok = (t6[idx] == want)
+        print(("PASS " if ok else "FAIL ") + "T6 far %s: got %d want %d"
+              % (label, t6[idx], want))
+        if not ok:
+            fails.append("T6 far " + label)
+    exp7 = [(92, 1, "home override"), (93, 1, "tribute paid"),
+            (94, 1, "tribute unpaid+grudge"), (95, 1, "immune stand-down"),
+            (114, 1, "alien VORLON shifts"), (115, 1, "3000-wipe loot"),
+            (126, 1, "land denial msgs"), (127, 0, "guard zeroed by wipe")]
+    for idx, want, label in exp7:
+        got = mpu.memory[trep + idx]
+        ok = (got == want)
+        print(("PASS " if ok else "FAIL ") + "T7 %s: got %d want %d"
+              % (label, got, want))
+        if not ok:
+            fails.append("T7 " + label)
+    exp8 = [(60, 1, "port_name home/away"), (61, 1, "LAND denial"),
+            (62, 1, "ATTACK paid stand-down"),
+            (63, 1, "ATTACK unpaid fight")]
+    for idx, want, label in exp8:
+        got = mpu.memory[trep + idx]
+        ok = (got == want)
+        print(("PASS " if ok else "FAIL ") + "T8 %s: got %d want %d"
+              % (label, got, want))
+        if not ok:
+            fails.append("T8 " + label)
     return 1 if fails else 0
 
 

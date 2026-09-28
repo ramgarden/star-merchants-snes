@@ -79,6 +79,35 @@ extern uint8_t gcomm;
 extern uint16_t gbankday;
 extern uint16_t gsfr;
 extern uint16_t gsfr;
+extern uint8_t gfar_fn;
+extern uint8_t gfarmagic;
+extern char gfarmsg[33];
+extern char gfarm2[33];
+extern char gfarm3[33];
+extern void far_exec(void);
+extern uint16_t guniv;
+extern uint16_t gfersec;
+extern uint8_t gfer;
+extern uint8_t gferd;
+extern uint8_t ggrudpk;
+extern uint16_t gfertreas;
+extern uint8_t gfergrd;
+extern uint8_t galien;
+extern uint16_t ghash;
+extern uint8_t gencls;
+extern uint16_t genftrs;
+extern uint16_t gday;
+extern uint8_t gport;
+extern uint8_t gplanet;
+extern uint8_t gplevel;
+extern uint8_t gftrs;
+extern uint8_t gsclk;
+extern const char *gdstr;
+extern const char *gm1;
+extern const char *gm2;
+extern uint8_t gcmdsel;
+extern void exec_cmd(void);
+extern void port_name(void);
 extern void show_title(void);
 extern void tick_once(void);
 extern void show_sector(void);
@@ -241,6 +270,11 @@ void test_main(void) {
         gtest_t++;
     }
     trep[116] = gstate;
+    trep[70] = galien;
+    trep[71] = (uint8_t)((gxp >> 8) & 255u);
+    trep[72] = (uint8_t)(ghash & 255u);
+    trep[73] = (uint8_t)((ghash >> 8) & 255u);
+    trep[74] = gencls;
     trep[117] = (uint8_t)(gsec & 255u);
     trep[118] = (uint8_t)(gturns & 255u);
     trep[119] = (uint8_t)((gturns >> 8) & 255u);
@@ -250,5 +284,184 @@ void test_main(void) {
     trep[123] = (uint8_t)(gfighters & 255u);
     trep[124] = gphotons;
     trep[125] = gfightover;
+    /* T6: far-code trampoline (m8dispatch fn 1 = m8_hello). On hardware
+       this crosses banks via jsl/rtl; on host it is a direct call.
+       Expected: magic A5 + "FAR-OK" in the far message buffer. */
+    gfar_fn = 1u;
+    far_exec();
+    trep[107] = gfarmagic;
+    trep[108] = (uint8_t)gfarmsg[0];
+    trep[109] = (uint8_t)gfarmsg[1];
+    trep[110] = (uint8_t)gfarmsg[2];
+    trep[111] = (uint8_t)gfarmsg[3];
+    trep[112] = (uint8_t)gfarmsg[4];
+    trep[113] = (uint8_t)gfarmsg[5];
+    /* T7: M8 Ferrengi/alien far functions (direct probes, no tour).
+       Home = guniv rim = 1000; day 10: guard 210, treasury 41000. */
+    boot_init();
+    guniv = 1000u;
+    gsclk = 0u;
+    gsec = 1000u;
+    gfighters = 30u;
+    gshields = 0u;
+    gcredits = 10000u;
+    gday = 10u;
+    ggrudpk = 0u;
+    galign = 0;
+    gxp = 0u;
+    gport = 1u;
+    gplanet = 0u;
+    gplevel = 0u;
+    gftrs = 0u;
+    gfar_fn = 13u;
+    far_exec();
+    trep[92] = 0u;
+    if (gfersec == 1000u) {
+        if (gplanet == 1u) {
+            if (gplevel == 4u) {
+                if (gport == 0u) {
+                    if (gftrs == 210u) {
+                        if (gfertreas == 41000u) {
+                            if (gfarm3[0] == 70u) {
+                                trep[92] = 1u;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    gfar_fn = 10u;
+    far_exec();
+    trep[93] = 0u;
+    if (gferd == 2u) {
+        if (gcredits == 9500u) {
+            if (gencls == 17u) {
+                if (gfarmsg[0] == 68u) {
+                    if (gfarm2[0] == 84u) {
+                        trep[93] = 1u;
+                    }
+                }
+            }
+        }
+    }
+    gcredits = 100u;
+    gfar_fn = 10u;
+    far_exec();
+    trep[94] = 0u;
+    if (gferd == 1u) {
+        if (gfer == 1u) {
+            if (ggrudpk == 16u) {
+                if (genftrs == 45u) {
+                    trep[94] = 1u;
+                }
+            }
+        }
+    }
+    gfighters = 1u;
+    gshields = 50u;
+    gcredits = 10000u;
+    gfar_fn = 10u;
+    far_exec();
+    trep[95] = 0u;
+    if (gferd == 2u) {
+        if (gcredits == 10000u) {
+            if (gfarm2[9] == 83u) {
+                trep[95] = 1u;
+            }
+        }
+    }
+    ghash = 112u;
+    galign = 0;
+    gxp = 0u;
+    gfar_fn = 12u;
+    far_exec();
+    trep[114] = 0u;
+    if (galien == 1u) {
+        if (galign == -10) {
+            if (gxp == 12u) {
+                if (gfarm2[0] == 86u) {
+                    trep[114] = 1u;
+                }
+            }
+        }
+    }
+    gfighters = 3000u;
+    gcredits = 10000u;
+    gxp = 0u;
+    galign = 0;
+    gfar_fn = 13u;
+    far_exec();
+    trep[115] = 0u;
+    if (gftrs == 0u) {
+        if (gcredits == 51000u) {
+            if (gxp == 50u) {
+                if (galign == -25) {
+                    if (ggrudpk & 64u) {
+                        trep[115] = 1u;
+                    }
+                }
+            }
+        }
+    }
+    gfar_fn = 14u;
+    far_exec();
+    trep[126] = 0u;
+    if (gfarmsg[0] == 70u) {
+        if (gfarm2[0] == 82u) {
+            trep[126] = 1u;
+        }
+    }
+    trep[127] = gfergrd;
+    /* T8: M8 bank-0 hook paths (trep 60-63 sit in the print-only T0
+       trajectory area; no asserts read them). Home state from T7. */
+    gsec = 1000u;
+    port_name();
+    trep[60] = 0u;
+    if (gdstr[0] == 70u) {
+        gsec = 3u;
+        port_name();
+        if (gdstr[0] == 82u) {
+            trep[60] = 1u;
+        }
+    }
+    gsec = 1000u;
+    gplanet = 1u;
+    gcmdsel = 5u;
+    exec_cmd();
+    trep[61] = 0u;
+    if (gstate == 9u) {
+        if (gm1[0] == 70u) {
+            if (gm2[0] == 82u) {
+                trep[61] = 1u;
+            }
+        }
+    }
+    gsec = 1000u;
+    gftrs = 30u;
+    gcredits = 10000u;
+    gfighters = 30u;
+    gshields = 0u;
+    gcmdsel = 6u;
+    exec_cmd();
+    trep[62] = 0u;
+    if (gstate == 9u) {
+        if (gcredits == 9500u) {
+            if (gm1[0] == 68u) {
+                trep[62] = 1u;
+            }
+        }
+    }
+    gcredits = 100u;
+    gcmdsel = 6u;
+    exec_cmd();
+    trep[63] = 0u;
+    if (gstate == 15u) {
+        if (gencls == 17u) {
+            if (gfer == 1u) {
+                trep[63] = 1u;
+            }
+        }
+    }
 trep[15] = 1u;
 }

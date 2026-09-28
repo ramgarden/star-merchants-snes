@@ -162,8 +162,31 @@ int main() {
 $ObjFiles = @()
 foreach ($c in $CFiles) {
     $obj = "$BUILD_DIR\$([IO.Path]::GetFileNameWithoutExtension($c)).o"
+    $base = [IO.Path]::GetFileNameWithoutExtension($c)
+    $flags = @("-t", "none", "--cpu", "65816", "-I$SRC_DIR", "-O", "-c", "-o", $obj, $c)
+    if ($base -eq "m8") {
+        # Bank-1 far code (FARCODE) + far const (FARRODATA, must stay empty:
+        # 16-bit refs can't reach bank 1 with DBR=0). See src/m8.c rules.
+        $flags = @("-t", "none", "--cpu", "65816", "-I$SRC_DIR", "-O",
+                   "--code-name", "FARCODE", "--rodata-name", "FARRODATA",
+                   "-c", "-o", $obj, $c)
+        # Source gate: no string literals, const arrays, switch (rodata
+        # jump tables), or pragmas in m8.c -- all unaddressable from bank 1.
+        # Plus: no bare farbyt() calls (bank-0 leaf; a bank-1 jsr lands in
+        # bank-1 zeros -- use the farbyt1() twin; see far_tbl.s).
+        $text = [System.IO.File]::ReadAllText($c)
+        $stripped = [regex]::Replace($text, '/\*.*?\*/', '', 'Singleline')
+        $stripped = [regex]::Replace($stripped, '//.*', '')
+        $stripped = [regex]::Replace($stripped, 'farbyt1', 'FARBYT1OK')
+        foreach ($pat in @('"', '\bconst\b', '\bswitch\b', '#pragma', '\bfarbyt\b')) {
+            if ($stripped -match $pat) {
+                Write-Error "src/m8.c gate: forbidden pattern '$pat' (bank-1 code cannot use literals/const/switch/pragma)"
+                exit 1
+            }
+        }
+    }
     Write-Host "Compiling $c..." -ForegroundColor Green
-    Invoke-Toolchain $CL65 @("-t", "none", "--cpu", "65816", "-I$SRC_DIR", "-O", "-c", "-o", $obj, $c)
+    Invoke-Toolchain $CL65 @flags
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     $ObjFiles += $obj
 }
@@ -184,6 +207,12 @@ foreach ($s in $SFiles) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     $ObjFiles += $obj
 }
+
+# --- Far-data layout gate (M8 tables are hand-padded; drift = silent
+# wrong reads on hardware AND host). Fails loudly before linking.
+Write-Host "Verifying far-data layout..." -ForegroundColor Green
+python "$ProjectRoot\tools\verify_far.py"
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $LINKER_CFG = "$ScriptDir\snes-lorom.cfg"
 

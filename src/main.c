@@ -121,6 +121,17 @@ typedef short int16_t;
 #define FT_SCP5 (FT_BASE + 752u)
 #define FT_SC6  (FT_BASE + 756u)
 #define FT_SCP6 (FT_BASE + 770u)
+/* M8 far data base (bank-1, after the 784 tour bytes); see far_data.s
+ * for the field layout. Strides: names 8, msgs 24, home 12, aliens 12. */
+#define FT_M8   (FT_BASE + 784u)
+#define FT_M8M0 (FT_M8 + 24u)
+#define FT_M8M1 (FT_M8 + 48u)
+#define FT_M8M2 (FT_M8 + 72u)
+#define FT_M8M3 (FT_M8 + 96u)
+#define FT_M8M4 (FT_M8 + 120u)
+#define FT_M8HOME (FT_M8 + 144u)
+#define FT_M8AL (FT_M8 + 156u)
+#define FT_M8SH (FT_M8 + 228u)
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -162,6 +173,15 @@ uint8_t gscr_f;
 uint16_t gscr_b;
 uint16_t gscr_b2;
 uint16_t gfar_o;
+uint8_t gfar_fn;
+uint16_t gfersec;
+uint8_t gfer;
+uint8_t gferd;
+uint8_t gferpal;
+uint8_t ggrudpk;
+uint16_t gfertreas;
+uint8_t gfergrd;
+uint8_t galien;
 char gname[9];
 char gship[9];
 char *gbuf;
@@ -261,6 +281,11 @@ void sram_wr(void);
 void sram_rd(void);
 void font_load(void);
 uint8_t farbyt(void);
+void far_exec(void);
+extern char gfarmsg[33];
+extern uint8_t gfarmagic;
+extern char gfarm2[33];
+extern char gfarm3[33];
 const uint8_t palc1[16] = {
     0xFF, 0x7F, 0x10, 0x42, 0x1F, 0x00, 0x0C, 0x00,
     0x00, 0x7C, 0x00, 0x2C, 0xE0, 0x7F, 0xFF, 0x03,
@@ -271,14 +296,18 @@ const uint8_t bitmask[8] = { 1u, 2u, 4u, 8u, 16u, 32u, 64u, 128u };
 const char rulerow[33] = "--------------------------------";
 const uint8_t clsides[9] = { 6u, 5u, 3u, 1u, 2u, 4u, 0u, 7u, 4u };
 const uint16_t citcost[6] = { 0u, 0u, 2000u, 5000u, 10000u, 20000u };
-/* M7 combat: 15 ship classes, offensive/defensive odds (TW2002 tables) */
-const uint8_t shipoff[15] = {
+/* M7 combat: 15 ship classes, offensive/defensive odds (TW2002 tables).
+ * M8 appends 3 Ferrengi classes (odds x5: 1.0/1.2/1.4 -> 5,6,7 over 5);
+ * their names come from the far buffer (ship_name), never literals. */
+const uint8_t shipoff[18] = {
     10u, 8u, 11u, 12u, 10u, 6u, 10u, 10u,
     12u, 13u, 11u, 11u, 12u, 13u, 7u,
+    5u, 6u, 7u,
 };
-const uint8_t shipdef[15] = {
+const uint8_t shipdef[18] = {
     10u, 8u, 10u, 11u, 12u, 6u, 10u, 11u,
     12u, 10u, 12u, 13u, 12u, 11u, 9u,
+    5u, 5u, 5u,
 };
 /* M7 combat tour (selfdrive 4): new game -> Stardock hardware ->
    photon buy -> leave hub -> warp sector 3 (11 hostiles, class 13) ->
@@ -291,6 +320,7 @@ static void show_loadret(void);
 static void show_dock(void);
 static void show_planet(void);
 static void show_fight(void);
+static void victory_calc(void);
 static void gen_enemy(void);
 static void planet_fresh(void);
 static void planet_genesis(void);
@@ -592,7 +622,7 @@ static void sram_sync(void) {
     gsram_ck = 0u;
     gsram_d = 83u; sram_put();
     gsram_d = 77u; sram_put();
-    gsram_d = 5u; sram_put();
+    gsram_d = 6u; sram_put();
     gi = 0u;
     while (gi < 8u) {
         gsram_d = gname[gi];
@@ -661,6 +691,7 @@ static void sram_sync(void) {
     gsram_d = (uint8_t)(gcolsec & 255u); sram_put();
     gsram_d = (uint8_t)(gcolsec >> 8); sram_put();
     gsram_d = gphotons; sram_put();
+    gsram_d = ggrudpk; sram_put();
     gsram_d = gsram_ck;
     sram_wr();
 }
@@ -673,7 +704,7 @@ static void sram_load(void) {
     sram_get();
     if (gsram_d != 77u) return;
     sram_get();
-    if (gsram_d != 5u) return;
+    if (gsram_d != 6u) return;
     gi = 0u;
     while (gi < 8u) {
         sram_get();
@@ -744,6 +775,7 @@ static void sram_load(void) {
     sram_get(); gtmp = gsram_d;
     sram_get(); gcolsec = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
     sram_get(); gphotons = gsram_d;
+    sram_get(); ggrudpk = gsram_d;
     sram_rd();
     if (gsram_d != gsram_ck) {
         gtmp = 0u;
@@ -1002,6 +1034,7 @@ static void show_launch(void) {
     gtorp = 0u;
     gcomm = 0u;
     gphotons = 0u;
+    ggrudpk = 0u;
     gbankday = 0u;
     gcitadel = 0u;
     gcolore = 0u;
@@ -1111,6 +1144,9 @@ static void gen_sector(void) {
     sec_next();
     if (((ghash >> 3) & 15u) < 3u) { gftrs = (uint8_t)(1u + ((ghash >> 7) & 15u)); }
     else { gftrs = 0u; }
+    /* M8: Ferrengal home override + guard/treasury derivation (far). */
+    gfar_fn = 13u;
+    far_exec();
 }
 static void mark_visited(void) {
     gtmp = (uint16_t)((gsec - 1u) & 511u);
@@ -1133,6 +1169,7 @@ static void neb_name(void) {
     else { gdstr = "VEGA DRIFT"; }
 }
 static void port_name(void) {
+    if (gsec == gfersec) { gdstr = gfarm3; return; }
     gtmp = (uint16_t)(gsec & 7u);
     if (gtmp == 0u) { gdstr = "HUYGENS"; }
     else if (gtmp == 1u) { gdstr = "STARDOCK"; }
@@ -1506,7 +1543,14 @@ static void exec_cmd(void) {
         }
     } else if (gcmdsel == 5u) {
         gcmdopen = 0u;
-        if (gplanet) {
+        if (gsec == gfersec) {
+            gfar_fn = 14u;
+            far_exec();
+            gmsgmode = 0u;
+            gm1 = gfarmsg; gm1pal = PAL_RED;
+            gm2 = gfarm2; gm3 = ""; gm4 = "";
+            show_sector();
+        } else if (gplanet) {
             gplsel = 0u;
             gplmsg = 0u;
             gm1 = "";
@@ -1532,12 +1576,16 @@ static void exec_cmd(void) {
             gen_enemy();
             gfightsel = 0u;
             gfightover = 0u;
-            gm1 = "ENGAGING ENEMY!";
-            gm1pal = PAL_RED;
-            gm2 = "PREPARE FOR BATTLE";
-            gm3 = "";
-            gm4 = "";
-            show_fight();
+            gfar_fn = 10u;
+            far_exec();
+            gm1 = gfarmsg; gm1pal = gferpal;
+            gm2 = gfarm2; gm3 = ""; gm4 = "";
+            if (gferd == 2u) {
+                gmsgmode = 0u;
+                show_sector();
+            } else {
+                show_fight();
+            }
         } else {
             gmsgmode = 0u;
             gm1 = "NO HOSTILES HERE";
@@ -3324,7 +3372,8 @@ static void ship_name(void) {
     else if (gencls == 11u) { gdstr = "CON STE"; }
     else if (gencls == 12u) { gdstr = "TKH ORI"; }
     else if (gencls == 13u) { gdstr = "THO SEN"; }
-    else { gdstr = "TAU MUL"; }
+    else if (gencls == 14u) { gdstr = "TAU MUL"; }
+    else { gdstr = gfarmsg; }
 }
 static void gen_enemy(void) {
     sec_seed();
@@ -3416,7 +3465,7 @@ static void draw_fightmsgs(void) {
         if (gphotons > 0u) {
             gdstr = "PHOTON SAVES POD!"; draw_text();
         } else if (gencorb) {
-            gdstr = "CORBOMITE RETALIATES!"; draw_text();
+            gdstr = "CORBOMITE!"; draw_text();
         } else {
             gdstr = "ESCAPE POD LAUNCHED"; draw_text();
         }
@@ -3477,42 +3526,48 @@ static void show_fight(void) {
     gstate = ST_FIGHT;
     gframe = 0u;
 }
+static void victory_calc(void) {
+    /* gbounty = gencls * 100 + 500 via shifts (64+32+4): exact,
+     * no multiply helper (see fight_odds note). */
+    gbounty = 0u;
+    gom = (uint16_t)gencls;
+    gom <<= 6u;
+    gbounty += gom;
+    gom = (uint16_t)gencls;
+    gom <<= 5u;
+    gbounty += gom;
+    gom = (uint16_t)gencls;
+    gom <<= 2u;
+    gbounty += gom;
+    gbounty += 500u;
+    gcredits += gbounty;
+    /* gxp += bounty / 100 + 5 via subtract division (bounty <=
+     * 1900, so <= 19 iterations): exact, no divide helper. */
+    goc = 0u;
+    gom = gbounty;
+    while (gom >= 100u) {
+        gom -= 100u;
+        goc++;
+    }
+    gxp += goc;
+    gxp += 5u;
+    sram_sync();
+}
 static void fight_attack(void) {
     fight_odds();
     if (gfighters >= gsav) {
         gfighters -= gsav;
         genftrs = 0u;
         gfightover = 1u;
-        /* gbounty = gencls * 100 + 500 via shifts (64+32+4): exact,
-         * no multiply helper (see fight_odds note). */
-        gbounty = 0u;
-        gom = (uint16_t)gencls;
-        gom <<= 6u;
-        gbounty += gom;
-        gom = (uint16_t)gencls;
-        gom <<= 5u;
-        gbounty += gom;
-        gom = (uint16_t)gencls;
-        gom <<= 2u;
-        gbounty += gom;
-        gbounty += 500u;
-        gcredits += gbounty;
-        /* gxp += bounty / 100 + 5 via subtract division (bounty <=
-         * 1900, so <= 19 iterations): exact, no divide helper. */
-        goc = 0u;
-        gom = gbounty;
-        while (gom >= 100u) {
-            gom -= 100u;
-            goc++;
-        }
-        gxp += goc;
-        gxp += 5u;
         gm1 = "VICTORY!";
         gm1pal = PAL_YEL;
         gm2 = "ENEMY VAPORIZED";
         gm3 = "";
         gm4 = "";
-        sram_sync();
+        victory_calc();
+        gfar_fn = 12u;
+        far_exec();
+        gm3 = gfarm2;
     } else {
         gfighters = 0u;
         gfightover = 2u;

@@ -3,7 +3,26 @@
 SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 **Read `devlog/` for the detailed history of what has been tried and verified.**
 
-## Current Status (2026-09-23)
+## Current Status (2026-09-28)
+
+- ✅ **Milestone 7 COMPLETE 2026-09-25, re-verified 2026-09-28** —
+  combat system (ship odds/fighter math, 15 classes, photon blind,
+  corbomite/escape-pod paths, turn clamps, victory_calc refactor);
+  fight-reboot root-caused to cc65 TOS helpers (shift-add rewrite).
+  M7 tour end-state re-verified with M8 present (SECTOR 3 / 11300cr /
+  11ftrs / 499t + KRULL alien XP 35). See
+  devlog/2026-09-25-m7-combat-verification.md.
+- ✅ **Milestone 8 COMPLETE 2026-09-28** — Ferrengi & Aliens: rim-home
+  Ferrengal (L4, guard/treasury day-derived), 3 ship classes (odds
+  1.0/1.2/1.4 exact), auto-tribute (rich pay+stand down, poor fight+
+  grudge), 2-bit×3 grudge pack in SRAM v6, neutralization (1ftr+50sh
+  immune, 3000ftrs wipe+loot), 1/8 alien ranks with align/XP shifts.
+  Bank-0 was full (12 B) so all M8 logic lives in LoROM bank 1
+  (`src/m8.c` + `_far_exec` jsl trampoline). Host 54/54; screenshot-
+  verified (tribute-paid 9000, ASS TRA fight, photon blind, Ferrengi
+  victory 11500, alien XP 35). See devlog/2026-09-28-m8-ferrengi.md.
+- ⚠️ **Milestone 7 ROLLED BACK 2026-09-24** — the first M7 attempt
+  (commit 6f1d999) added `#pragma rodata-name ("FARRODATA")` in main.c;
 
 - ✅ Black screen RESOLVED (two root causes, see
   devlog/2026-09-22-black-screen-root-causes.md)
@@ -70,6 +89,23 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 - crt0: DP=$0000 via full-16-bit TCD BEFORE any direct-page access
   (`sta c_sp`); `src/cpustate.s` `_probe` kept as unreferenced no-stack
   diagnostic that paints D/B/c_sp/M/X state as colors.
+- Bank-1 C (`src/m8.c`): **no calls crossing banks, ever.** A bank-1
+  `jsr` to a bank-0 address (none.lib helpers like `shrax`/`mulax`,
+  or the bare `farbyt` leaf) lands in bank-1 zeros (`$01E8xx` =
+  BRK-sled) instead of bank-0 code: wander, garbage reads, occasional
+  hangs. Host never catches it (flat 6502, no banks). Bank-1 math must
+  be helper-free (shift-add doubling chains, subtract loops — enforced
+  by the same-bank-calls gate in `scripts/build.ps1`); far data access
+  goes through the bank-1 twin `farbyt1`. See
+  devlog/2026-09-28-m8-ferrengi.md.
+- Asm leaf helpers: **return with X=0** (`LDX #0` before RTS). cc65
+  promotes `uint8` callee results to `uint16` via `STA lo + STX hi`,
+  trusting X=0; a stale X high byte corrupts the value (was XP 64291,
+  now exactly 35). Host 6502 codegen masks this — hardware-only class.
+- Bank-1 const data in `far_data.s` is hand-padded to fixed strides;
+  `tools/verify_far.py` (run by the build) asserts every field offset.
+  Miscounted padding once shifted all later fields +2 (silent wrong
+  reads while state logic stayed green).
 
 ## Structure
 

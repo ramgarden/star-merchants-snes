@@ -151,7 +151,7 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
   SRAM v4 (+20B planet record), L LAND added as 7th palette command,
   full M6 tour host-proven (claim/deploy/load/quasar/warp/denial)
 
-## Milestone 7: Combat System (in verification 2026-09-25)
+## Milestone 7: Combat System (Complete 2026-09-25, verified 2026-09-28)
 - ROLLED BACK 2026-09-24: first implementation (commit 6f1d999) shipped a
   `#pragma rodata-name` that pushed all C string literals to bank 1 ->
   garbled text on every screen. Code reverted to verified M6 state
@@ -181,12 +181,30 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
   fight math); rewrote odds/bounty/XP with shift-add/subtract step math.
   Helpers fully unlinked; host still byte-exact (see devlog)
 
-## Milestone 8: Ferrengi & Aliens
-- [ ] **Ferrengal** - L4 planet, 30% sector QC, 40% MRL, 5000 ftrs, 100k treasury
-- [ ] **Ferrengi Ships** - Assault Trader (1.0), BattleCruiser (1.2), Dreadnaught (1.4)
-- [ ] **Ferrengi Behavior** - Demand tribute, grudge system (3 grudges/ship), regen
-- [ ] **Neutralization** - 1 ftr + max shields = immune; 3000 ftrs in home sector = kill all
-- [ ] **Aliens** - Good/evil ranks, alignment-based XP/align shifts on kill
+## Milestone 8: Ferrengi & Aliens (Complete 2026-09-28)
+- [x] **Ferrengal** - Rim-sector L4 planet "FERRENGAL", guard 200+day
+  (cap 250, `uint8` adaptation of spec 5000), treasury 40000+day·100
+  (cap 60000, `uint16` adaptation of 100k) — sector screenshot-verified
+  (PORT:NONE, PLANET:FERRENGAL L4, FTRS:201 HOSTILE)
+- [x] **Ferrengi Ships** - ASS TRA / BAT CRU / DREADNT with odds 5,6,7
+  over 5 (exact 1.0/1.2/1.4 ratios); bounties 2000+ — fight intro
+  screenshot-verified (COMBAT: ASS TRA, 33→25 FTRS, ODDS 5/5)
+- [x] **Ferrengi Behavior** - Auto-tribute on engage (rich pay 500cr
+  and stand down — "TRIBUTE PAID 500CR", CR 10000→9000 verified; poor
+  fight with +1 grudge), 2-bit×3 grudge pack in SRAM v6, day-derived
+  regen, retaliation scaling (+5 fighters/grudge)
+- [x] **Neutralization** - ≤1 fighter + ≥50 shields = stand down
+  ("FERRENGI STAND DOWN"); ≥3000 fighters at home = guard wiped +
+  treasury looted (+50 XP, −25 ALIGN) — all host-proven (T7/T8)
+- [x] **Aliens** - 1/8 victories roll good/evil rank (VORLON/ASGARD/
+  ELDARI vs KRULL/MORGU/XARTH) with align ∓ / XP + shifts on the
+  victory line ("VORLON GOOD SLAIN" host-proven; KRULL +10/+12 on the
+  M7 tour: T5 now expects XP 35 by design)
+- [x] **FARCODE infra** - Bank-0 ROM was full (12 B), so post-M7 logic
+  lives in LoROM bank 1 (`src/m8.c`, `_far_exec` jsl trampoline);
+  root-caused two hardware-only bug classes along the way (cross-bank
+  JSR helpers → BRK-sled; asm X-discipline) with build gates for both.
+  See devlog/2026-09-28-m8-ferrengi.md
 
 ## Milestone 9: Corporation & Multiplayer Prep
 - [ ] **Corporation** - Create/join, CEO Flagship, corp planets, corp fighters

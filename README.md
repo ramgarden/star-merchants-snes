@@ -30,6 +30,11 @@ All captures are real emulator screenshots (snes9x) of the actual ROM.
 | ![Planet](docs/screens/planet.png) | ![Quasar](docs/screens/quasar.png) |
 | Claimed homeworld: citadel, colonists, fighters, 8 commands | Quasar set 20%, fuel stock decremented, economy reconciled |
 
+| Ferrengi tribute | Ferrengi combat |
+|---|---|
+| ![Tribute](docs/screens/ferrengi_tribute.png) | ![Combat](docs/screens/ferrengi_combat.png) |
+| Ferrengal L4 / 201 fighters; ASS TRA demands 500cr, paid (CR 9000) | Unpaid: ASS TRA 5/5 odds, photon blinds (MIN TO WIN 25→12) |
+
 ## Current Status
 
 Milestones 0–6 complete and screenshot-verified: ANSI title + attract
@@ -41,11 +46,14 @@ genesis/detonator), and SRAM save/load with Continue resume. See
 `MILESTONES.md` for the roadmap, `AGENTS.md` and `devlog/` for the full
 technical state.
 
-**Milestone 7 (combat) rolled back 2026-09-24**: the first M7 commit
-broke text rendering (a bank-1 rodata pragma moved all C string
-literals out of bank 0 -> garbled text on every screen). Code was
-reverted to the screenshot-verified M6 state and M7 is being
-re-implemented from that base. See `devlog/2026-09-24-m7-rollback.md`.
+**Milestones 7–8 complete 2026-09-28**: combat system (15 ship classes,
+photon blind, corbomite/escape-pod paths, turn clamps) and Ferrengi &
+Aliens (Ferrengal L4 colony, 3 ship classes, tribute/grudge system,
+neutralization rules, alien ranks with alignment shifts). The M7
+rollback of 2026-09-24 (bank-1 rodata pragma garbling text) is ancient
+history — see `devlog/` for that and the M8 bank-1-code root causes
+(cross-bank JSR, asm X-discipline). Host suite 54/54, ROM builds with
+Mesen-S-exact validation. Next: corporations (Milestone 9).
 
 ## Quick Start
 

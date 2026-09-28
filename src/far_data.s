@@ -129,3 +129,35 @@ _scf6:
 _scp6:
     .byte 3,0,3,0,6,0,2,0,2,0
     .byte 6,0,6,0
+
+; ============================================================================
+; Milestone 8: Ferrengi + alien tables (offsets FT_M8* in main.c, bytes read
+; via farbyt() only -- never address these symbols from C).
+; Layout from FT_M8 (all NUL-terminated, zero-padded to stride):
+;   +0   ship names 3x8   ("ASS TRA","BAT CRU","DREADNT")
+;   +24  msg lines 5x24   (PAID,UNPAID,STAND,DENY,HINT -- see FT_M8M*)
+;   +144 home name 12     ("FERRENGAL")
+;   +156 alien names 6x12 (VORLON/ASGARD/ELDARI good, KRULL/MORGU/XARTH evil)
+;   +228 alien shifts 6x2 (align+128, xp; good kills cost alignment)
+; Total 240 bytes.
+; ============================================================================
+    .byte "ASS TRA", 0
+    .byte "BAT CRU", 0
+    .byte "DREADNT", 0
+    .byte "TRIBUTE PAID 500CR", 0, 0, 0, 0, 0, 0
+    .byte "TRIBUTE UNPAID: FIGHT!", 0, 0
+    .byte "FERRENGI STAND DOWN", 0, 0, 0, 0, 0
+    .byte "FERRENGAL DEFENDED", 0, 0, 0, 0, 0, 0
+    .byte "RETURN WITH 3000 FTRS", 0, 0, 0
+    .byte "FERRENGAL", 0, 0, 0
+    .byte "VORLON", 0, 0, 0, 0, 0, 0
+    .byte "ASGARD", 0, 0, 0, 0, 0, 0
+    .byte "ELDARI", 0, 0, 0, 0, 0, 0
+    .byte "KRULL", 0, 0, 0, 0, 0, 0, 0
+    .byte "MORGU", 0, 0, 0, 0, 0, 0, 0
+    .byte "XARTH", 0, 0, 0, 0, 0, 0, 0
+    .byte 118, 12, 120, 10, 116, 15, 138, 12, 136, 10, 140, 15
+; Fight-entry lines for every battle (bank-0 keeps no literals here):
+; +240 normal ENGAGING, +264 normal PREPARE.
+    .byte "ENGAGING ENEMY!", 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "PREPARE FOR BATTLE", 0, 0, 0, 0, 0, 0
