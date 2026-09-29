@@ -102,7 +102,7 @@ typedef short int16_t;
 #define SCN 92u
 #define SCN2 106u
 #define SCN3 92u
-#define SCN4 84u
+#define SCN4 88u
 #define SCN5 4u
 #define SCN6 14u
 /* Bank-1 tour table bases (FARRODATA starts at $018C00, right after
@@ -117,13 +117,13 @@ typedef short int16_t;
 #define FT_SCP3 (FT_BASE + 488u)
 #define FT_SC4  (FT_BASE + 580u)
 #define FT_SCP4 (FT_BASE + 664u)
-#define FT_SC5  (FT_BASE + 748u)
-#define FT_SCP5 (FT_BASE + 752u)
-#define FT_SC6  (FT_BASE + 756u)
-#define FT_SCP6 (FT_BASE + 770u)
+#define FT_SC5  (FT_BASE + 756u)
+#define FT_SCP5 (FT_BASE + 760u)
+#define FT_SC6  (FT_BASE + 764u)
+#define FT_SCP6 (FT_BASE + 778u)
 /* M8 far data base (bank-1, after the 784 tour bytes); see far_data.s
  * for the field layout. Strides: names 8, msgs 24, home 12, aliens 12. */
-#define FT_M8   (FT_BASE + 784u)
+#define FT_M8   (FT_BASE + 792u)
 #define FT_M8M0 (FT_M8 + 24u)
 #define FT_M8M1 (FT_M8 + 48u)
 #define FT_M8M2 (FT_M8 + 72u)
@@ -132,6 +132,25 @@ typedef short int16_t;
 #define FT_M8HOME (FT_M8 + 144u)
 #define FT_M8AL (FT_M8 + 156u)
 #define FT_M8SH (FT_M8 + 228u)
+/* M9 corp tables follow the 288 M8 bytes; see far_data.s layout. */
+#define FT_M9   (FT_M8 + 288u)
+#define FT_M9ROW0 (FT_M9 + 64u)
+#define FT_M9ROW1 (FT_M9 + 88u)
+#define FT_M9HW0 (FT_M9 + 112u)
+#define FT_M9HW1 (FT_M9 + 136u)
+#define FT_M9HW2 (FT_M9 + 160u)
+#define FT_M9HW3 (FT_M9 + 184u)
+#define FT_M9M0 (FT_M9 + 208u)
+#define FT_M9M1 (FT_M9 + 232u)
+#define FT_M9M2 (FT_M9 + 256u)
+#define FT_M9M3 (FT_M9 + 280u)
+#define FT_M9M4 (FT_M9 + 304u)
+#define FT_M9M5 (FT_M9 + 328u)
+#define FT_M9M6 (FT_M9 + 352u)
+#define FT_M9M7 (FT_M9 + 376u)
+#define FT_SC7  (FT_M9 + 400u)
+#define FT_SCP7 (FT_SC7 + SCN7)
+#define SCN7 44u
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -179,6 +198,9 @@ uint8_t gfer;
 uint8_t gferd;
 uint8_t gferpal;
 uint8_t ggrudpk;
+uint8_t gcorpk;
+uint8_t gpool;
+uint8_t gshipcls;
 uint16_t gfertreas;
 uint8_t gfergrd;
 uint8_t galien;
@@ -286,6 +308,10 @@ extern char gfarmsg[33];
 extern uint8_t gfarmagic;
 extern char gfarm2[33];
 extern char gfarm3[33];
+extern char gfar4[33];
+extern char gfar5[33];
+extern char gfar6[33];
+extern char gfar7[33];
 const uint8_t palc1[16] = {
     0xFF, 0x7F, 0x10, 0x42, 0x1F, 0x00, 0x0C, 0x00,
     0x00, 0x7C, 0x00, 0x2C, 0xE0, 0x7F, 0xFF, 0x03,
@@ -381,7 +407,9 @@ static void wait_vblank(void) {
 /* All tours (1-6) use bank-1 FARRODATA tables via farbyt(). */
 static void script_pads(void) {
     gsclk = (uint8_t)(gsfr >> 4);
-    if (gselfdrive == 4u) {
+    if (gselfdrive == 7u) {
+        gscr_f = 1u; gscr_b = FT_SC7; gscr_b2 = FT_SCP7; gflim = SCN7;
+    } else if (gselfdrive == 4u) {
         gscr_f = 1u; gscr_b = FT_SC4; gscr_b2 = FT_SCP4; gflim = SCN4;
     } else if (gselfdrive == 5u) {
         gscr_f = 1u; gscr_b = FT_SC5; gscr_b2 = FT_SCP5; gflim = SCN5;
@@ -622,7 +650,7 @@ static void sram_sync(void) {
     gsram_ck = 0u;
     gsram_d = 83u; sram_put();
     gsram_d = 77u; sram_put();
-    gsram_d = 6u; sram_put();
+    gsram_d = 7u; sram_put();
     gi = 0u;
     while (gi < 8u) {
         gsram_d = gname[gi];
@@ -692,6 +720,9 @@ static void sram_sync(void) {
     gsram_d = (uint8_t)(gcolsec >> 8); sram_put();
     gsram_d = gphotons; sram_put();
     gsram_d = ggrudpk; sram_put();
+    gsram_d = gcorpk; sram_put();
+    gsram_d = gpool; sram_put();
+    gsram_d = gshipcls; sram_put();
     gsram_d = gsram_ck;
     sram_wr();
 }
@@ -704,7 +735,7 @@ static void sram_load(void) {
     sram_get();
     if (gsram_d != 77u) return;
     sram_get();
-    if (gsram_d != 6u) return;
+    if (gsram_d != 7u) return;
     gi = 0u;
     while (gi < 8u) {
         sram_get();
@@ -776,6 +807,9 @@ static void sram_load(void) {
     sram_get(); gcolsec = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
     sram_get(); gphotons = gsram_d;
     sram_get(); ggrudpk = gsram_d;
+    sram_get(); gcorpk = gsram_d;
+    sram_get(); gpool = gsram_d;
+    sram_get(); gshipcls = gsram_d;
     sram_rd();
     if (gsram_d != gsram_ck) {
         gtmp = 0u;
@@ -1035,6 +1069,9 @@ static void show_launch(void) {
     gcomm = 0u;
     gphotons = 0u;
     ggrudpk = 0u;
+    gcorpk = 0u;
+    gpool = 0u;
+    gshipcls = 1u;
     gbankday = 0u;
     gcitadel = 0u;
     gcolore = 0u;
@@ -1894,9 +1931,9 @@ static void draw_portmsgs(void) {
     }
     if (gportmsg == 5u) {
         gdx = 0u; gdy = 7u; gdpal = PAL_RED;
-        gdstr = "BUSTED BY PORT AUTHORITY!"; draw_text();
+        gdstr = "BUSTED BY PORT!"; draw_text();
         gdx = 0u; gdy = 8u; gdpal = PAL_WHITE;
-        gdstr = "FINE 500 CR ALIGN -20"; draw_text();
+        gdstr = "FINE 500 ALIGN-20"; draw_text();
         return;
     }
     gdx = 0u; gdy = 7u; gdpal = gm1pal;
@@ -1982,7 +2019,7 @@ static void port_buy(void) {
         gportmsg = 0u;
         gm1 = "PORT WON'T SELL THAT";
         gm1pal = PAL_RED;
-        gm2 = "CHECK B/S CLASS LETTERS";
+        gm2 = "CHECK B/S LETTERS";
         show_port();
         return;
     }
@@ -2008,7 +2045,7 @@ static void port_buy(void) {
         gportmsg = 0u;
         gm1 = "HOLDS FULL";
         gm1pal = PAL_RED;
-        gm2 = "SELL OR UPGRADE (SOON)";
+        gm2 = "SELL OR UPGRADE";
         show_port();
         return;
     }
@@ -2026,7 +2063,7 @@ static void port_sell(void) {
         gportmsg = 0u;
         gm1 = "PORT WON'T BUY THAT";
         gm1pal = PAL_RED;
-        gm2 = "CHECK B/S CLASS LETTERS";
+        gm2 = "CHECK B/S LETTERS";
         show_port();
         return;
     }
@@ -2085,7 +2122,7 @@ static void port_steal(void) {
         gportmsg = 0u;
         gm1 = "HOLDS FULL";
         gm1pal = PAL_RED;
-        gm2 = "SELL OR UPGRADE (SOON)";
+        gm2 = "SELL OR UPGRADE";
         show_port();
         return;
     }
@@ -2183,7 +2220,7 @@ static void cap_credits(void) {
 }
 static void dock_count(void) {
     if (gdept == 0u) { gtmp = 8u; }
-    else if (gdept == 2u) { gtmp = 5u; }
+    else if (gdept == 2u) { gtmp = 7u; }
     else { gtmp = 4u; }
 }
 static void draw_dockhead(void) {
@@ -2298,31 +2335,31 @@ static void draw_dockmsgs(void) {
     }
     if (gdockmsg == 14u) {
         gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
-        gdstr = "FENCED HOT GOODS +150"; draw_text();
+        gdstr = "FENCED GOODS +150"; draw_text();
         return;
     }
     if (gdockmsg == 15u) {
         gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
-        gdstr = "YOU LAY LOW A WHILE"; draw_text();
+        gdstr = "LAYING LOW"; draw_text();
         return;
     }
     if (gdockmsg == 16u) {
         gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
-        gdstr = "ALE WARMS THE CREW XP+1"; draw_text();
+        gdstr = "ALE +1 XP"; draw_text();
         return;
     }
     if (gdockmsg == 17u) {
         gdx = 0u; gdy = 5u; gdpal = PAL_YEL;
         gtmp = (uint16_t)((gday + gsec) & 3u);
-        if (gtmp == 0u) { gdstr = "GRIMY: FIGS WIN WARS"; }
-        else if (gtmp == 1u) { gdstr = "TRICRON: ORE IS KING"; }
-        else if (gtmp == 2u) { gdstr = "DOC: PROBES SAVE LIVES"; }
-        else { gdstr = "ALIENS BEYOND SECTOR 5"; }
+        if (gtmp == 0u) { gdstr = "FIGS WIN WARS"; }
+        else if (gtmp == 1u) { gdstr = "ORE IS KING"; }
+        else if (gtmp == 2u) { gdstr = "PROBES SAVE LIVES"; }
+        else { gdstr = "ALIENS ARE REAL"; }
         draw_text();
         gtmp = (uint16_t)((gday + gsec) & 7u);
         if (gtmp == 0u) {
             gdx = 0u; gdy = 6u; gdpal = PAL_RED;
-            gdstr = "MUGGED IN ALLEY -100 CR"; draw_text();
+            gdstr = "MUGGED -100 CR"; draw_text();
             if (gcredits >= 100u) { gcredits -= 100u; }
             else { gcredits = 0u; }
         }
@@ -2332,9 +2369,9 @@ static void draw_dockmsgs(void) {
         gdx = 0u; gdy = 5u; gdpal = PAL_GRAY;
         gdstr = "ISS: NEED COMMISSION"; draw_text();
         gdx = 0u; gdy = 6u; gdpal = PAL_GRAY;
-        gdstr = "FREIGHTER 60HL CRUISER 20HL"; draw_text();
+        gdstr = "FREIGHTER/CRUISER DATA"; draw_text();
         gdx = 0u; gdy = 7u; gdpal = PAL_GRAY;
-        gdstr = "CORVETTE 85HL ESCORT 12HL"; draw_text();
+        gdstr = "CORVETTE/ESCORT DATA"; draw_text();
         return;
     }
     gdx = 0u; gdy = 5u; gdpal = gm1pal;
@@ -2370,11 +2407,13 @@ static void draw_dockopts(void) {
             else if (gi == 1u) { gdstr = "BUY FIGHTERS 500"; }
             else if (gi == 2u) { gdstr = "BUY SHIELDS 1000"; }
             else { gdstr = "BACK"; }
-        } else if (gdept == 2u) {
-            if (gi == 0u) { gdstr = "BUY PROBE 500"; }
-            else if (gi == 1u) { gdstr = "BUY BEACON 100"; }
-            else if (gi == 2u) { gdstr = "BUY GENESIS 5000"; }
-            else if (gi == 3u) { gdstr = "BUY PHOTON 500"; }
+        }         else if (gdept == 2u) {
+            if (gi == 0u) { gdstr = gfar4; }
+            else if (gi == 1u) { gdstr = gfar5; }
+            else if (gi == 2u) { gdstr = gfar6; }
+            else if (gi == 3u) { gdstr = gfar7; }
+            else if (gi == 4u) { gdstr = gfarmsg; }
+            else if (gi == 5u) { gdstr = gfarm2; }
             else { gdstr = "BACK"; }
         } else if (gdept == 3u) {
             if (gi == 0u) { gdstr = "DEPOSIT 1000"; }
@@ -2413,8 +2452,8 @@ static void draw_dockfoot(void) {
     else if (gdept == 2u) { gdstr = "STELLAR HARDWARE"; }
     else if (gdept == 3u) { gdstr = "3PCT DAILY NOMINAL"; }
     else if (gdept == 4u) { gdstr = "SERVE THE FEDERATION"; }
-    else if (gdept == 5u) { gdstr = "EVIL ONLY BEYOND HERE"; }
-    else { gdstr = "GRIMY TRADER KNOWS ALL"; }
+    else if (gdept == 5u) { gdstr = "EVIL ONLY"; }
+    else { gdstr = "GRIMY KNOWS ALL"; }
     draw_text();
 }
 static void show_dock(void) {
@@ -2446,6 +2485,8 @@ static void dock_hub(void) {
     ghubonce = 0u;
     ghubug = 0u;
     ghubfence = 0u;
+    gfar_fn = 22u;
+    far_exec();
     gm1 = "WELCOME TO STARDOCK";
     gm1pal = PAL_YEL;
     gm2 = "FEDERATION PROTECTED";
@@ -2635,7 +2676,7 @@ static void dock_withdraw(void) {
 static void dock_commission(void) {
     if (galign < 500) {
         gdockmsg = 0u;
-        gm1 = "NEED 500 ALIGN FOR ISS";
+            gm1 = "NEED 500 ALIGN";
         gm1pal = PAL_RED;
         gm2 = "SERVE, THEN RETURN";
         show_dock();
@@ -2651,7 +2692,7 @@ static void dock_bounty(void) {
         gdockmsg = 0u;
         gm1 = "NO FED STANDING";
         gm1pal = PAL_RED;
-        gm2 = "GOOD DEEDS PAY (ALIGN+)";
+        gm2 = "GOOD DEEDS PAY";
         show_dock();
         return;
     }
@@ -2781,14 +2822,26 @@ static void dock_exec(void) {
         return;
     }
     if (gdept == 2u) {
-        if (gdocksel == 4u) {
+        if (gdocksel == 6u) {
             dock_back();
             return;
         }
         if (gdocksel == 0u) { dock_buyprobe(); }
         else if (gdocksel == 1u) { dock_buybeacon(); }
         else if (gdocksel == 2u) { dock_buygenesis(); }
-        else { dock_buyphoton(); }
+        else if (gdocksel == 3u) { dock_buyphoton(); }
+        else {
+            if (gdocksel == 4u) { gfar_fn = 20u; }
+            else { gfar_fn = 21u; }
+            far_exec();
+            gm1 = gfarmsg;
+            gm1pal = PAL_YEL;
+            gm2 = gfarm2;
+            gm3 = "";
+            gm4 = "";
+            sram_sync();
+            show_dock();
+        }
         return;
     }
     if (gdocksel == 3u) {
@@ -3256,7 +3309,7 @@ static void plan_detonate(void) {
     gmsgmode = 0u;
     gm1 = "PLANET DESTROYED +50XP";
     gm1pal = PAL_RED;
-    gm2 = "ALIGN -50 THE FEDS NOTICE";
+        gm2 = "ALIGN -50 FEDS NOTICE";
     gm3 = "";
     gm4 = "";
     gcmdopen = 0u;
@@ -3895,7 +3948,7 @@ int main(void) {
     gopt1 = 1u;
     gopt2 = 1u;
     gopt3 = 1u;
-    gselfdrive = 0u;
+    gselfdrive = 7u;
     gdemo = 0u;
     gcmdopen = 0u;
     gsi = 0u;

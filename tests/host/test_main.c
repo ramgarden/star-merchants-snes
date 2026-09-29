@@ -15,7 +15,7 @@ uint16_t hj_pad;
 uint8_t gth;
 const uint8_t font_pic[3072] = {0};
 uint8_t sram_mem[2048];
-uint8_t trep[128];
+uint8_t trep[160];
 uint16_t gtest_t;
 uint8_t tslot;
 
@@ -96,6 +96,11 @@ extern uint8_t galien;
 extern uint16_t ghash;
 extern uint8_t gencls;
 extern uint16_t genftrs;
+extern uint8_t gcorpk;
+extern uint8_t gpool;
+extern uint8_t gshipcls;
+extern void sram_sync(void);
+extern void sram_load(void);
 extern uint16_t gday;
 extern uint8_t gport;
 extern uint8_t gplanet;
@@ -460,6 +465,129 @@ void test_main(void) {
         if (gencls == 17u) {
             if (gfer == 1u) {
                 trep[63] = 1u;
+            }
+        }
+    }
+    /* T9: M9 corp tour (selfdrive 7) end state + SRAM v7 round-trip.
+       Runner asserts exact values (trep 128-140). */
+    boot_init();
+    gselfdrive = 7u;
+    gtest_t = 0u;
+    trep[139] = 0u;
+    trep[141] = 0u;
+    while (gtest_t < 4600u) {
+        tick_once();
+        gtest_t++;
+        if (gsi >= 44u) {
+            if (trep[139] == 0u) {
+                trep[139] = (uint8_t)gm1[0];
+                trep[141] = gdept;
+                trep[143] = (uint8_t)gm2[0];
+            }
+        }
+    }
+    trep[128] = gstate;
+    trep[129] = (uint8_t)(gsec & 255u);
+    trep[130] = (uint8_t)(gturns & 255u);
+    trep[131] = (uint8_t)((gturns >> 8) & 255u);
+    trep[132] = (uint8_t)(gcredits & 255u);
+    trep[133] = (uint8_t)((gcredits >> 8) & 255u);
+    trep[134] = gcorpk;
+    trep[135] = gpool;
+    trep[136] = gshipcls;
+    trep[137] = (uint8_t)(gholdmax & 255u);
+    trep[138] = (uint8_t)(gfighters & 255u);
+    trep[142] = gdept;
+    sram_sync();
+    gcorpk = 0u;
+    gpool = 9u;
+    gshipcls = 0u;
+    sram_load();
+    trep[140] = 0u;
+    if (gcorpk == trep[134]) {
+        if (gpool == trep[135]) {
+            if (gshipcls == trep[136]) {
+                trep[140] = 1u;
+            }
+        }
+    }
+    /* T9 overflow probe: SCOUT(15max)+10pool=25 total -> MERCHANT(30max):
+       fits, pool tapped. Setup MERCHANT->FREIGHTER overflow instead:
+       shipcls 2, fighters 50, pool 10 (total 60 > 50) -> DREAD(80max)
+       with 60000cr: pool 60-80? No: 60 <= 80 fits. Use FREIGHTER hold
+       cap: fighters 50 pool 10 -> fighters 60, pool 0, HULL SWAPPED.
+       True overflow: shipcls 0 (SCOUT ftr 15), fighters 15, pool 10
+       (total 25 > MERCHANT 30? No, fits). Overflow needs total > max:
+       shipcls 1 (MERCHANT ftr 30), fighters 30, pool 10 (total 40 > 30
+       FREIGHTER 50? No: next is FREIGHTER(50): 40 <= 50 fits).
+       Cleanest: shipcls 2 (FREIGHTER ftr 50)->DREAD(80): fighters 50,
+       pool 40 (total 90 > 80): pool 10, fighters 80, OVERFLOW msg. */
+    gcorpk = 5u;
+    gshipcls = 2u;
+    gfighters = 50u;
+    gpool = 40u;
+    gholds = 0u;
+    gcredits = 60000u;
+    gfar_fn = 21u;
+    far_exec();
+    trep[144] = 0u;
+    if (gpool == 10u) {
+        if (gfighters == 80u) {
+            if (gshipcls == 3u) {
+                if (gcredits == 30000u) {
+                    if (gfarm2[0] == 79u) {
+                        trep[144] = 1u;
+                    }
+                }
+            }
+        }
+    }
+    /* T9 cargo-deny probe: MERCHANT(20holds)->FREIGHTER with 41 holds. */
+    gcorpk = 3u;
+    gshipcls = 1u;
+    gfighters = 30u;
+    gpool = 0u;
+    gholds = 41u;
+    gcredits = 10000u;
+    gfar_fn = 21u;
+    far_exec();
+    trep[145] = 0u;
+    if (gshipcls == 1u) {
+        if (gcredits == 10000u) {
+            if (gfarm2[2] == 82u) {
+                trep[145] = 1u;
+            }
+        }
+    }
+    /* T9 price-deny probe: same swap, holds fit, 0 credits. */
+    gholds = 0u;
+    gcredits = 0u;
+    gfar_fn = 21u;
+    far_exec();
+    trep[146] = 0u;
+    if (gshipcls == 1u) {
+        if (gfarm2[2] == 78u) {
+            trep[146] = 1u;
+        }
+    }
+    /* T9 pool-tapped probe: SCOUT->MERCHANT, 10+5=15 <= 30, pool 5>0. */
+    gcorpk = 1u;
+    gshipcls = 0u;
+    gfighters = 10u;
+    gpool = 5u;
+    gholds = 0u;
+    gcredits = 10000u;
+    gfar_fn = 21u;
+    far_exec();
+    trep[147] = 0u;
+    if (gfighters == 15u) {
+        if (gpool == 0u) {
+            if (gshipcls == 1u) {
+                if (gcredits == 5000u) {
+                    if (gfarm2[0] == 80u) {
+                        trep[147] = 1u;
+                    }
+                }
             }
         }
     }

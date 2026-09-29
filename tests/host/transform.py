@@ -33,7 +33,7 @@ FAR_BASE = 0x0C00
 # Highest reachable far index: FT_M8 end (784 tour + 288 M8 tables).
 # The image is zero-padded to cover it (hardware would return bank-1
 # padding bytes there).
-FAR_SIZE = FAR_BASE + 1080
+FAR_SIZE = FAR_BASE + 1576
 
 
 def parse_far_bytes(s: str) -> list:

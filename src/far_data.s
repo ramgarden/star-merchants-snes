@@ -8,7 +8,7 @@
 ; ($018000-$018BFF). If the font size changes, the FT_* bases move.
 
 .export _scf, _scp, _scf2, _scp2, _scf3, _scp3
-.export _scf4, _scp4, _scf5, _scp5, _scf6, _scp6
+.export _scf4, _scp4, _scf5, _scp5, _scf6, _scp6, _scf7, _scp7
 
 .segment "FARRODATA"
 
@@ -86,33 +86,37 @@ _scp3:
     .byte 3,0,3,0,3,0,3,0,3,0
     .byte 6,0
 
-; Tour 4 (gselfdrive=4): scf4[84], scp4[84]
+; Tour 4 (gselfdrive=4): scf4[88], scp4[88]
 ; Combat demo: new game -> Stardock hardware -> photon buy -> leave ->
 ; warp sector 3 (hostile: 11 fighters, class 13 THO SEN) -> command
 ; palette -> ATTACK -> photon (blind) -> attack (victory, bounty 1800)
-; -> leave. 37 presses + 5 release pairs; frames are (press,release)
-; pairs 3 apart so the whole demo fits in ~2100 ticks.
+; -> leave. 39 presses; frames are (press,release) pairs 3 apart so the
+; whole demo fits in ~2100 ticks. M9: hardware dept grew 5->7 rows
+; (BACK 4->6), so two extra DOWNs precede the BACK press; tail frames
+; shift +4 (all <256, still 8-bit safe).
 _scf4:
     .byte 3,4,6,7,9,10,12,13,15,16
     .byte 18,19,21,22,24,25,27,28,30,31
     .byte 33,34,36,37,39,40,42,43,45,46
     .byte 48,49,51,52,54,55,57,58,60,61
-    .byte 63,64,66,67,69,70,72,73,75,76
-    .byte 78,79,81,82,84,85,87,88,90,91
-    .byte 93,94,96,97,99,100,102,103,105,106
-    .byte 108,109,111,112,114,115,117,118,120,121
-    .byte 123,124,126,127
+    .byte 62,63,64,65,67,68,70,71,73,74
+    .byte 76,77,79,80,82,83,85,86,88,89
+    .byte 91,92,94,95,97,98,100,101,103,104
+    .byte 106,107,109,110,112,113,115,116,118,119
+    .byte 121,122,124,125,127,128,130,131
+; scf4 check: 40 head + 4 inserted (62-65) + 44 tail (old 63-127 shifted +4)
 
 _scp4:
     .byte 1,0,6,0,1,0,1,0,6,0
     .byte 6,0,8,0,3,0,3,0,3,0
     .byte 3,0,6,0,3,0,3,0,6,0
     .byte 3,0,3,0,3,0,6,0,3,0
-    .byte 6,0,7,0,3,0,6,0,8,0
-    .byte 3,0,3,0,3,0,3,0,3,0
-    .byte 3,0,6,0,3,0,6,0,2,0
-    .byte 6,0,6,0,0,0,0,0,0,0
-    .byte 0,0,0,0
+    .byte 3,0,3,0,6,0,7,0,3,0
+    .byte 6,0,8,0,3,0,3,0,3,0
+    .byte 3,0,3,0,3,0,6,0,3,0
+    .byte 6,0,2,0,6,0,6,0,0,0
+    .byte 0,0,0,0,0,0,0,0
+; scp4 check: 40 head + (DOWN,0,DOWN,0) + old tail 6,0,7,0... unchanged
 
 ; Tour 5 (gselfdrive=5): scf5[4], scp5[4]
 _scf5:
@@ -161,3 +165,54 @@ _scp6:
 ; +240 normal ENGAGING, +264 normal PREPARE.
     .byte "ENGAGING ENEMY!", 0, 0, 0, 0, 0, 0, 0, 0, 0
     .byte "PREPARE FOR BATTLE", 0, 0, 0, 0, 0, 0
+
+; ============================================================================
+; Milestone 9: Corporation tables (offsets FT_M9* in main.c, farbyt only).
+; Layout from FT_M9 (NUL-terminated, zero-padded to stride):
+;   +0   hull names 4x12  ("SCOUT","MERCHANT","FREIGHTER","DREAD")
+;   +48  hull stats 4x4   (holdsmax, ftrmax, price-lo, price-hi;
+;   prices are data: SCOUT 0, MERCHANT 5000, FREIGHTER 5000, DREAD 30000)
+;   +64  dept rows 2x24   (CHARTER row, EXCHANGE row)
+;   +112 corp msgs 8x24   (M0..M7, see FT_M9M*)
+; Total 304 bytes. Megaholds bug NOT replicated: holds are capped.
+; ============================================================================
+    .byte "SCOUT", 0, 0, 0, 0, 0, 0, 0
+    .byte "MERCHANT", 0, 0, 0, 0
+    .byte "FREIGHTER", 0, 0, 0
+    .byte "DREAD", 0, 0, 0, 0, 0, 0, 0
+    .byte 10, 15, 0, 0
+    .byte 20, 30, 136, 19
+    .byte 40, 50, 136, 19
+    .byte 60, 80, 48, 117
+    .byte "CORP CHARTER 5000", 0, 0, 0, 0, 0, 0, 0
+    .byte "EXCHANGE SHIP", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "BUY PROBE 500", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "BUY BEACON 100", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "BUY GENESIS 5000", 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "BUY PHOTON 500", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "CORP CHARTERED!", 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "NEED 5000 CREDITS", 0, 0, 0, 0, 0, 0, 0
+    .byte "CORP FLEET ACTIVE", 0, 0, 0, 0, 0, 0, 0
+    .byte "HULL SWAPPED", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "CANT AFFORD HULL", 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "CARGO WONT FIT", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "OVERFLOW TO POOL", 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "POOL TAPPED", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+; Tour 7 (gselfdrive=7): scf7[44], scp7[44]
+; Corp demo: new game -> Stardock hardware -> CHARTER (5000cr) ->
+; EXCHANGE (FREIGHTER 5000cr) -> end in dept 2 on HULL SWAPPED.
+; Head (30) reuses tour-4 verified path; corp tail: DOWNx4,A,DOWN,A.
+_scf7:
+    .byte 3,4,6,7,9,10,12,13,15,16
+    .byte 18,19,21,22,24,25,27,28,30,31
+    .byte 33,34,36,37,39,40,42,43,45,46
+    .byte 48,49,51,52,54,55,57,58,60,61
+    .byte 63,64,66,67
+
+_scp7:
+    .byte 1,0,6,0,1,0,1,0,6,0
+    .byte 6,0,8,0,3,0,3,0,3,0
+    .byte 3,0,6,0,3,0,3,0,6,0
+    .byte 3,0,3,0,3,0,3,0,6,0
+    .byte 3,0,6,0

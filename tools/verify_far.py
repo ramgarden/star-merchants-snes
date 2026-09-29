@@ -18,26 +18,48 @@ FAR = ROOT / "src" / "far_data.s"
 FIELDS = [
     (0, b"\x03\x04"),                    # tour data starts (scf[0..1])
     (580, None),                         # tour4 base (size-checked only)
-    (784 + 0, b"ASS TRA\x00"),
-    (784 + 8, b"BAT CRU\x00"),
-    (784 + 16, b"DREADNT\x00"),
-    (784 + 24, b"TRIBUTE PAID 500CR\x00"),
-    (784 + 48, b"TRIBUTE UNPAID: FIGHT!\x00"),
-    (784 + 72, b"FERRENGI STAND DOWN\x00"),
-    (784 + 96, b"FERRENGAL DEFENDED\x00"),
-    (784 + 120, b"RETURN WITH 3000 FTRS\x00"),
-    (784 + 144, b"FERRENGAL\x00"),
-    (784 + 156, b"VORLON\x00"),
-    (784 + 168, b"ASGARD\x00"),
-    (784 + 180, b"ELDARI\x00"),
-    (784 + 192, b"KRULL\x00"),
-    (784 + 204, b"MORGU\x00"),
-    (784 + 216, b"XARTH\x00"),
-    (784 + 228, bytes([118, 12])),
-    (784 + 240, b"ENGAGING ENEMY!\x00"),
-    (784 + 264, b"PREPARE FOR BATTLE\x00"),
+    (792 + 0, b"ASS TRA\x00"),
+    (792 + 8, b"BAT CRU\x00"),
+    (792 + 16, b"DREADNT\x00"),
+    (792 + 24, b"TRIBUTE PAID 500CR\x00"),
+    (792 + 48, b"TRIBUTE UNPAID: FIGHT!\x00"),
+    (792 + 72, b"FERRENGI STAND DOWN\x00"),
+    (792 + 96, b"FERRENGAL DEFENDED\x00"),
+    (792 + 120, b"RETURN WITH 3000 FTRS\x00"),
+    (792 + 144, b"FERRENGAL\x00"),
+    (792 + 156, b"VORLON\x00"),
+    (792 + 168, b"ASGARD\x00"),
+    (792 + 180, b"ELDARI\x00"),
+    (792 + 192, b"KRULL\x00"),
+    (792 + 204, b"MORGU\x00"),
+    (792 + 216, b"XARTH\x00"),
+    (792 + 228, bytes([118, 12])),
+    (792 + 240, b"ENGAGING ENEMY!\x00"),
+    (792 + 264, b"PREPARE FOR BATTLE\x00"),
+    (1080 + 0, b"SCOUT\x00"),
+    (1080 + 12, b"MERCHANT\x00"),
+    (1080 + 24, b"FREIGHTER\x00"),
+    (1080 + 36, b"DREAD\x00"),
+    (1080 + 48, bytes([10, 15, 0, 0])),
+    (1080 + 52, bytes([20, 30, 136, 19])),
+    (1080 + 56, bytes([40, 50, 136, 19])),
+    (1080 + 60, bytes([60, 80, 48, 117])),
+    (1080 + 64, b"CORP CHARTER 5000\x00"),
+    (1080 + 88, b"EXCHANGE SHIP\x00"),
+    (1080 + 112, b"BUY PROBE 500\x00"),
+    (1080 + 136, b"BUY BEACON 100\x00"),
+    (1080 + 160, b"BUY GENESIS 5000\x00"),
+    (1080 + 184, b"BUY PHOTON 500\x00"),
+    (1080 + 208, b"CORP CHARTERED!\x00"),
+    (1080 + 232, b"NEED 5000 CREDITS\x00"),
+    (1080 + 256, b"CORP FLEET ACTIVE\x00"),
+    (1080 + 280, b"HULL SWAPPED\x00"),
+    (1080 + 304, b"CANT AFFORD HULL\x00"),
+    (1080 + 328, b"CARGO WONT FIT\x00"),
+    (1080 + 352, b"OVERFLOW TO POOL\x00"),
+    (1080 + 376, b"POOL TAPPED\x00"),
 ]
-TOTAL = 784 + 288  # 784 tour bytes + 288 M8 bytes
+TOTAL = 792 + 288 + 400 + 88  # tours + M8 + M9 + tour7 (44 frames + 44 pads)
 
 
 def parse_far_bytes(s: str) -> list:
@@ -114,7 +136,7 @@ def check_farcode_calls() -> int:
             if not m:
                 continue
             tgt = m.group(1)
-            if tgt.startswith("_m8") or tgt in ("_farbyt1",):
+            if tgt.startswith("_m8") or tgt.startswith("_m9") or tgt in ("_farbyt1",):
                 continue
             bad.append(tgt)
     if bad:

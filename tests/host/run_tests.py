@@ -174,6 +174,31 @@ def main():
               % (label, got, want))
         if not ok:
             fails.append("T8 " + label)
+    # T9: M9 corp tour: charter (5000) + exchange to FREIGHTER (5000).
+    # Expected: dock/sector-1, 500 turns (no warp), 0 credits,
+    # corpk 5 (bit0 + class 2), pool 0, shipcls 2, holdmax 40,
+    # fighters 30 (fit, no overflow), gm1 "HULL SWAPPED", SRAM v7 round-trip.
+    exp9 = [(128, 13, "gstate ST_DOCK"), (129, 1, "gsec"),
+            (130, 500 & 255, "gturns lo"), (131, 500 >> 8, "gturns hi"),
+            (132, 0, "credits lo"), (133, 0, "credits hi"),
+            (134, 5, "gcorpk"), (135, 0, "gpool"), (136, 2, "gshipcls"),
+            (137, 40, "gholdmax"), (138, 30, "gfighters"),
+            (139, 70, "gm1 FREIGHTER preview at tour end"),
+            (140, 1, "SRAM v7 round-trip"),
+            (141, 2, "dept HW at tour end"),
+            (142, 2, "dept HW at run end"),
+            (143, 72, "gm2 HULL SWAPPED at tour end"),
+            (144, 1, "exchange overflow to pool"),
+            (145, 1, "exchange cargo-deny"),
+            (146, 1, "exchange price-deny"),
+            (147, 1, "exchange pool-tapped")]
+    for idx, want, label in exp9:
+        got = mpu.memory[trep + idx]
+        ok = (got == want)
+        print(("PASS " if ok else "FAIL ") + "T9 %s: got %d want %d"
+              % (label, got, want))
+        if not ok:
+            fails.append("T9 " + label)
     return 1 if fails else 0
 
 

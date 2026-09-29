@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "sessionID": "ses_f30ee6ce4ffemwTNb1g1GbAPg7",
+  "generation": 1,
+  "items": [
+    {
+      "id": "2bf40590-f918-44eb-a5da-29c213bdbc25",
+      "objective": "update any docs needed for the next agent to better be able to pick up where the other left off, including any project goals using the opencode goals plugin",
+      "acceptance": [],
+      "constraints": [],
+      "checks": [],
+      "files": [],
+      "budget": {},
+      "createdAt": 1790181837719
+    }
+  ],
+  "updatedAt": 1790181837719
+}

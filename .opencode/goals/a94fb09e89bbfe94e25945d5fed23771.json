@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "id": "7afa7520-8565-467b-9499-c44964d54734",
+  "sessionID": "ses_f1aec38ddffeYEPyQVd0TkOav7",
+  "objective": "work on each milestone one at a time. use the test scripts to take screenshots to validate tests. if tests pass then commit and push each milestone with a matching github release. update any readme, agents.md, or other docs as needed on each milestone as well. Add any screenshots to the README that might show even more how the game works if it would not add to much or repetitive gameplay information.",
+  "constraints": [],
+  "revision": 1,
+  "status": "usage_limited",
+  "requirements": [
+    {
+      "id": "3603e925-c6bd-4cc4-9aeb-2a42edc49ca7",
+      "text": "Objective achieved: work on each milestone one at a time. use the test scripts to take screenshots to validate tests. if tests pass then commit and push each milestone with a matching github release. update any readme, agents.md, or other docs as needed on each milestone as well. Add any screenshots to the README that might show even more how the game works if it would not add to much or repetitive gameplay information.",
+      "required": true,
+      "status": "pending",
+      "evidenceIDs": [],
+      "verification": "semantic",
+      "source": "objective",
+      "updatedAt": 1790605132984
+    }
+  ],
+  "evidence": [],
+  "checks": [],
+  "execution": {
+    "agent": "build",
+    "model": {
+      "providerID": "opencode",
+      "modelID": "muse-spark-1.3-contributor-free"
+    },
+    "modelContext": {
+      "contextLimit": 1048576,
+      "outputLimit": 131072,
+      "autoCompaction": true,
+      "observedAt": 1790631966013,
+      "lastRequestTokens": 24286,
+      "lastInputTokens": 24121
+    }
+  },
+  "runtimeFingerprint": {
+    "goalVersion": "1.3.36",
+    "goalBuild": "sha256:d129b66b3da4ed914f3899d25984ff1edc5bcaeb7fce34b2555aa9257ca3e8f8"
+  },
+  "usage": {
+    "turns": 8,
+    "tokens": 21864,
+    "cost": 0,
+    "runtimeMs": 186530,
+    "seenMessageIDs": [
+      "msg_0e862054f001GtnR5mrJJprRNY",
+      "msg_0e868eabc001kXTOU93vby06I4",
+      "msg_0e8977dd9001R83zlJ39RZHem7",
+      "msg_0e89e630e001rbMauPq7Sr8MKq",
+      "msg_0e8d9b187001BBoIQzYjMAbtQI",
+      "msg_0e99b18db001f2cNHfNqSQkia5",
+      "msg_0e9a93820001ir0vbLg2ncWfp6",
+      "msg_0e9e0d44c001bPf1bUdMdy5KHt"
+    ]
+  },
+  "revisionTurnBaseline": 0,
+  "budget": {
+    "maxTurns": 0,
+    "maxTokens": 0,
+    "maxCost": 0,
+    "maxRuntimeMs": 0
+  },
+  "progressRevision": 5,
+  "observedProgressRevision": 5,
+  "progressFingerprints": [
+    "shell-worktree:086661ef508cd6a6391cca05a991488789515e6d9e37eb32b3ca117d1d9c4c59",
+    "shell-worktree:e926a5756bb36d2cc652754789ff355785eaef7def109045ddc357ad8f15dbe5",
+    "shell-worktree:231ee94b5bceaf038c9b2d02e46a155870e49108b548476f1cbeaaaf1d05c03f",
+    "shell-worktree:6bce4c8fbdce769fa91811f2db4aa0716860e52e6941ee70b8a8281c5e6c24c4",
+    "shell-worktree:7a9198ffd6cd2ad12ae546e3580caccd2969095533d73d99558cd57f3f7eda24"
+  ],
+  "stalledTurns": 1,
+  "progressNotes": [
+    {
+      "time": 1790605546927,
+      "summary": "Corbomite agent's final work reviewed: behavior-preserving victory_calc() extraction (globals-only, shift-math, sram_sync intact) + CORBOMITE! string diet; T5 victory math still exact; player-corbomite-buy/pod-trade features NOT implemented (M7 boxes stay open). My FARCODE infra folded back in (m8.c, trampoline, decls; cfg/cpustate/build/host survived). Tree links (bank-0: 189B free), host 42/42. Screenshot-validated: title perfect; combat tour aftermath SECTOR 3/CR11300/FTR11/TR499/XP23 matches M7 verified numbers exactly. gselfdrive=0 restored, temp files removed. Uncommitted: their refactor + my infra (no milestone completed yet).",
+      "next": "M8 Ferrengi: far-code encounter logic + data (bank-1), bank-0 hook, host tests, emulator screenshots"
+    },
+    {
+      "time": 1790606768776,
+      "summary": "[host:tool:bash] Goal-owned shell command changed the project worktree.",
+      "next": ""
+    },
+    {
+      "time": 1790607180131,
+      "summary": "[host:tool:bash] Goal-owned shell command changed the project worktree.",
+      "next": ""
+    },
+    {
+      "time": 1790608616630,
+      "summary": "M8 Ferrengi+Aliens implemented and host-green 50/50 (35 old + 7 T6 + 8 T7). Far side: 288B tables (ships/msgs/aliens) + m8.c fns 10/12/13/14 (encounter/tribute/grudge/immune/3000-wipe/regen/alien/LAND-deny). Bank-0: thin hooks (gen/attack/victory/land), shipoff/def +3 classes (5,6,7/5,5,5), ship_name+port_name far-buffer branches, SRAM v6 (+grudge pack). Fixed along the way: M8B base bug (offsets missed FT_BASE, all far reads hit tour bytes), PAID/UNPAID 25B padding miscount (+2 shift), new verify_far.py layout gate in build. Bank-0: 16B free; zero TOS helpers. gselfdrive=0, uncommitted.",
+      "next": "Emulator screenshot verification of M8 (Ferrengi tribute/fight/LAND-denial + alien line) via temp home-sector override, then docs + commit/push/release"
+    },
+    {
+      "time": 1790625614638,
+      "summary": "M8 COMPLETE and verified. Root-caused the black screens: cross-bank JSR (bank-1 C calling bank-0 helpers like shrax/farbyt lands in bank-1 zeros = BRK-sled wander/hang). Fixed by helper-free far C (shift-add/subtract-step math, verified by new same-bank-calls build gate) + farbyt1 bank-1 twin. Second bug: asm leafs must return X=0 (cc65 uint8->uint16 promotion via STX hi; fixed with LDX #0, was XP 64291 now 35). Host 54/54. Hardware: Ferrengi tribute paid (9000), fight intro (ASS TRA 5/5 MIN 25), photon blind (MIN 12), Ferrengi victory (11500/FTR18/AL12), M7-path victory+alien (11300/AL10/XP35). Ship state: gselfdrive=0, zero TEMPs, build green, uncommitted.",
+      "next": "Docs + commit/push/release v0.7 (devlog M8 root-cause story, MILESTONES checkboxes, AGENTS status, README screenshots, tag + GitHub release)"
+    },
+    {
+      "time": 1790626182891,
+      "summary": "[host:tool:bash] Goal-owned shell command changed the project worktree.",
+      "next": ""
+    },
+    {
+      "time": 1790626376522,
+      "summary": "[host:tool:bash] Goal-owned shell command changed the project worktree.",
+      "next": ""
+    },
+    {
+      "time": 1790626415483,
+      "summary": "[host:tool:bash] Goal-owned shell command changed the project worktree.",
+      "next": ""
+    },
+    {
+      "time": 1790626532079,
+      "summary": "M8 SHIPPED as v0.7 (commit 7de2a01 pushed + tag + GitHub release with ROM). Docs: devlog/2026-09-28-m8-ferrengi.md, MILESTONES M7-verified/M8-complete, AGENTS status + 3 new hard rules (no cross-bank calls, asm X=0, far stride contract), README +2 screenshots. Verified: build gates, host 54/54, 5 hardware screenshots. Worktree cleaned. Next: M9.",
+      "next": "Milestone 9 (Corporation): scope bank-0 budget (16B free – needs diet or FARCODE growth), design, implement per milestone cadence"
+    }
+  ],
+  "storageGeneration": 873,
+  "createdAt": 1790605132984,
+  "updatedAt": 1790631966529,
+  "stopReason": "OpenCode provider usage limit (opencode): Free limit reached: Subscribe to OpenCode Go for reliable access to the best open-source models for $10/month.",
+  "infrastructureRecovery": {
+    "kind": "continuation_dispatch",
+    "reason": "Continuation dispatch failed: TypeError: fetch failed",
+    "attempt": 1,
+    "startedAt": 1790630526417,
+    "nextRetryAt": 1790630541417
+  },
+  "skipNextStallCheck": true
+}

@@ -31,8 +31,10 @@ typedef unsigned char uint8_t;
 typedef unsigned int uint16_t;
 typedef short int16_t;
 /* Far offset of the M8 tables from $018000: FT_BASE (3072, after FARFONT)
- * + 784 tour bytes. Must match FT_M8 in main.c. */
-#define M8B 3856u
+ * + 792 tour bytes. Must match FT_M8 in main.c. */
+#define M8B 3864u
+/* Far offset of the M9 tables: M8B + 288 M8 bytes. Must match FT_M9. */
+#define M9B 4152u
 
 /* Shared game state owned by main.c */
 extern uint8_t gfar_fn;
@@ -48,6 +50,12 @@ extern uint16_t gfersec;
 extern uint8_t gfer;
 extern uint8_t gferd;
 extern uint8_t gferpal;
+extern uint8_t gcorpk;
+extern uint8_t gpool;
+extern uint8_t gshipcls;
+extern uint16_t gholds;
+extern uint16_t gholdmax;
+extern uint8_t gdocksel;
 extern uint8_t ggrudpk;
 extern uint16_t gfertreas;
 extern uint8_t gfergrd;
@@ -65,6 +73,7 @@ extern uint16_t gday;
 extern uint16_t ghash;
 extern uint8_t gi;
 extern uint8_t gk;
+extern uint16_t gn;
 extern uint16_t gom;
 extern uint8_t goc;
 extern uint16_t gtmp;
@@ -75,10 +84,20 @@ uint8_t farbyt1(void);
 /* M8-owned BSS: far text line buffers (bank-0 draw code renders from
  * here) and a proof magic. gfarmsg = encounter ship name (persists
  * across fight redraws); gfarm2 = tribute/alien/deny line; gfarm3 =
- * home sector name (filled at sector gen). 32 cols + NUL each. */
+ * home sector name (filled at sector gen); gfar4-7 = Stardock hardware
+ * rows 0-3 (refilled at every hub entry); gfar8/9 = corp message lines
+ * (M9 charter/exchange results -- MUST be separate buffers: writing
+ * results into gfarmsg/gfarm2 would clobber the CHARTER/EXCHANGE menu
+ * rows, screenshot-proven 2026-09-28). 32 cols + NUL each. */
 char gfarmsg[33];
 char gfarm2[33];
 char gfarm3[33];
+char gfar4[33];
+char gfar5[33];
+char gfar6[33];
+char gfar7[33];
+char gfar8[33];
+char gfar9[33];
 uint8_t gfarmagic;
 
 void m8_hello(void);
@@ -88,6 +107,9 @@ void m8enc(void);
 void m8alien(void);
 void m8gen(void);
 void m8deny(void);
+void m9charter(void);
+void m9exchange(void);
+void m9rows(void);
 void m8dispatch(void);
 
 void m8_hello(void) {
@@ -110,8 +132,20 @@ void m8cpy(void) {
             gfarmsg[gi] = gact;
         } else if (goc == 1u) {
             gfarm2[gi] = gact;
-        } else {
+        } else if (goc == 2u) {
             gfarm3[gi] = gact;
+        } else if (goc == 3u) {
+            gfar4[gi] = gact;
+        } else if (goc == 4u) {
+            gfar5[gi] = gact;
+        } else if (goc == 5u) {
+            gfar6[gi] = gact;
+        } else if (goc == 6u) {
+            gfar7[gi] = gact;
+        } else if (goc == 7u) {
+            gfar8[gi] = gact;
+        } else {
+            gfar9[gi] = gact;
         }
         if (gact == 0u) {
             return;
@@ -123,8 +157,20 @@ void m8cpy(void) {
         gfarmsg[32] = 0u;
     } else if (goc == 1u) {
         gfarm2[32] = 0u;
-    } else {
+    } else if (goc == 2u) {
         gfarm3[32] = 0u;
+    } else if (goc == 3u) {
+        gfar4[32] = 0u;
+    } else if (goc == 4u) {
+        gfar5[32] = 0u;
+    } else if (goc == 5u) {
+            gfar6[32] = 0u;
+    } else if (goc == 6u) {
+        gfar7[32] = 0u;
+    } else if (goc == 7u) {
+        gfar8[32] = 0u;
+    } else {
+        gfar9[32] = 0u;
     }
 }
 
@@ -464,6 +510,171 @@ void m8deny(void) {
     m8cpy();
 }
 
+void m9charter(void) {
+    if (gcorpk & 1u) {
+        gfar_o = M9B + 256u;
+        goc = 7u;
+        m8cpy();
+        gom = gshipcls;
+        gom += gom;
+        gom += gom;
+        gtmp = gom;
+        gom += gom;
+        gtmp += gom;
+        gfar_o = M9B;
+        gfar_o += gtmp;
+        goc = 8u;
+        m8cpy();
+        return;
+    }
+    if (gcredits < 5000u) {
+        gfar_o = M9B + 232u;
+        goc = 7u;
+        m8cpy();
+        gfar9[0] = 0u;
+        return;
+    }
+    gcredits -= 5000u;
+    gcorpk = 1u;
+    gom = gshipcls;
+    gom += gom;
+    gcorpk += gom;
+    gpool = 0u;
+    gfar_o = M9B + 208u;
+    goc = 7u;
+    m8cpy();
+    gom = gshipcls;
+    gom += gom;
+    gom += gom;
+    gtmp = gom;
+    gom += gom;
+    gtmp += gom;
+    gfar_o = M9B;
+    gfar_o += gtmp;
+    goc = 8u;
+    m8cpy();
+}
+
+void m9exchange(void) {
+    goc = gshipcls;
+    goc++;
+    if (goc >= 4u) {
+        goc = 0u;
+    }
+    gk = goc;
+    gom = gk;
+    gom += gom;
+    gom += gom;
+    gtmp = gom;
+    gom += gom;
+    gtmp += gom;
+    gfar_o = M9B;
+    gfar_o += gtmp;
+    goc = 7u;
+    m8cpy();
+    gom = gk;
+    gom += gom;
+    gom += gom;
+    gtmp = gom;
+    gfar_o = M9B + 48u;
+    gfar_o += gtmp;
+    gact = farbyt1();
+    gn = gact;
+    gfar_o++;
+    gact = farbyt1();
+    gtmp = gact;
+    gfar_o++;
+    gact = farbyt1();
+    goc = gact;
+    gfar_o++;
+    gact = farbyt1();
+    gi = gact;
+    gom = gi;
+    gom += gom;
+    gom += gom;
+    gom += gom;
+    gom += gom;
+    gom += gom;
+    gom += gom;
+    gom += gom;
+    gom += gom;
+    gom += goc;
+    if (gholds > gn) {
+        gfar_o = M9B + 328u;
+        goc = 8u;
+        m8cpy();
+        return;
+    }
+    if (gom > 0u) {
+        if (gcredits < gom) {
+            gfar_o = M9B + 304u;
+            goc = 8u;
+            m8cpy();
+            return;
+        }
+        gcredits -= gom;
+    }
+    gholdmax = gn;
+    gom = gfighters;
+    gom += gpool;
+    if (gom > gtmp) {
+        gom -= gtmp;
+        if (gom > 255u) {
+            gom = 255u;
+        }
+        gpool = gom;
+        gfighters = gtmp;
+        gfar_o = M9B + 352u;
+        goc = 1u;
+        m8cpy();
+    } else {
+        /* Fit branch: ftrmax (gtmp) is dead from here, so reuse it for
+         * the pool-tapped flag. It must NOT live in gi: m8cpy uses
+         * gi/gact/gfar_o as cursor/byte/addr and would clobber it
+         * during the HULL write below. Pool still holds entry value. */
+        gtmp = 0u;
+        if (gpool > 0u) {
+            gtmp = 1u;
+        }
+        gfighters = gom;
+        gpool = 0u;
+        gfar_o = M9B + 280u;
+        goc = 1u;
+        m8cpy();
+        if (gtmp) {
+            gfar_o = M9B + 376u;
+            goc = 1u;
+            m8cpy();
+        }
+    }
+    gshipcls = gk;
+    gcorpk &= 1u;
+    gom = gk;
+    gom += gom;
+    gcorpk += gom;
+}
+
+void m9rows(void) {
+    gfar_o = M9B + 64u;
+    goc = 0u;
+    m8cpy();
+    gfar_o = M9B + 88u;
+    goc = 1u;
+    m8cpy();
+    gfar_o = M9B + 112u;
+    goc = 3u;
+    m8cpy();
+    gfar_o = M9B + 136u;
+    goc = 4u;
+    m8cpy();
+    gfar_o = M9B + 160u;
+    goc = 5u;
+    m8cpy();
+    gfar_o = M9B + 184u;
+    goc = 6u;
+    m8cpy();
+}
+
 void m8dispatch(void) {
     if (gfar_fn == 1u) {
         m8_hello();
@@ -475,6 +686,12 @@ void m8dispatch(void) {
         m8gen();
     } else if (gfar_fn == 14u) {
         m8deny();
+    } else if (gfar_fn == 20u) {
+        m9charter();
+    } else if (gfar_fn == 21u) {
+        m9exchange();
+    } else if (gfar_fn == 22u) {
+        m9rows();
     }
     gfar_fn = 0u;
 }
