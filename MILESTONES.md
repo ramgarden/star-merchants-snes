@@ -206,11 +206,22 @@ Based on TradeWars 2002 gameplay analysis (Iago's War Manual, TradeWars Museum, 
   JSR helpers → BRK-sled; asm X-discipline) with build gates for both.
   See devlog/2026-09-28-m8-ferrengi.md
 
-## Milestone 9: Corporation & Multiplayer Prep
-- [ ] **Corporation** - Create/join, CEO Flagship, corp planets, corp fighters
-- [ ] **Ship Exchange** - Unlock ships in citadel, transfer fighters/shields
-- [ ] **Corp Megaholds (CEYLAD)** - Bug/exploit: unlimited holds via ship swap
-- [ ] **Team Tactics** - Sector defense, planet building, coordinated stealing
+## Milestone 9: Corporation (COMPLETE 2026-10-01, lean single-player core)
+
+Multiplayer/team play stays future work; shipped the corp core with the
+CEYLAD megaholds exploit fixed by design (holds capped, overflow pooled).
+
+- [x] **Corporation** - Charter in Stardock Hardware (5000cr, gcorpk =
+  corp bit + shipcls bits, NEED 5000 CREDITS denial)
+- [x] **Ship Exchange** - 4 hulls (SCOUT/MERCHANT/FREIGHTER/DREAD, far
+  names + data-driven stats/prices 0/5000/5000/30000), cargo-fit gate,
+  fighter overflow to uint8 pool (255 clamp) + reabsorption
+- [x] **SRAM v7** - +gcorpk/gpool/gshipcls with host-proven round-trip;
+  new-game ship is merchant-class (gshipcls inits 1)
+- [x] **Verified** - Tour-7 + host T9 (16 tour + 4 probe asserts, 74/74
+  with T1-T8); Mesen-S + snes9x screenshot-verified (exchange end
+  state). Bank-0 went byte-full (diet + far hardware rows got M9 in).
+  See devlog/2026-10-01-m9-corporation.md
 
 ## Milestone 10: Endgame & Polish
 - [ ] **Victory Conditions** - Credits, planets, XP, alignment leaderboards

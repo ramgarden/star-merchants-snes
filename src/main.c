@@ -312,6 +312,8 @@ extern char gfar4[33];
 extern char gfar5[33];
 extern char gfar6[33];
 extern char gfar7[33];
+extern char gfar8[33];
+extern char gfar9[33];
 const uint8_t palc1[16] = {
     0xFF, 0x7F, 0x10, 0x42, 0x1F, 0x00, 0x0C, 0x00,
     0x00, 0x7C, 0x00, 0x2C, 0xE0, 0x7F, 0xFF, 0x03,
@@ -2834,9 +2836,9 @@ static void dock_exec(void) {
             if (gdocksel == 4u) { gfar_fn = 20u; }
             else { gfar_fn = 21u; }
             far_exec();
-            gm1 = gfarmsg;
+            gm1 = gfar8;
             gm1pal = PAL_YEL;
-            gm2 = gfarm2;
+            gm2 = gfar9;
             gm3 = "";
             gm4 = "";
             sram_sync();
@@ -3948,7 +3950,7 @@ int main(void) {
     gopt1 = 1u;
     gopt2 = 1u;
     gopt3 = 1u;
-    gselfdrive = 7u;
+    gselfdrive = 0u;
     gdemo = 0u;
     gcmdopen = 0u;
     gsi = 0u;

@@ -84,6 +84,8 @@ extern uint8_t gfarmagic;
 extern char gfarmsg[33];
 extern char gfarm2[33];
 extern char gfarm3[33];
+extern char gfar8[33];
+extern char gfar9[33];
 extern void far_exec(void);
 extern uint16_t guniv;
 extern uint16_t gfersec;
@@ -535,7 +537,7 @@ void test_main(void) {
         if (gfighters == 80u) {
             if (gshipcls == 3u) {
                 if (gcredits == 30000u) {
-                    if (gfarm2[0] == 79u) {
+                    if (gfar9[0] == 79u) {
                         trep[144] = 1u;
                     }
                 }
@@ -554,7 +556,7 @@ void test_main(void) {
     trep[145] = 0u;
     if (gshipcls == 1u) {
         if (gcredits == 10000u) {
-            if (gfarm2[2] == 82u) {
+            if (gfar9[2] == 82u) {
                 trep[145] = 1u;
             }
         }
@@ -566,7 +568,7 @@ void test_main(void) {
     far_exec();
     trep[146] = 0u;
     if (gshipcls == 1u) {
-        if (gfarm2[2] == 78u) {
+        if (gfar9[2] == 78u) {
             trep[146] = 1u;
         }
     }
@@ -584,7 +586,7 @@ void test_main(void) {
         if (gpool == 0u) {
             if (gshipcls == 1u) {
                 if (gcredits == 5000u) {
-                    if (gfarm2[0] == 80u) {
+                    if (gfar9[0] == 80u) {
                         trep[147] = 1u;
                     }
                 }

@@ -35,6 +35,11 @@ All captures are real emulator screenshots (snes9x) of the actual ROM.
 | ![Tribute](docs/screens/ferrengi_tribute.png) | ![Combat](docs/screens/ferrengi_combat.png) |
 | Ferrengal L4 / 201 fighters; ASS TRA demands 500cr, paid (CR 9000) | Unpaid: ASS TRA 5/5 odds, photon blinds (MIN TO WIN 25→12) |
 
+| Corporation: ship exchange |
+|---|
+| ![Exchange](docs/screens/corp_exchange.png) |
+| Stardock Hardware: FREIGHTER / HULL SWAPPED (CR 0), charter + exchange rows intact |
+
 ## Current Status
 
 Milestones 0–6 complete and screenshot-verified: ANSI title + attract
@@ -53,7 +58,14 @@ neutralization rules, alien ranks with alignment shifts). The M7
 rollback of 2026-09-24 (bank-1 rodata pragma garbling text) is ancient
 history — see `devlog/` for that and the M8 bank-1-code root causes
 (cross-bank JSR, asm X-discipline). Host suite 54/54, ROM builds with
-Mesen-S-exact validation. Next: corporations (Milestone 9).
+Mesen-S-exact validation.
+
+**Milestone 9 complete 2026-10-01**: Corporation (lean single-player
+core) — Stardock-Hardware charter (5000cr) + 4-hull exchange with
+cargo-fit gate (no megaholds exploit by design), fighter overflow
+pool, SRAM v7. Host suite 74/74, screenshot-verified in Mesen-S and
+snes9x. Bank-0 is byte-full — M10 needs a budget first. Next:
+endgame & polish (Milestone 10).
 
 ## Quick Start
 

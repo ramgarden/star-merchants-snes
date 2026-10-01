@@ -3,7 +3,21 @@
 SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 **Read `devlog/` for the detailed history of what has been tried and verified.**
 
-## Current Status (2026-09-28)
+## Current Status (2026-10-01)
+
+- ✅ **Milestone 9 COMPLETE 2026-10-01** — Corporation (lean single-
+  player core): Stardock-Hardware charter (5000cr, gcorpk bit+class),
+  4-hull exchange (data-driven stats/prices, cargo-fit gate kills the
+  megaholds exploit by design, fighter overflow pool + reabsorb),
+  SRAM v7 (+gcorpk/gpool/gshipcls). Bank-0 went byte-full (diet +
+  far-sourced hardware rows; `= 0u` is 3-byte STZ vs 4-byte LDA/STA).
+  Tour-7 + host T9 (20 asserts, 74/74); Mesen-S + snes9x screenshot-
+  verified (FREIGHTER/HULL SWAPPED, CR 0 TR 500). Tour-4 re-walked
+  for the 7-row dept (+8 B far cascade, T5 numbers exact). New bug
+  classes: m8cpy clobbers gi/gact/gfar_o (flags live in gtmp-after-
+  last-use); far result buffers must not alias menu-row buffers
+  (gfar8/9 split, screenshot-proven). See
+  devlog/2026-10-01-m9-corporation.md.
 
 - ✅ **Milestone 7 COMPLETE 2026-09-25, re-verified 2026-09-28** —
   combat system (ship odds/fighter math, 15 classes, photon blind,
@@ -106,6 +120,23 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
   `tools/verify_far.py` (run by the build) asserts every field offset.
   Miscounted padding once shifted all later fields +2 (silent wrong
   reads while state logic stayed green).
+- `m8cpy` **clobbers gi/gact/gfar_o** (cursor/byte/addr). No flag or
+  scratch may live in those across an `m8cpy` call — the M9 pool-tapped
+  flag died this way (always-true). Flags live in `gtmp` *after its
+  last real use*, or another m8cpy-untouched global. See
+  devlog/2026-10-01-m9-corporation.md.
+- Far **result buffers must not alias menu-row buffers.** Writing M9
+  charter/exchange results into `gfarmsg/gfarm2` overwrote the
+  CHARTER/EXCHANGE menu rows with message text (screenshot-proven).
+  Results go to dedicated `gfar8/9` (`m8cpy` selectors 7/8); rows stay
+  in `gfarmsg/gfarm2/gfar4-7` (refilled at every hub entry).
+- Script-tour tables are **position-coupled to menu row counts.**
+  Adding dept rows moves cursor targets: every tour visiting that
+  dept must be re-walked (tour-4 needed +2 DOWNs for BACK 4→6; the
+  +8 B far cascade moved tours 5/6, M8B/M9B, verify base, FAR_SIZE).
+- Bank-0 is byte-full: `= 0u` emits 3-byte STZ, any other immediate
+  is 4-byte LDA/STA — the tour ROM overflowed by 2 B while the ship
+  ROM fit. Budget bank-0 before any M10 work (diet or FARCODE growth).
 
 ## Structure
 
@@ -288,9 +319,10 @@ Before committing changes or making a release, follow this workflow to verify th
 
 ## Next Steps
 
-1. Milestone 7 combat system (see MILESTONES.md) — hooks ready:
-   gpftrs/gpsh + MRL (planetary), gfighters/gshields (ship),
-   gcomm (ISS gate), quasar levels, photon/corbomite/escape design
+1. Milestone 10 endgame & polish (see MILESTONES.md) — BUT bank-0 is
+   byte-full: budget it first (string diet or FARCODE growth) before
+   any M10 code. SRAM is at v7; visited-bitmap persistence wants
+   ~250 B + a version bump.
 
 ## Key References
 

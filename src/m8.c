@@ -625,7 +625,7 @@ void m9exchange(void) {
         gpool = gom;
         gfighters = gtmp;
         gfar_o = M9B + 352u;
-        goc = 1u;
+        goc = 8u;
         m8cpy();
     } else {
         /* Fit branch: ftrmax (gtmp) is dead from here, so reuse it for
@@ -639,11 +639,11 @@ void m9exchange(void) {
         gfighters = gom;
         gpool = 0u;
         gfar_o = M9B + 280u;
-        goc = 1u;
+        goc = 8u;
         m8cpy();
         if (gtmp) {
             gfar_o = M9B + 376u;
-            goc = 1u;
+            goc = 8u;
             m8cpy();
         }
     }
