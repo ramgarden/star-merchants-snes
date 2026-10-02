@@ -5,6 +5,12 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 
 ## Current Status (2026-10-02)
 
+- ✅ **M10 bug fix COMPLETE 2026-10-02** — Top-edge text clipping:
+  all 5 headers drew at tile row 0 (overscan clips it). Dropped each
+  screen's row-1 ruler, headers 0→1; rows 2+ and prompts untouched
+  (no bottom-clip trade). Host 86/86; sector screen re-shot in
+  Mesen-S + snes9x. Rule: keep text within rows 1-26. See
+  devlog/2026-10-02-m10-top-margin.md.
 - ✅ **M10 seed slice COMPLETE 2026-10-02** — Universe seed: new-game
   16-button mash (glyph cells + weave bar, B back, A confirm), mixed
   into sector gen (`ghash ^= gunivseed`, seed 0 = legacy), SRAM v9.

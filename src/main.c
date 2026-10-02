@@ -1342,13 +1342,11 @@ static void draw_num(void) {
     draw_text();
 }
 static void draw_sec_head(void) {
-    gdx = 0u; gdy = 0u; gdpal = PAL_CYAN;
+    gdx = 0u; gdy = 1u; gdpal = PAL_CYAN;
     gdstr = "SECTOR "; draw_text();
     gn = gsec; draw_num();
     gdstr = ":"; draw_text();
     neb_name(); draw_text();
-    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = rulerow; draw_text();
     gdx = 0u; gdy = 2u; gdpal = PAL_WHITE;
     gdstr = "WARPS:"; draw_text();
     gi = 0u;
@@ -1919,13 +1917,11 @@ static void port_genrow(void) {
     gstock[gportcom] = (uint8_t)gtmp;
 }
 static void draw_porthead(void) {
-    gdx = 0u; gdy = 0u; gdpal = PAL_GRAY;
+    gdx = 0u; gdy = 1u; gdpal = PAL_GRAY;
     gdstr = "PORT "; draw_text();
     gdpal = PAL_YEL; port_name(); draw_text();
     gdpal = PAL_GRAY; gdstr = " CLS "; draw_text();
     gdpal = PAL_WHITE; cls_str(); draw_text();
-    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = rulerow; draw_text();
 }
 static void draw_portrows(void) {
     gi = 0u;
@@ -2309,10 +2305,8 @@ static void dock_count(void) {
     else { gtmp = 4u; }
 }
 static void draw_dockhead(void) {
-    gdx = 0u; gdy = 0u; gdpal = PAL_CYAN;
+    gdx = 0u; gdy = 1u; gdpal = PAL_CYAN;
     gdstr = "STARDOCK SECTOR 1"; draw_text();
-    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = rulerow; draw_text();
     gdx = 0u; gdy = 2u; gdpal = PAL_GRAY;
     gdstr = "CR "; draw_text();
     gdpal = PAL_WHITE; gn = gcredits; draw_num();
@@ -3037,13 +3031,11 @@ static void col_give(void) {
     gholds -= gtmp;
 }
 static void draw_planhead(void) {
-    gdx = 0u; gdy = 0u; gdpal = PAL_GRAY;
+    gdx = 0u; gdy = 1u; gdpal = PAL_GRAY;
     gdstr = "PLANET "; draw_text();
     gdpal = PAL_YEL; port_name(); draw_text();
     gdpal = PAL_GRAY; gdstr = " LV "; draw_text();
     gdpal = PAL_WHITE; gn = gplevel; draw_num();
-    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = rulerow; draw_text();
     gdx = 0u; gdy = 2u; gdpal = PAL_GRAY;
     gdstr = "CIT "; draw_text();
     gdpal = PAL_WHITE;
@@ -3552,11 +3544,9 @@ static void fight_odds(void) {
     if (gsav > 9999u) { gsav = 9999u; }
 }
 static void draw_fighthead(void) {
-    gdx = 0u; gdy = 0u; gdpal = PAL_RED;
+    gdx = 0u; gdy = 1u; gdpal = PAL_RED;
     gdstr = "COMBAT: "; draw_text();
     gdpal = PAL_YEL; ship_name(); draw_text();
-    gdy = 1u; gdx = 0u; gdpal = PAL_BLUE;
-    gdstr = rulerow; draw_text();
     gdx = 0u; gdy = 2u; gdpal = PAL_GRAY;
     gdstr = "ENEMY FTRS "; draw_text();
     gdpal = PAL_WHITE; gn = genftrs; draw_num();

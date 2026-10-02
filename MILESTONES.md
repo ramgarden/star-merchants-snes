@@ -247,6 +247,12 @@ CEYLAD megaholds exploit fixed by design (holds capped, overflow pooled).
   for cursor/starfield only — full-screen sprites are impossible on
   hardware: 128 sprites / 32-per-scanline max)
 - [ ] **Bug Fixes** - 6666 bug (MRL=0), holds bug, shield bug, cloak reliability
+- [x] **Top-edge clipping** (FIXED 2026-10-02) - Sector/port/dock/
+  planet/fight headers drew at tile row 0 (CRT overscan clips it;
+  visible even in emulator captures). Dropped each screen's row-1
+  ruler, headers moved 0→1; content rows and prompts untouched.
+  Host 86/86, re-shot in Mesen-S + snes9x. See
+  devlog/2026-10-02-m10-top-margin.md
 - [ ] **Options Menu** - ANSI on/off, sound, difficulty, controller config
 - [ ] **Cartridge Build** - Header, checksum, LoROM/HiROM, FastROM toggle
 
