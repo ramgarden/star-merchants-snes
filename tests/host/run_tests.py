@@ -37,9 +37,9 @@ def main():
     smoke = "--smoke" in args
 
     blob = (OUT / "test.bin").read_bytes()
-    assert len(blob) == 61440, len(blob)
+    assert len(blob) == 0xE9FA + 6, len(blob)
     mpu = MPU()
-    mpu.memory[0x1000:0x1000 + len(blob)] = blob
+    mpu.memory[0x1600:0x1600 + len(blob)] = blob
     mpu.reset()
     # py65 reset() leaves PC at $0000; fetch the reset vector manually
     mpu.pc = mpu.memory[0xFFFC] | (mpu.memory[0xFFFD] << 8)
@@ -200,7 +200,10 @@ def main():
              (152, 39, "credits hi"), (153, 3, "visited byte0 {1,2}"),
              (154, 0, "visited byte1 clear"),
              (155, 1, "visited round-trip"),
-             (156, 8, "SRAM record version 8")]
+             (156, 9, "SRAM record version 9"),
+            (157, 9, "seed tour reaches sector"),
+            (158, 2, "seed tour in sector 2"),
+            (159, 1, "seed 2426 warps 43/335")]
     for idx, want, label in exp10:
         got = mpu.memory[trep + idx]
         ok = (got == want)

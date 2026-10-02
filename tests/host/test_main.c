@@ -102,6 +102,8 @@ extern uint8_t gcorpk;
 extern uint8_t gpool;
 extern uint8_t gshipcls;
 extern uint8_t gvisited[64];
+extern uint16_t gunivseed;
+extern uint16_t gwarps[6];
 extern void sram_sync(void);
 extern void sram_load(void);
 extern uint16_t gday;
@@ -599,6 +601,26 @@ void test_main(void) {
         }
     }
     trep[156] = sram_mem[2];
+    /* T11: M10 seed tour (selfdrive 9): wizard -> 16 fixed mashes ->
+       launch -> warp to 2. Seed/timing are host-deterministic; the
+       runner asserts the exact seeded warps of sector 2. */
+    boot_init();
+    gselfdrive = 9u;
+    run_ticks();
+    trep[157] = gstate;
+    trep[158] = (uint8_t)(gsec & 255u);
+    trep[159] = 0u;
+    if (gstate == 9u) {
+        if (gsec == 2u) {
+            if (gunivseed == 2426u) {
+                if (gwarps[0] == 43u) {
+                    if (gwarps[1] == 335u) {
+                        trep[159] = 1u;
+                    }
+                }
+            }
+        }
+    }
     /* T9 pool-tapped probe: SCOUT->MERCHANT, 10+5=15 <= 30, pool 5>0. */
     gcorpk = 1u;
     gshipcls = 0u;

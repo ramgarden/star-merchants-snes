@@ -45,6 +45,11 @@ All captures are real emulator screenshots (snes9x) of the actual ROM.
 | ![Visited](docs/screens/visited_warps.png) |
 | Sector 990 after Continue → Resume: visited warp 44 renders white, rest red |
 
+| Universe seed entry | Seeded universe |
+|---|---|
+| ![Seed](docs/screens/seed_mash.png) | ![Seeded](docs/screens/seeded_sector.png) |
+| Mash 16 buttons: glyph cells + weave bar fill per press (B backs out) | Same new-game flow, seed 2426: sector-2 warps 43/335/753/854 |
+
 ## Current Status
 
 Milestones 0–6 complete and screenshot-verified: ANSI title + attract
@@ -74,8 +79,12 @@ snes9x. Bank-0 is byte-full — M10 needs a budget first.
 **Milestone 10 slice complete 2026-10-02**: explored-universe
 persistence — visited-sector bitmap saved in SRAM v8, white warps
 survive Continue/resume (host 83/83, Mesen-S + snes9x verified).
-Next: more M10 slices (victory, Hall of Fame, animations, bug
-fixes, options, cartridge).
+
+**Milestone 10 slice complete 2026-10-02**: universe seed — 16-button
+mash entry (glyph cells + weave bar) mixed into sector generation,
+SRAM v9 (host 86/86, Mesen-S + snes9x verified). Next: more M10
+slices (victory, Hall of Fame, animations, bug fixes, options,
+cartridge).
 
 ## Quick Start
 

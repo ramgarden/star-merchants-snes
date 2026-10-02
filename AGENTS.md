@@ -5,6 +5,15 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 
 ## Current Status (2026-10-02)
 
+- ✅ **M10 seed slice COMPLETE 2026-10-02** — Universe seed: new-game
+  16-button mash (glyph cells + weave bar, B back, A confirm), mixed
+  into sector gen (`ghash ^= gunivseed`, seed 0 = legacy), SRAM v9.
+  Tour-9 (fixed mash → seed 2426, sector-2 warps 43/335) + host T11
+  (86/86); screenshot-verified full-seed screen + seeded sector
+  (Mesen-S + snes9x). Bank-0 funded by far-sourcing all Stardock menu
+  rows + dock footers (cc65 pools identical literals — sharing them
+  saved ~nothing; measure first). Host RAM model grew ($200+$1400).
+  See devlog/2026-10-02-m10-universe-seed.md.
 - ✅ **M10 slice COMPLETE 2026-10-02** — Explored-universe persistence:
   visited bitmap `gvisited[64]` saved in SRAM record v7→v8 (mark-on-
   entry already existed; only sync/load loops added, +diet for the
@@ -150,6 +159,14 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
   extending an early tour shifts every later table (the tour-4 +8 B
   cascade). When a dispatch arm is needed, hoist invariants first
   (`gscr_f = 1u` hoist funded tour-8's arm).
+- cc65 `-O` already pools identical string literals: const-sharing 16
+  duplicated literals over 45 sites saved ~22 B. Far-sourcing menu
+  rows (distinct strings → buffers) is the real lever (~380 B across
+  all Stardock depts + footers). Measure segment sizes (HEAD-vs-work
+  `.s` line counts) before assuming.
+- Tour seeds are position-dependent (gsfr timing): T11's exact seed
+  holds because T11 runs last; inserting an earlier tour would shift
+  it.
 
 ## Structure
 

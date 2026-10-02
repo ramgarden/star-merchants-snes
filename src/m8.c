@@ -35,6 +35,16 @@ typedef short int16_t;
 #define M8B 3864u
 /* Far offset of the M9 tables: M8B + 288 M8 bytes. Must match FT_M9. */
 #define M9B 4152u
+/* M10 hub rows: M9B + 400 M9 bytes + 88 tour-7 + 112 tour-8.
+ * Must match FT_HUB in main.c. Seed labels follow at +192/+216/+240,
+ * glyphs at +264. */
+#define HUBB 4752u
+#define SEEDB 4944u
+#define SEEDG 5016u
+/* M10 dept rows: SEEDG + 16 glyph bytes. Must match DPT base. */
+#define DPTB 5032u
+/* M10 dock footers: DPTB + 360 dept bytes, 28-byte stride. */
+#define FOOTB 5392u
 
 /* Shared game state owned by main.c */
 extern uint8_t gfar_fn;
@@ -56,6 +66,7 @@ extern uint8_t gshipcls;
 extern uint16_t gholds;
 extern uint16_t gholdmax;
 extern uint8_t gdocksel;
+extern uint8_t gdept;
 extern uint8_t ggrudpk;
 extern uint16_t gfertreas;
 extern uint8_t gfergrd;
@@ -79,6 +90,11 @@ extern uint8_t goc;
 extern uint16_t gtmp;
 extern uint8_t gact;
 extern uint8_t gsclk;
+extern uint16_t gsfr;
+extern uint16_t gunivseed;
+extern uint8_t gseedct;
+extern uint8_t gseedbtn;
+extern uint8_t gseedbt2;
 uint8_t farbyt1(void);
 
 /* M8-owned BSS: far text line buffers (bank-0 draw code renders from
@@ -88,7 +104,9 @@ uint8_t farbyt1(void);
  * rows 0-3 (refilled at every hub entry); gfar8/9 = corp message lines
  * (M9 charter/exchange results -- MUST be separate buffers: writing
  * results into gfarmsg/gfarm2 would clobber the CHARTER/EXCHANGE menu
- * rows, screenshot-proven 2026-09-28). 32 cols + NUL each. */
+ * rows, screenshot-proven 2026-09-28). 32 cols + NUL each.
+ * gfar10-17 = Stardock hub dept-0 rows (refilled at every hub entry).
+ * gseedcells/gseedbar = universe-seed mash cells + weave bar. */
 char gfarmsg[33];
 char gfarm2[33];
 char gfarm3[33];
@@ -98,6 +116,33 @@ char gfar6[33];
 char gfar7[33];
 char gfar8[33];
 char gfar9[33];
+char gfar10[33];
+char gfar11[33];
+char gfar12[33];
+char gfar13[33];
+char gfar14[33];
+char gfar15[33];
+char gfar16[33];
+char gfar17[33];
+char gseedcells[17];
+char gseedbar[17];
+char gfar18[33];
+char gfar19[33];
+char gfar20[33];
+char gfar21[33];
+char gfar22[33];
+char gfar23[33];
+char gfar24[33];
+char gfar25[33];
+char gfar26[33];
+char gfar27[33];
+char gfar28[33];
+char gfar29[33];
+char gfar30[33];
+char gfar31[33];
+char gfar32[33];
+char gfootA[33];
+char gfootB[33];
 uint8_t gfarmagic;
 
 void m8_hello(void);
@@ -110,6 +155,7 @@ void m8deny(void);
 void m9charter(void);
 void m9exchange(void);
 void m9rows(void);
+void m10mash(void);
 void m8dispatch(void);
 
 void m8_hello(void) {
@@ -144,8 +190,58 @@ void m8cpy(void) {
             gfar7[gi] = gact;
         } else if (goc == 7u) {
             gfar8[gi] = gact;
-        } else {
+        } else if (goc == 8u) {
             gfar9[gi] = gact;
+        } else if (goc == 9u) {
+            gfar10[gi] = gact;
+        } else if (goc == 10u) {
+            gfar11[gi] = gact;
+        } else if (goc == 11u) {
+            gfar12[gi] = gact;
+        } else if (goc == 12u) {
+            gfar13[gi] = gact;
+        } else if (goc == 13u) {
+            gfar14[gi] = gact;
+        } else if (goc == 14u) {
+            gfar15[gi] = gact;
+        } else if (goc == 15u) {
+            gfar16[gi] = gact;
+        } else if (goc == 16u) {
+            gfar17[gi] = gact;
+        } else if (goc == 17u) {
+            gfar18[gi] = gact;
+        } else if (goc == 18u) {
+            gfar19[gi] = gact;
+        } else if (goc == 19u) {
+            gfar20[gi] = gact;
+        } else if (goc == 20u) {
+            gfar21[gi] = gact;
+        } else if (goc == 21u) {
+            gfar22[gi] = gact;
+        } else if (goc == 22u) {
+            gfar23[gi] = gact;
+        } else if (goc == 23u) {
+            gfar24[gi] = gact;
+        } else if (goc == 24u) {
+            gfar25[gi] = gact;
+        } else if (goc == 25u) {
+            gfar26[gi] = gact;
+        } else if (goc == 26u) {
+            gfar27[gi] = gact;
+        } else if (goc == 27u) {
+            gfar28[gi] = gact;
+        } else if (goc == 28u) {
+            gfar29[gi] = gact;
+        } else if (goc == 29u) {
+            gfar30[gi] = gact;
+        } else if (goc == 30u) {
+            gfar31[gi] = gact;
+        } else if (goc == 31u) {
+            gfar32[gi] = gact;
+        } else if (goc == 32u) {
+            gfootA[gi] = gact;
+        } else {
+            gfootB[gi] = gact;
         }
         if (gact == 0u) {
             return;
@@ -164,13 +260,63 @@ void m8cpy(void) {
     } else if (goc == 4u) {
         gfar5[32] = 0u;
     } else if (goc == 5u) {
-            gfar6[32] = 0u;
+        gfar6[32] = 0u;
     } else if (goc == 6u) {
         gfar7[32] = 0u;
     } else if (goc == 7u) {
         gfar8[32] = 0u;
-    } else {
+    } else if (goc == 8u) {
         gfar9[32] = 0u;
+    } else if (goc == 9u) {
+        gfar10[32] = 0u;
+    } else if (goc == 10u) {
+        gfar11[32] = 0u;
+    } else if (goc == 11u) {
+        gfar12[32] = 0u;
+    } else if (goc == 12u) {
+        gfar13[32] = 0u;
+    } else if (goc == 13u) {
+        gfar14[32] = 0u;
+    } else if (goc == 14u) {
+        gfar15[32] = 0u;
+    } else if (goc == 15u) {
+        gfar16[32] = 0u;
+    } else if (goc == 16u) {
+        gfar17[32] = 0u;
+    } else if (goc == 17u) {
+        gfar18[32] = 0u;
+    } else if (goc == 18u) {
+        gfar19[32] = 0u;
+    } else if (goc == 19u) {
+        gfar20[32] = 0u;
+    } else if (goc == 20u) {
+        gfar21[32] = 0u;
+    } else if (goc == 21u) {
+        gfar22[32] = 0u;
+    } else if (goc == 22u) {
+        gfar23[32] = 0u;
+    } else if (goc == 23u) {
+        gfar24[32] = 0u;
+    } else if (goc == 24u) {
+        gfar25[32] = 0u;
+    } else if (goc == 25u) {
+        gfar26[32] = 0u;
+    } else if (goc == 26u) {
+        gfar27[32] = 0u;
+    } else if (goc == 27u) {
+        gfar28[32] = 0u;
+    } else if (goc == 28u) {
+        gfar29[32] = 0u;
+    } else if (goc == 29u) {
+        gfar30[32] = 0u;
+    } else if (goc == 30u) {
+        gfar31[32] = 0u;
+    } else if (goc == 31u) {
+        gfar32[32] = 0u;
+    } else if (goc == 32u) {
+        gfootA[32] = 0u;
+    } else {
+        gfootB[32] = 0u;
     }
 }
 
@@ -673,6 +819,120 @@ void m9rows(void) {
     gfar_o = M9B + 184u;
     goc = 6u;
     m8cpy();
+    gfar_o = HUBB;
+    goc = 9u;
+    m8cpy();
+    gfar_o = HUBB + 24u;
+    goc = 10u;
+    m8cpy();
+    gfar_o = HUBB + 48u;
+    goc = 11u;
+    m8cpy();
+    gfar_o = HUBB + 72u;
+    goc = 12u;
+    m8cpy();
+    gfar_o = HUBB + 96u;
+    goc = 13u;
+    m8cpy();
+    gfar_o = HUBB + 120u;
+    goc = 14u;
+    m8cpy();
+    gfar_o = HUBB + 144u;
+    goc = 15u;
+    m8cpy();
+    gfar_o = HUBB + 168u;
+    goc = 16u;
+    m8cpy();
+    gfar_o = DPTB;
+    goc = 17u;
+    m8cpy();
+    gfar_o = DPTB + 24u;
+    goc = 18u;
+    m8cpy();
+    gfar_o = DPTB + 48u;
+    goc = 19u;
+    m8cpy();
+    gfar_o = DPTB + 72u;
+    goc = 20u;
+    m8cpy();
+    gfar_o = DPTB + 96u;
+    goc = 21u;
+    m8cpy();
+    gfar_o = DPTB + 120u;
+    goc = 22u;
+    m8cpy();
+    gfar_o = DPTB + 144u;
+    goc = 23u;
+    m8cpy();
+    gfar_o = DPTB + 168u;
+    goc = 24u;
+    m8cpy();
+    gfar_o = DPTB + 192u;
+    goc = 25u;
+    m8cpy();
+    gfar_o = DPTB + 216u;
+    goc = 26u;
+    m8cpy();
+    gfar_o = DPTB + 240u;
+    goc = 27u;
+    m8cpy();
+    gfar_o = DPTB + 264u;
+    goc = 28u;
+    m8cpy();
+    gfar_o = DPTB + 288u;
+    goc = 29u;
+    m8cpy();
+    gfar_o = DPTB + 312u;
+    goc = 30u;
+    m8cpy();
+    gfar_o = DPTB + 336u;
+    goc = 31u;
+    m8cpy();
+    if (gdept == 0u) {
+        gfar_o = FOOTB;
+    } else {
+        gfar_o = FOOTB + 28u;
+    }
+    goc = 32u;
+    m8cpy();
+    gfar_o = FOOTB + 56u;
+    if (gdept == 1u) {
+        gfar_o += 0u;
+    } else if (gdept == 2u) {
+        gfar_o += 28u;
+    } else if (gdept == 3u) {
+        gfar_o += 56u;
+    } else if (gdept == 4u) {
+        gfar_o += 84u;
+    } else if (gdept == 5u) {
+        gfar_o += 112u;
+    } else if (gdept == 6u) {
+        gfar_o += 140u;
+    }
+    goc = 33u;
+    m8cpy();
+}
+
+void m10mash(void) {
+    /* Fold one button mash into the universe seed: double-add is a
+     * helper-free left shift (16-bit << would emit none.lib calls).
+     * Raw button bytes + frame timing supply entropy; the cell glyph
+     * is count-indexed (bank-0 passes no button map). */
+    gom = gunivseed;
+    gom += gom;
+    gom += gseedbtn;
+    gom += gseedbt2;
+    gom += gsfr;
+    gunivseed = gom;
+    gfar_o = SEEDG;
+    gfar_o += gseedct;
+    gact = farbyt1();
+    gseedcells[gseedct] = gact;
+    gseedbar[gseedct] = '#';
+    gi = gseedct;
+    gi++;
+    gseedcells[gi] = 0u;
+    gseedbar[gi] = 0u;
 }
 
 void m8dispatch(void) {
@@ -692,6 +952,8 @@ void m8dispatch(void) {
         m9exchange();
     } else if (gfar_fn == 22u) {
         m9rows();
+    } else if (gfar_fn == 23u) {
+        m10mash();
     }
     gfar_fn = 0u;
 }

@@ -8,7 +8,7 @@
 ; ($018000-$018BFF). If the font size changes, the FT_* bases move.
 
 .export _scf, _scp, _scf2, _scp2, _scf3, _scp3
-.export _scf4, _scp4, _scf5, _scp5, _scf6, _scp6, _scf7, _scp7, _scf8, _scp8
+.export _scf4, _scp4, _scf5, _scp5, _scf6, _scp6, _scf7, _scp7, _scf8, _scp8, _scf9, _scp9, _scf9, _scp9
 
 .segment "FARRODATA"
 
@@ -236,3 +236,72 @@ _scp8:
     .byte 3,0,2,0,6,0,6,0,6,0
     .byte 6,0,6,0,6,0,6,0,7,0
     .byte 3,0,6,0,6,0
+
+; M10: hub dept-0 rows 8x24 (HUBB+0, far-sourced like M9 hw rows).
+; Bytes identical to the bank-0 literals they replace.
+    .byte "TRADING POST", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "SHIPYARD", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "HARDWARE", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "GALACTIC BANK", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "FED POLICE", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "UNDERGROUND", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "TAVERN", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "LEAVE STARDOCK", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+; M10: seed screen labels 3x24 + 16 mash glyphs (1B each).
+    .byte "SEED THE UNIVERSE", 0, 0, 0, 0, 0, 0, 0
+    .byte "MASH 16 BUTTONS", 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "WEAVING UNIVERSE", 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "*","#","@","%","&","+","?","!","<",">","=","^","~","$","x","o"
+
+; M10: dept 1/3/4/5/6 menu rows 15x24 (DPTB+0, far-sourced).
+; Bytes identical to the bank-0 literals they replace.
+    .byte "BUY HOLDS 5000", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "BUY FIGHTERS 500", 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "BUY SHIELDS 1000", 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "DEPOSIT 1000", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "WITHDRAW 1000", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "LEDGER", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "COMMISSION", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "BOUNTY", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "RECORD", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "SEE BOSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "FENCE 150", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "LAY LOW", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "ALE 10", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "GOSSIP", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "LIBRARY", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+; M10: dock footer lines 9x28 (FOOTB+0, far-sourced).
+; Row1: dept0/other; row2: one per dept. Bytes identical.
+    .byte "A:ENTER B:SECTOR", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "A:DO B:HUB", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "TRADING POST=PORT MARKET", 0, 0, 0, 0
+    .byte "CLASS 0 OUTFITTER", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "STELLAR HARDWARE", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "3PCT DAILY NOMINAL", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "SERVE THE FEDERATION", 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "EVIL ONLY", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .byte "GRIMY KNOWS ALL", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+
+; Tour 9 (gselfdrive=9): scf9[68], scp9[68]
+; Seed demo: wizard -> 16 fixed mashes (no B) -> confirm(A) ->
+; launch -> warp to 2. Mash timing is host-deterministic; the
+; seed and sector-2 warps are asserted exact. Head reuses tour-1.
+_scf9:
+    .byte 3,4,9,10,15,16,21,22,27,28
+    .byte 40,41,46,47,52,53,58,59,64,65
+    .byte 70,71,76,77,82,83,88,89,94,95
+    .byte 97,98,100,101,103,104,106,107,109,110
+    .byte 112,113,115,116,118,119,121,122,124,125
+    .byte 127,128,130,131,133,134,136,137,139,140
+    .byte 142,143,145,146,148,149,151,152
+
+_scp9:
+    .byte 1,0,3,0,3,0,3,0,6,0
+    .byte 7,0,2,0,2,0,6,0,7,0
+    .byte 2,0,6,0,1,0,1,0,6,0
+    .byte 6,0,8,0,9,0,2,0,3,0
+    .byte 4,0,5,0,1,0,6,0,8,0
+    .byte 9,0,2,0,3,0,4,0,5,0
+    .byte 1,0,6,0,6,0,6,0

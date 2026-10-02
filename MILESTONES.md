@@ -234,6 +234,13 @@ CEYLAD megaholds exploit fixed by design (holds capped, overflow pooled).
   (83/83), Mesen-S + snes9x screenshot-verified (white 44 in sector
   990). Known quirk kept: sectors >512 alias onto 0-511 (bug-fix
   slice). See devlog/2026-10-02-m10-visited-persistence.md
+- [x] **Universe seed** (COMPLETE 2026-10-02) - New-game button-mash
+  seed entry (16 presses, glyph cells + weave bar, B backs out,
+  A confirms) mixed into sector generation (`ghash ^= gunivseed`;
+  seed 0 = legacy universe, tours 1-8 bypass). SRAM v9. Tour-9 +
+  host T11 (86/86); screenshot-verified (full-seed screen, seeded
+  sector 2 warps 43/335). Bank-0 funded by far-sourcing all Stardock
+  menu rows + dock footers. See devlog/2026-10-02-m10-universe-seed.md
 - [ ] **ANSI Animations** - Starfield, warp, combat, port entry (see
   devlog/2026-09-23-ansi-graphics-path.md for the researched upgrade
   path: solid-bg tiles, full palette ramps, backdrop BG layer, sprites

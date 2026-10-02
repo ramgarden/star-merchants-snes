@@ -70,6 +70,7 @@ typedef short int16_t;
 #define ST_DOCK 13u
 #define ST_PLANET 14u
 #define ST_FIGHT 15u
+#define ST_SEED 16u
 /* Joypad buttons: PVSnesLib KEYPAD_BITS layout (include/snes/input.h:
  * KEY_A=BIT(7) KEY_B=BIT(15) KEY_SELECT=BIT(13) KEY_START=BIT(12)
  * KEY_RIGHT=BIT(8) KEY_LEFT=BIT(9) KEY_DOWN=BIT(10) KEY_UP=BIT(11)
@@ -154,6 +155,12 @@ typedef short int16_t;
 #define FT_SC8  (FT_M9 + 488u)
 #define FT_SCP8 (FT_SC8 + SCN8)
 #define SCN8 56u
+#define FT_SC9  (FT_M9 + 1492u)
+#define FT_SCP9 (FT_SC9 + SCN9)
+#define SCN9 68u
+#define FT_SEED0 (FT_BASE + 1872u)
+#define FT_SEED1 (FT_BASE + 1896u)
+#define FT_SEED2 (FT_BASE + 1920u)
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -253,6 +260,11 @@ uint8_t gmsgmode;
 uint16_t gsav;
 uint16_t guniv;
 uint8_t gvisited[64];
+uint16_t gunivseed;
+uint8_t gseedct;
+uint8_t gseedbtn;
+uint8_t gseedbt2;
+char gseedmsg[25];
 uint16_t gsram_a;
 uint8_t gsram_d;
 uint8_t gsram_ck;
@@ -317,6 +329,33 @@ extern char gfar6[33];
 extern char gfar7[33];
 extern char gfar8[33];
 extern char gfar9[33];
+extern char gfar10[33];
+extern char gfar11[33];
+extern char gfar12[33];
+extern char gfar13[33];
+extern char gfar14[33];
+extern char gfar15[33];
+extern char gfar16[33];
+extern char gfar17[33];
+extern char gfar18[33];
+extern char gfar19[33];
+extern char gfar20[33];
+extern char gfar21[33];
+extern char gfar22[33];
+extern char gfar23[33];
+extern char gfar24[33];
+extern char gfar25[33];
+extern char gfar26[33];
+extern char gfar27[33];
+extern char gfar28[33];
+extern char gfar29[33];
+extern char gfar30[33];
+extern char gfar31[33];
+extern char gfar32[33];
+extern char gfootA[33];
+extern char gfootB[33];
+extern char gseedcells[17];
+extern char gseedbar[17];
 const uint8_t palc1[16] = {
     0xFF, 0x7F, 0x10, 0x42, 0x1F, 0x00, 0x0C, 0x00,
     0x00, 0x7C, 0x00, 0x2C, 0xE0, 0x7F, 0xFF, 0x03,
@@ -324,6 +363,24 @@ const uint8_t palc1[16] = {
 const uint8_t mrows[4] = { 11u, 13u, 15u, 17u };
 const char charset[38] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
 const uint8_t bitmask[8] = { 1u, 2u, 4u, 8u, 16u, 32u, 64u, 128u };
+/* Shared literals (M10 bank-0 diet: cc65 emits one copy per use site,
+ * so duplicates are pooled here; all use sites render byte-identical). */
+const char s_TRIBUTE[] = "A TRADEWARS TRIBUTE";
+const char s_NEED500[] = "NEED 500 CREDITS";
+const char s_BACK[] = "BACK";
+const char s_CREDITS[] = "CREDITS";
+const char s_NEED1T[] = "NEED 1 TURN";
+const char s_HOLDSFULL[] = "HOLDS FULL";
+const char s_NONE[] = "NONE";
+const char s_NOTENOUGH[] = "NOT ENOUGH CREDITS";
+const char s_MERCH[] = "M E R C H A N T S";
+const char s_CHECKBS[] = "CHECK B/S LETTERS";
+const char s_PICKDEPT[] = "PICK A DEPARTMENT";
+const char s_NEED5000[] = "NEED 5000 CREDITS";
+const char s_NOSTEAL[] = "NOTHING TO STEAL";
+const char s_DOIT[] = "A:DO IT B:SECTOR";
+const char s_SELLUP[] = "SELL OR UPGRADE";
+const char s_STAR[] = "STAR MERCHANTS";
 const char rulerow[33] = "--------------------------------";
 const uint8_t clsides[9] = { 6u, 5u, 3u, 1u, 2u, 4u, 0u, 7u, 4u };
 const uint16_t citcost[6] = { 0u, 0u, 2000u, 5000u, 10000u, 20000u };
@@ -414,7 +471,9 @@ static void wait_vblank(void) {
 static void script_pads(void) {
     gsclk = (uint8_t)(gsfr >> 4);
     gscr_f = 1u;
-    if (gselfdrive == 8u) {
+    if (gselfdrive == 9u) {
+        gscr_b = FT_SC9; gscr_b2 = FT_SCP9; gflim = SCN9;
+    } else if (gselfdrive == 8u) {
         gscr_b = FT_SC8; gscr_b2 = FT_SCP8; gflim = SCN8;
     } else if (gselfdrive == 7u) {
         gscr_b = FT_SC7; gscr_b2 = FT_SCP7; gflim = SCN7;
@@ -513,10 +572,10 @@ static void draw_lines(void) {
 }
 static void draw_title(void) {
     gdx = 13u; gdy = 5u;  gdpal = PAL_GRAY; gdstr = "S T A R";           draw_text();
-    gdx = 8u;  gdy = 7u;  gdpal = PAL_GRAY; gdstr = "M E R C H A N T S"; draw_text();
+    gdx = 8u;  gdy = 7u;  gdpal = PAL_GRAY; gdstr = s_MERCH; draw_text();
     gdx = 13u; gdy = 9u;  gdpal = PAL_DRED; gdstr = "2 0 2 6";           draw_text();
     gdx = 12u; gdy = 4u;  gdpal = PAL_WHITE; gdstr = "S T A R";           draw_text();
-    gdx = 7u;  gdy = 6u;  gdpal = PAL_WHITE; gdstr = "M E R C H A N T S"; draw_text();
+    gdx = 7u;  gdy = 6u;  gdpal = PAL_WHITE; gdstr = s_MERCH; draw_text();
     gdx = 12u; gdy = 8u;  gdpal = PAL_RED;   gdstr = "2 0 2 6";           draw_text();
 }
 static void draw_ship(void) {
@@ -537,7 +596,7 @@ static void draw_ship(void) {
 }
 static void draw_footer(void) {
     gdpal = PAL_GRAY;
-    gdy = 23u; gdx = 6u;  gdstr = "A TRADEWARS TRIBUTE"; draw_text();
+    gdy = 23u; gdx = 6u;  gdstr = s_TRIBUTE; draw_text();
     gdy = 24u; gdx = 8u;  gdstr = "(C) 2026 GPL-3.0";    draw_text();
 }
 static void draw_prompt(void) {
@@ -592,11 +651,11 @@ static void show_menu(void) {
     clear_map();
     draw_menulines();
     gdpal = PAL_WHITE;
-    gdy = 4u; gdx = 9u;  gdstr = "STAR MERCHANTS"; draw_text();
+    gdy = 4u; gdx = 9u;  gdstr = s_STAR; draw_text();
     gdy = 11u; gdx = 10u; gdstr = "NEW GAME";  draw_text();
     gdy = 13u; gdx = 10u; gdstr = "CONTINUE";  draw_text();
     gdy = 15u; gdx = 10u; gdstr = "OPTIONS";   draw_text();
-    gdy = 17u; gdx = 10u; gdstr = "CREDITS";   draw_text();
+    gdy = 17u; gdx = 10u; gdstr = s_CREDITS;   draw_text();
     draw_cursor();
     draw_hint_title();
     REG_TM = 0x01u;
@@ -609,9 +668,9 @@ static void show_credits(void) {
     clear_map();
     draw_menulines();
     gdpal = PAL_WHITE;
-    gdy = 6u; gdx = 9u;  gdstr = "STAR MERCHANTS"; draw_text();
+    gdy = 6u; gdx = 9u;  gdstr = s_STAR; draw_text();
     gdpal = PAL_GRAY;
-    gdy = 9u;  gdx = 6u;  gdstr = "A TRADEWARS TRIBUTE"; draw_text();
+    gdy = 9u;  gdx = 6u;  gdstr = s_TRIBUTE; draw_text();
     gdy = 11u; gdx = 8u;  gdstr = "SNES HOMEBREW 2026";  draw_text();
     gdy = 13u; gdx = 8u;  gdstr = "FONT: PVSNESLIB";     draw_text();
     gdy = 15u; gdx = 7u;  gdstr = "LICENSE: GPL-3.0";    draw_text();
@@ -643,7 +702,7 @@ static void show_continue(void) {
     }
     show_loadret();
 }
-/* ---- SRAM save/load ($70:0000+, ~148 bytes, sum checksum) ---- */
+/* ---- SRAM save/load ($70:0000+, ~150 bytes, sum checksum) ---- */
 static void sram_put(void) {
     sram_wr();
     gsram_ck += gsram_d;
@@ -659,7 +718,7 @@ static void sram_sync(void) {
     gsram_ck = 0u;
     gsram_d = 83u; sram_put();
     gsram_d = 77u; sram_put();
-    gsram_d = 8u; sram_put();
+    gsram_d = 9u; sram_put();
     gi = 0u;
     while (gi < 8u) {
         gsram_d = gname[gi];
@@ -732,6 +791,8 @@ static void sram_sync(void) {
     gsram_d = gcorpk; sram_put();
     gsram_d = gpool; sram_put();
     gsram_d = gshipcls; sram_put();
+    gsram_d = (uint8_t)(gunivseed & 255u); sram_put();
+    gsram_d = (uint8_t)(gunivseed >> 8); sram_put();
     gi = 0u;
     while (gi < 64u) {
         gsram_d = gvisited[gi];
@@ -750,7 +811,7 @@ static void sram_load(void) {
     sram_get();
     if (gsram_d != 77u) return;
     sram_get();
-    if (gsram_d != 8u) return;
+    if (gsram_d != 9u) return;
     gi = 0u;
     while (gi < 8u) {
         sram_get();
@@ -825,6 +886,8 @@ static void sram_load(void) {
     sram_get(); gcorpk = gsram_d;
     sram_get(); gpool = gsram_d;
     sram_get(); gshipcls = gsram_d;
+    sram_get(); gtmp = gsram_d;
+    sram_get(); gunivseed = (uint16_t)(gtmp | ((uint16_t)gsram_d << 8));
     gi = 0u;
     while (gi < 64u) {
         sram_get();
@@ -873,7 +936,7 @@ static void show_loadret(void) {
     gdy = 10u; gdx = 14u; gdstr = gship; draw_text();
     gdpal = PAL_GRAY;
     gdy = 12u; gdx = 6u; gdstr = "SECTOR";  draw_text();
-    gdy = 13u; gdx = 6u; gdstr = "CREDITS"; draw_text();
+    gdy = 13u; gdx = 6u; gdstr = s_CREDITS; draw_text();
     gdy = 14u; gdx = 6u; gdstr = "TURNS";   draw_text();
     gdpal = PAL_WHITE;
     gdy = 12u; gdx = 20u; gn = gsec; draw_num();
@@ -916,7 +979,7 @@ static void show_options_keep(void) {
     gdpal = PAL_GRAY;
     gdy = 10u; gdx = 6u; gdstr = "TURN RATE"; draw_text();
     gdy = 11u; gdx = 6u; gdstr = "UNIVERSE";  draw_text();
-    gdy = 12u; gdx = 6u; gdstr = "CREDITS";   draw_text();
+    gdy = 12u; gdx = 6u; gdstr = s_CREDITS;   draw_text();
     gdy = 13u; gdx = 6u; gdstr = "FERRENGI";  draw_text();
     gdpal = PAL_WHITE;
     gp = gosel;
@@ -1033,7 +1096,7 @@ static void show_sum(void) {
     gdpal = PAL_GRAY;
     gdy = 12u; gdx = 6u; gdstr = "TURN RATE"; draw_text();
     gdy = 13u; gdx = 6u; gdstr = "UNIVERSE";  draw_text();
-    gdy = 14u; gdx = 6u; gdstr = "CREDITS";   draw_text();
+    gdy = 14u; gdx = 6u; gdstr = s_CREDITS;   draw_text();
     gdy = 15u; gdx = 6u; gdstr = "FERRENGI";  draw_text();
     gdpal = PAL_WHITE;
     gosel = 0u;
@@ -1150,6 +1213,7 @@ static void univ_size(void) {
 }
 static void sec_seed(void) {
     ghash = gsec;
+    ghash ^= gunivseed;
     ghash ^= (uint16_t)(ghash << 7);
     ghash ^= (uint16_t)(ghash >> 5);
     ghash ^= (uint16_t)(ghash << 3);
@@ -1311,7 +1375,7 @@ static void draw_sec_head(void) {
         gdpal = PAL_WHITE; gdstr = " CLS "; draw_text();
         cls_str(); draw_text();
     } else {
-        gdpal = PAL_GRAY; gdstr = "NONE"; draw_text();
+        gdpal = PAL_GRAY; gdstr = s_NONE; draw_text();
     }
     gdx = 0u; gdy = 5u; gdpal = PAL_GRAY;
     gdstr = "PLANET:"; draw_text();
@@ -1320,7 +1384,7 @@ static void draw_sec_head(void) {
         gdpal = PAL_WHITE; gdstr = " L"; draw_text();
         gn = gplevel; draw_num();
     } else {
-        gdpal = PAL_GRAY; gdstr = "NONE"; draw_text();
+        gdpal = PAL_GRAY; gdstr = s_NONE; draw_text();
     }
     gdx = 0u; gdy = 6u; gdpal = PAL_GRAY;
     gdstr = "FTRS:"; draw_text();
@@ -1379,7 +1443,7 @@ static void draw_msgs(void) {
             gdstr = " "; draw_text();
             cls_str(); draw_text();
         } else {
-            gdstr = "NONE"; draw_text();
+            gdstr = s_NONE; draw_text();
         }
         gdx = 0u; gdy = 10u; gdpal = PAL_WHITE;
         gdstr = "PLANET "; draw_text();
@@ -1388,7 +1452,7 @@ static void draw_msgs(void) {
             gdstr = " L"; draw_text();
             gn = gplevel; draw_num();
         } else {
-            gdstr = "NONE"; draw_text();
+            gdstr = s_NONE; draw_text();
         }
         gdx = 0u; gdy = 11u;
         if (gftrs) {
@@ -1533,7 +1597,7 @@ static void show_attract(void) {
     gmsgmode = 0u;
     gm1 = "DEMO: STARDOCK SECTOR";
     gm1pal = PAL_YEL;
-    gm2 = "A TRADEWARS TRIBUTE";
+    gm2 = s_TRIBUTE;
     gm3 = "";
     gm4 = "";
     show_sector();
@@ -2040,7 +2104,7 @@ static void port_buy(void) {
         gportmsg = 0u;
         gm1 = "WON'T SELL THAT";
         gm1pal = PAL_RED;
-        gm2 = "CHECK B/S LETTERS";
+        gm2 = s_CHECKBS;
         show_port();
         return;
     }
@@ -2056,7 +2120,7 @@ static void port_buy(void) {
     gsav = gn;
     if (gcredits < gsav) {
         gportmsg = 0u;
-        gm1 = "NOT ENOUGH CREDITS";
+        gm1 = s_NOTENOUGH;
         gm1pal = PAL_RED;
         gm2 = "SELL CARGO FIRST";
         show_port();
@@ -2064,9 +2128,9 @@ static void port_buy(void) {
     }
     if (gholds >= gholdmax) {
         gportmsg = 0u;
-        gm1 = "HOLDS FULL";
+        gm1 = s_HOLDSFULL;
         gm1pal = PAL_RED;
-        gm2 = "SELL OR UPGRADE";
+        gm2 = s_SELLUP;
         show_port();
         return;
     }
@@ -2084,7 +2148,7 @@ static void port_sell(void) {
         gportmsg = 0u;
         gm1 = "WON'T BUY THAT";
         gm1pal = PAL_RED;
-        gm2 = "CHECK B/S LETTERS";
+        gm2 = s_CHECKBS;
         show_port();
         return;
     }
@@ -2125,7 +2189,7 @@ static void port_steal(void) {
     port_side();
     if (gj == 1u) {
         gportmsg = 0u;
-        gm1 = "NOTHING TO STEAL";
+        gm1 = s_NOSTEAL;
         gm1pal = PAL_RED;
         gm2 = "PORT KEEPS NO STOCK";
         show_port();
@@ -2133,7 +2197,7 @@ static void port_steal(void) {
     }
     if (gstock[gportcom] == 0u) {
         gportmsg = 0u;
-        gm1 = "NOTHING TO STEAL";
+        gm1 = s_NOSTEAL;
         gm1pal = PAL_RED;
         gm2 = "STOCKROOM IS EMPTY";
         show_port();
@@ -2141,9 +2205,9 @@ static void port_steal(void) {
     }
     if (gholds >= gholdmax) {
         gportmsg = 0u;
-        gm1 = "HOLDS FULL";
+        gm1 = s_HOLDSFULL;
         gm1pal = PAL_RED;
-        gm2 = "SELL OR UPGRADE";
+        gm2 = s_SELLUP;
         show_port();
         return;
     }
@@ -2177,7 +2241,7 @@ static void port_leave(void) {
         gdockmsg = 0u;
         gm1 = "BACK AT CONCOURSE";
         gm1pal = PAL_YEL;
-        gm2 = "PICK A DEPARTMENT";
+        gm2 = s_PICKDEPT;
         show_dock();
         return;
     }
@@ -2415,19 +2479,19 @@ static void draw_dockopts(void) {
         }
         gdx = 4u;
         if (gdept == 0u) {
-            if (gi == 0u) { gdstr = "TRADING POST"; }
-            else if (gi == 1u) { gdstr = "SHIPYARD"; }
-            else if (gi == 2u) { gdstr = "HARDWARE"; }
-            else if (gi == 3u) { gdstr = "GALACTIC BANK"; }
-            else if (gi == 4u) { gdstr = "FED POLICE"; }
-            else if (gi == 5u) { gdstr = "UNDERGROUND"; }
-            else if (gi == 6u) { gdstr = "TAVERN"; }
-            else { gdstr = "LEAVE STARDOCK"; }
+            if (gi == 0u) { gdstr = gfar10; }
+            else if (gi == 1u) { gdstr = gfar11; }
+            else if (gi == 2u) { gdstr = gfar12; }
+            else if (gi == 3u) { gdstr = gfar13; }
+            else if (gi == 4u) { gdstr = gfar14; }
+            else if (gi == 5u) { gdstr = gfar15; }
+            else if (gi == 6u) { gdstr = gfar16; }
+            else { gdstr = gfar17; }
         } else if (gdept == 1u) {
-            if (gi == 0u) { gdstr = "BUY HOLDS 5000"; }
-            else if (gi == 1u) { gdstr = "BUY FIGHTERS 500"; }
-            else if (gi == 2u) { gdstr = "BUY SHIELDS 1000"; }
-            else { gdstr = "BACK"; }
+            if (gi == 0u) { gdstr = gfar18; }
+            else if (gi == 1u) { gdstr = gfar19; }
+            else if (gi == 2u) { gdstr = gfar20; }
+            else { gdstr = s_BACK; }
         }         else if (gdept == 2u) {
             if (gi == 0u) { gdstr = gfar4; }
             else if (gi == 1u) { gdstr = gfar5; }
@@ -2435,27 +2499,27 @@ static void draw_dockopts(void) {
             else if (gi == 3u) { gdstr = gfar7; }
             else if (gi == 4u) { gdstr = gfarmsg; }
             else if (gi == 5u) { gdstr = gfarm2; }
-            else { gdstr = "BACK"; }
+            else { gdstr = s_BACK; }
         } else if (gdept == 3u) {
-            if (gi == 0u) { gdstr = "DEPOSIT 1000"; }
-            else if (gi == 1u) { gdstr = "WITHDRAW 1000"; }
-            else if (gi == 2u) { gdstr = "LEDGER"; }
-            else { gdstr = "BACK"; }
+            if (gi == 0u) { gdstr = gfar21; }
+            else if (gi == 1u) { gdstr = gfar22; }
+            else if (gi == 2u) { gdstr = gfar23; }
+            else { gdstr = s_BACK; }
         } else if (gdept == 4u) {
-            if (gi == 0u) { gdstr = "COMMISSION"; }
-            else if (gi == 1u) { gdstr = "BOUNTY"; }
-            else if (gi == 2u) { gdstr = "RECORD"; }
-            else { gdstr = "BACK"; }
+            if (gi == 0u) { gdstr = gfar24; }
+            else if (gi == 1u) { gdstr = gfar25; }
+            else if (gi == 2u) { gdstr = gfar26; }
+            else { gdstr = s_BACK; }
         } else if (gdept == 5u) {
-            if (gi == 0u) { gdstr = "SEE BOSS"; }
-            else if (gi == 1u) { gdstr = "FENCE 150"; }
-            else if (gi == 2u) { gdstr = "LAY LOW"; }
-            else { gdstr = "BACK"; }
+            if (gi == 0u) { gdstr = gfar27; }
+            else if (gi == 1u) { gdstr = gfar28; }
+            else if (gi == 2u) { gdstr = gfar29; }
+            else { gdstr = s_BACK; }
         } else {
-            if (gi == 0u) { gdstr = "ALE 10"; }
-            else if (gi == 1u) { gdstr = "GOSSIP"; }
-            else if (gi == 2u) { gdstr = "LIBRARY"; }
-            else { gdstr = "BACK"; }
+            if (gi == 0u) { gdstr = gfar30; }
+            else if (gi == 1u) { gdstr = gfar31; }
+            else if (gi == 2u) { gdstr = gfar32; }
+            else { gdstr = s_BACK; }
         }
         draw_text();
         gi++;
@@ -2464,17 +2528,10 @@ static void draw_dockopts(void) {
 static void draw_dockfoot(void) {
     gdpal = PAL_GRAY;
     gdy = 18u; gdx = 0u;
-    if (gdept == 0u) { gdstr = "A:ENTER B:SECTOR"; }
-    else { gdstr = "A:DO B:HUB"; }
+    gdstr = gfootA;
     draw_text();
     gdy = 19u; gdx = 0u;
-    if (gdept == 0u) { gdstr = "TRADING POST=PORT MARKET"; }
-    else if (gdept == 1u) { gdstr = "CLASS 0 OUTFITTER"; }
-    else if (gdept == 2u) { gdstr = "STELLAR HARDWARE"; }
-    else if (gdept == 3u) { gdstr = "3PCT DAILY NOMINAL"; }
-    else if (gdept == 4u) { gdstr = "SERVE THE FEDERATION"; }
-    else if (gdept == 5u) { gdstr = "EVIL ONLY"; }
-    else { gdstr = "GRIMY KNOWS ALL"; }
+    gdstr = gfootB;
     draw_text();
 }
 static void show_dock(void) {
@@ -2526,7 +2583,7 @@ static void dock_buyholds(void) {
     }
     if (gcredits < 5000u) {
         gdockmsg = 0u;
-        gm1 = "NEED 5000 CREDITS";
+        gm1 = s_NEED5000;
         gm1pal = PAL_RED;
         gm2 = "TRADE AT PORT FIRST";
         show_dock();
@@ -2541,7 +2598,7 @@ static void dock_buyholds(void) {
 static void dock_buyftrs(void) {
     if (gcredits < 500u) {
         gdockmsg = 0u;
-        gm1 = "NEED 500 CREDITS";
+        gm1 = s_NEED500;
         gm1pal = PAL_RED;
         gm2 = "FIGHTERS COST MONEY";
         show_dock();
@@ -2579,7 +2636,7 @@ static void dock_buyprobe(void) {
     }
     if (gcredits < 500u) {
         gdockmsg = 0u;
-        gm1 = "NEED 500 CREDITS";
+        gm1 = s_NEED500;
         gm1pal = PAL_RED;
         gm2 = "PROBES COST MONEY";
         show_dock();
@@ -2625,7 +2682,7 @@ static void dock_buygenesis(void) {
     }
     if (gcredits < 5000u) {
         gdockmsg = 0u;
-        gm1 = "NEED 5000 CREDITS";
+        gm1 = s_NEED5000;
         gm1pal = PAL_RED;
         gm2 = "GENESIS AINT CHEAP";
         show_dock();
@@ -2650,7 +2707,7 @@ static void dock_buyphoton(void) {
     }
     if (gcredits < 500u) {
         gdockmsg = 0u;
-        gm1 = "NEED 500 CREDITS";
+        gm1 = s_NEED500;
         gm1pal = PAL_RED;
         gm2 = "PHOTON MISSILE PRICE";
         show_dock();
@@ -2808,10 +2865,12 @@ static void dock_library(void) {
 static void dock_back(void) {
     gdocksel = gdept;
     gdept = 0u;
+    gfar_fn = 22u;
+    far_exec();
     gdockmsg = 0u;
     gm1 = "STARDOCK CONCOURSE";
     gm1pal = PAL_YEL;
-    gm2 = "PICK A DEPARTMENT";
+    gm2 = s_PICKDEPT;
     show_dock();
 }
 static void dock_leave(void) {
@@ -2835,6 +2894,8 @@ static void dock_exec(void) {
         } else {
             gdept = (uint8_t)(gdocksel);
             gdocksel = 0u;
+            gfar_fn = 22u;
+            far_exec();
             gdockmsg = 0u;
             gm1 = "";
             gm2 = "";
@@ -2986,7 +3047,7 @@ static void draw_planhead(void) {
     gdx = 0u; gdy = 2u; gdpal = PAL_GRAY;
     gdstr = "CIT "; draw_text();
     gdpal = PAL_WHITE;
-    if (gcitadel == 0u) { gdstr = "NONE"; }
+    if (gcitadel == 0u) { gdstr = s_NONE; }
     else { gn = gcitadel; draw_num(); }
     if (gcitadel > 0u) {
         gdpal = PAL_GRAY; gdstr = " LV"; draw_text();
@@ -3118,7 +3179,7 @@ static void draw_planfoot(void) {
     gdpal = PAL_WHITE; gn = gcolship; draw_num();
     gdstr = "/"; draw_text();
     gn = gholdmax; draw_num();
-    gdy = 22u; gdx = 0u; gdstr = "A:DO IT B:SECTOR"; draw_text();
+    gdy = 22u; gdx = 0u; gdstr = s_DOIT; draw_text();
 }
 static void show_planet(void) {
     if (gplanet == 0u) {
@@ -3165,7 +3226,7 @@ static void plan_claim(void) {
     gtmp = citcost[gcitadel + 1u];
     if (gcredits < gtmp) {
         gplmsg = 0u;
-        gm1 = "NOT ENOUGH CREDITS";
+        gm1 = s_NOTENOUGH;
         gm1pal = PAL_RED;
         gm2 = "TRADE UP FIRST";
         show_planet();
@@ -3188,7 +3249,7 @@ static void plan_claim(void) {
     }
     if (gturns == 0u) {
         gplmsg = 0u;
-        gm1 = "NEED 1 TURN";
+        gm1 = s_NEED1T;
         gm1pal = PAL_RED;
         gm2 = "TO RAISE CITADEL";
         show_planet();
@@ -3230,7 +3291,7 @@ static void plan_load(void) {
     if (gn < 10u || gsav < 10u) {
         gplmsg = 0u;
         if (gholds >= gholdmax) {
-            gm1 = "HOLDS FULL";
+            gm1 = s_HOLDSFULL;
         } else {
             gm1 = "NEED 10 COLONISTS";
         }
@@ -3305,7 +3366,7 @@ static void plan_detonate(void) {
     }
     if (gturns == 0u) {
         gplmsg = 0u;
-        gm1 = "NEED 1 TURN";
+        gm1 = s_NEED1T;
         gm1pal = PAL_RED;
         gm2 = "TO ARM THE DEVICE";
         show_planet();
@@ -3340,7 +3401,7 @@ static void plan_detonate(void) {
 static void planet_genesis(void) {
     if (gturns == 0u) {
         gmsgmode = 0u;
-        gm1 = "NEED 1 TURN";
+        gm1 = s_NEED1T;
         gm1pal = PAL_RED;
         gm2 = "TO LAUNCH TORPEDO";
         gm3 = "";
@@ -3586,7 +3647,7 @@ static void draw_fightfoot(void) {
     gdy = 18u; gdx = 0u; gdstr = "MIN TO WIN "; draw_text();
     fight_odds();
     gdpal = PAL_WHITE; gn = gsav; draw_num();
-    gdy = 19u; gdx = 0u; gdstr = "A:DO IT B:SECTOR"; draw_text();
+    gdy = 19u; gdx = 0u; gdstr = s_DOIT; draw_text();
 }
 static void show_fight(void) {
     REG_INIDISP = 0x80u;
@@ -3939,12 +4000,76 @@ static void tick_name(void) {
         return;
     }
 }
+/* ---- M10: universe seed entry (button mash) ----
+ * 16 fresh presses (any button but B) each fold raw pad bytes +
+ * frame timing into gunivseed and extend the glyph cells + weave bar
+ * (far fn23, one call per press). Full seed shows one beat, then the
+ * next tick launches. Tours 1-8 bypass with seed 0 (verified
+ * universes hold); tour-9 mashes a fixed sequence. B backs out. */
+static void seed_msg(void) {
+    gi = 0u;
+    while (gi < 24u) {
+        gact = farbyt();
+        gseedmsg[gi] = gact;
+        if (gact == 0u) { return; }
+        gi++;
+        gfar_o++;
+    }
+    gseedmsg[24] = 0u;
+}
+static void draw_seed(void) {
+    REG_INIDISP = 0x80u;
+    clear_map();
+    gdx = 0u; gdy = 2u; gdpal = PAL_CYAN;
+    gfar_o = FT_SEED0; seed_msg(); gdstr = gseedmsg; draw_text();
+    gdx = 0u; gdy = 5u; gdpal = PAL_WHITE;
+    gfar_o = FT_SEED1; seed_msg(); gdstr = gseedmsg; draw_text();
+    gdx = 0u; gdy = 8u; gdpal = PAL_YEL;
+    gdstr = gseedcells; draw_text();
+    gdx = 0u; gdy = 11u; gdpal = PAL_GRAY;
+    gdstr = gseedbar; draw_text();
+    gdx = 0u; gdy = 24u;
+    gdstr = "B:BACK"; draw_text();
+    REG_TM = 0x01u;
+    REG_INIDISP = 0x0Fu;
+    gframe = 0u;
+}
+static void show_seed(void) {
+    gunivseed = 0u;
+    gseedct = 0u;
+    gseedcells[0] = 0u;
+    gseedbar[0] = 0u;
+    draw_seed();
+    gstate = ST_SEED;
+    gframe = 0u;
+}
+static void tick_seed(void) {
+    wait_vblank();
+    gframe++;
+    read_pads();
+    if (gseedct >= 16u) {
+        if (gj_new & KEY_B) { show_sum(); return; }
+        if (gj_new & (KEY_A | KEY_START)) { show_launch(); }
+        return;
+    }
+    if (gj_new & KEY_B) { show_sum(); return; }
+    if (gj_new) {
+        gseedbtn = (uint8_t)(gj_new & 255u);
+        gseedbt2 = (uint8_t)(gj_new >> 8);
+        gfar_fn = 23u;
+        far_exec();
+        gseedct++;
+        draw_seed();
+        return;
+    }
+}
 static void tick_sum(void) {
     wait_vblank();
     gframe++;
     read_pads();
     if (gj_new & (KEY_A | KEY_START)) {
-        show_launch();
+        if (gselfdrive == 0u || gselfdrive == 9u) { show_seed(); }
+        else { gunivseed = 0u; show_launch(); }
         return;
     }
     if (gj_new & KEY_B) {
@@ -4002,6 +4127,8 @@ static void tick_once(void) {
             tick_name();
         } else if (gstate == ST_NEWSUM) {
             tick_sum();
+        } else if (gstate == ST_SEED) {
+            tick_seed();
         } else if (gstate == ST_LAUNCH) {
             tick_launch();
         } else if (gstate == ST_LOADRET) {

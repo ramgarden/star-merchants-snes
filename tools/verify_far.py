@@ -58,8 +58,39 @@ FIELDS = [
     (1080 + 328, b"CARGO WONT FIT\x00"),
     (1080 + 352, b"OVERFLOW TO POOL\x00"),
     (1080 + 376, b"POOL TAPPED\x00"),
+    (1680 + 0, b"TRADING POST\x00"),
+    (1680 + 24, b"SHIPYARD\x00"),
+    (1680 + 48, b"HARDWARE\x00"),
+    (1680 + 72, b"GALACTIC BANK\x00"),
+    (1680 + 96, b"FED POLICE\x00"),
+    (1680 + 120, b"UNDERGROUND\x00"),
+    (1680 + 144, b"TAVERN\x00"),
+    (1680 + 168, b"LEAVE STARDOCK\x00"),
+    (1680 + 192, b"SEED THE UNIVERSE\x00"),
+    (1680 + 216, b"MASH 16 BUTTONS\x00"),
+    (1680 + 240, b"WEAVING UNIVERSE\x00"),
+    (1680 + 264, b"*#@%&+?!<>=^~$xo"),
 ]
-TOTAL = 792 + 288 + 400 + 88 + 112  # + tour8 (56 frames + 56 pads)
+TOTAL = 792 + 288 + 400 + 88 + 112 + 280 + 360 + 252 + 136  # + tour9
+DPT = 1680 + 280
+FOOT = 1680 + 280 + 360
+FOOTROWS = [
+    "A:ENTER B:SECTOR", "A:DO B:HUB",
+    "TRADING POST=PORT MARKET", "CLASS 0 OUTFITTER", "STELLAR HARDWARE",
+    "3PCT DAILY NOMINAL", "SERVE THE FEDERATION", "EVIL ONLY",
+    "GRIMY KNOWS ALL",
+]
+for _fi, _fr in enumerate(FOOTROWS):
+    FIELDS.append((FOOT + _fi * 28, _fr.encode() + b"\x00"))
+DEPTROWS = [
+    "BUY HOLDS 5000", "BUY FIGHTERS 500", "BUY SHIELDS 1000",
+    "DEPOSIT 1000", "WITHDRAW 1000", "LEDGER",
+    "COMMISSION", "BOUNTY", "RECORD",
+    "SEE BOSS", "FENCE 150", "LAY LOW",
+    "ALE 10", "GOSSIP", "LIBRARY",
+]
+for _di, _dr in enumerate(DEPTROWS):
+    FIELDS.append((DPT + _di * 24, _dr.encode() + b"\x00"))
 
 
 def parse_far_bytes(s: str) -> list:
@@ -136,7 +167,7 @@ def check_farcode_calls() -> int:
             if not m:
                 continue
             tgt = m.group(1)
-            if tgt.startswith("_m8") or tgt.startswith("_m9") or tgt in ("_farbyt1",):
+            if tgt.startswith("_m8") or tgt.startswith("_m9") or tgt.startswith("_m10") or tgt in ("_farbyt1",):
                 continue
             bad.append(tgt)
     if bad:
