@@ -192,6 +192,22 @@ def main():
             (145, 1, "exchange cargo-deny"),
             (146, 1, "exchange price-deny"),
             (147, 1, "exchange pool-tapped")]
+    # T10: M10 persistence tour: warp0 chain 1,2,422,680,44,880,990,
+    # menu, Continue, Resume into 990. Save at each warp, load on
+    # Continue: visited {1,2} in byte 0; 422+ live in higher bytes.
+    exp10 = [(148, 9, "gstate ST_SECTOR"), (149, 990 & 255, "gsec lo"),
+             (150, 494 & 255, "gturns lo"), (151, 16, "credits lo"),
+             (152, 39, "credits hi"), (153, 3, "visited byte0 {1,2}"),
+             (154, 0, "visited byte1 clear"),
+             (155, 1, "visited round-trip"),
+             (156, 8, "SRAM record version 8")]
+    for idx, want, label in exp10:
+        got = mpu.memory[trep + idx]
+        ok = (got == want)
+        print(("PASS " if ok else "FAIL ") + "T10 %s: got %d want %d"
+              % (label, got, want))
+        if not ok:
+            fails.append("T10 " + label)
     for idx, want, label in exp9:
         got = mpu.memory[trep + idx]
         ok = (got == want)

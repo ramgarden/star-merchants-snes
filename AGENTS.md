@@ -3,7 +3,16 @@
 SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 **Read `devlog/` for the detailed history of what has been tried and verified.**
 
-## Current Status (2026-10-01)
+## Current Status (2026-10-02)
+
+- ✅ **M10 slice COMPLETE 2026-10-02** — Explored-universe persistence:
+  visited bitmap `gvisited[64]` saved in SRAM record v7→v8 (mark-on-
+  entry already existed; only sync/load loops added, +diet for the
+  48 B overflow). Tour-8 (warp0 chain → Continue → Resume) + host T10
+  (83/83); screenshot-verified white-44 in sector 990 (Mesen-S +
+  snes9x). Universe is deterministic per sector (`gseed` is title
+  glitter); sectors >512 alias (kept, bug-fix slice). See
+  devlog/2026-10-02-m10-visited-persistence.md.
 
 - ✅ **Milestone 9 COMPLETE 2026-10-01** — Corporation (lean single-
   player core): Stardock-Hardware charter (5000cr, gcorpk bit+class),
@@ -137,6 +146,10 @@ SNES homebrew game (spiritual successor to Tradewars 2002). Licensed GPL-3.0.
 - Bank-0 is byte-full: `= 0u` emits 3-byte STZ, any other immediate
   is 4-byte LDA/STA — the tour ROM overflowed by 2 B while the ship
   ROM fit. Budget bank-0 before any M10 work (diet or FARCODE growth).
+- New self-drive tours APPEND at the far end (tour-8 after tour-7):
+  extending an early tour shifts every later table (the tour-4 +8 B
+  cascade). When a dispatch arm is needed, hoist invariants first
+  (`gscr_f = 1u` hoist funded tour-8's arm).
 
 ## Structure
 

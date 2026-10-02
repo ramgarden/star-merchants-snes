@@ -226,11 +226,14 @@ CEYLAD megaholds exploit fixed by design (holds capped, overflow pooled).
 ## Milestone 10: Endgame & Polish
 - [ ] **Victory Conditions** - Credits, planets, XP, alignment leaderboards
 - [ ] **High Score / Hall of Fame** - SRAM persistence
-- [ ] **Explored-universe persistence** - Save the visited-sector bitmap
-  to SRAM (up to 2000 sectors = 250 bytes; bump record version) so
-  explored sectors stay white (not red) across Continue/resume.
-  RAM-only today by design; sector contents regenerate from the
-  universe seed, only the visited flags need storing.
+- [x] **Explored-universe persistence** (COMPLETE 2026-10-02) - The
+  64-byte visited bitmap is saved to SRAM (record v7→v8) so explored
+  sectors stay white (not red) across Continue/resume. Sector contents
+  regenerate deterministically from the sector number (no per-game
+  random universe; `gseed` is title glitter only). Tour-8 + host T10
+  (83/83), Mesen-S + snes9x screenshot-verified (white 44 in sector
+  990). Known quirk kept: sectors >512 alias onto 0-511 (bug-fix
+  slice). See devlog/2026-10-02-m10-visited-persistence.md
 - [ ] **ANSI Animations** - Starfield, warp, combat, port entry (see
   devlog/2026-09-23-ansi-graphics-path.md for the researched upgrade
   path: solid-bg tiles, full palette ramps, backdrop BG layer, sprites

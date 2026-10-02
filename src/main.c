@@ -151,6 +151,9 @@ typedef short int16_t;
 #define FT_SC7  (FT_M9 + 400u)
 #define FT_SCP7 (FT_SC7 + SCN7)
 #define SCN7 44u
+#define FT_SC8  (FT_M9 + 488u)
+#define FT_SCP8 (FT_SC8 + SCN8)
+#define SCN8 56u
 extern const uint8_t font_pic[3072];
 uint16_t gw;
 uint16_t gseed;
@@ -406,23 +409,27 @@ static void wait_vblank(void) {
     }
     gsfr++;
 }
-/* All tours (1-6) use bank-1 FARRODATA tables via farbyt(). */
+/* All tours use bank-1 FARRODATA tables via farbyt(). gscr_f hoisted:
+ * every branch set it to 1u (saves ~18 B bank-0 for the tour-8 arm). */
 static void script_pads(void) {
     gsclk = (uint8_t)(gsfr >> 4);
-    if (gselfdrive == 7u) {
-        gscr_f = 1u; gscr_b = FT_SC7; gscr_b2 = FT_SCP7; gflim = SCN7;
+    gscr_f = 1u;
+    if (gselfdrive == 8u) {
+        gscr_b = FT_SC8; gscr_b2 = FT_SCP8; gflim = SCN8;
+    } else if (gselfdrive == 7u) {
+        gscr_b = FT_SC7; gscr_b2 = FT_SCP7; gflim = SCN7;
     } else if (gselfdrive == 4u) {
-        gscr_f = 1u; gscr_b = FT_SC4; gscr_b2 = FT_SCP4; gflim = SCN4;
+        gscr_b = FT_SC4; gscr_b2 = FT_SCP4; gflim = SCN4;
     } else if (gselfdrive == 5u) {
-        gscr_f = 1u; gscr_b = FT_SC5; gscr_b2 = FT_SCP5; gflim = SCN5;
+        gscr_b = FT_SC5; gscr_b2 = FT_SCP5; gflim = SCN5;
     } else if (gselfdrive == 6u) {
-        gscr_f = 1u; gscr_b = FT_SC6; gscr_b2 = FT_SCP6; gflim = SCN6;
+        gscr_b = FT_SC6; gscr_b2 = FT_SCP6; gflim = SCN6;
     } else if (gselfdrive == 3u) {
-        gscr_f = 1u; gscr_b = FT_SC3; gscr_b2 = FT_SCP3; gflim = SCN3;
+        gscr_b = FT_SC3; gscr_b2 = FT_SCP3; gflim = SCN3;
     } else if (gselfdrive == 2u) {
-        gscr_f = 1u; gscr_b = FT_SC2; gscr_b2 = FT_SCP2; gflim = SCN2;
+        gscr_b = FT_SC2; gscr_b2 = FT_SCP2; gflim = SCN2;
     } else {
-        gscr_f = 1u; gscr_b = FT_SC; gscr_b2 = FT_SCP; gflim = SCN;
+        gscr_b = FT_SC; gscr_b2 = FT_SCP; gflim = SCN;
     }
     while (gsi < gflim) {
         gfar_o = (uint16_t)(gscr_b + gsi);
@@ -636,7 +643,7 @@ static void show_continue(void) {
     }
     show_loadret();
 }
-/* ---- SRAM save/load ($70:0000+, 75 bytes, sum checksum) ---- */
+/* ---- SRAM save/load ($70:0000+, ~148 bytes, sum checksum) ---- */
 static void sram_put(void) {
     sram_wr();
     gsram_ck += gsram_d;
@@ -652,7 +659,7 @@ static void sram_sync(void) {
     gsram_ck = 0u;
     gsram_d = 83u; sram_put();
     gsram_d = 77u; sram_put();
-    gsram_d = 7u; sram_put();
+    gsram_d = 8u; sram_put();
     gi = 0u;
     while (gi < 8u) {
         gsram_d = gname[gi];
@@ -725,6 +732,12 @@ static void sram_sync(void) {
     gsram_d = gcorpk; sram_put();
     gsram_d = gpool; sram_put();
     gsram_d = gshipcls; sram_put();
+    gi = 0u;
+    while (gi < 64u) {
+        gsram_d = gvisited[gi];
+        sram_put();
+        gi++;
+    }
     gsram_d = gsram_ck;
     sram_wr();
 }
@@ -737,7 +750,7 @@ static void sram_load(void) {
     sram_get();
     if (gsram_d != 77u) return;
     sram_get();
-    if (gsram_d != 7u) return;
+    if (gsram_d != 8u) return;
     gi = 0u;
     while (gi < 8u) {
         sram_get();
@@ -812,6 +825,12 @@ static void sram_load(void) {
     sram_get(); gcorpk = gsram_d;
     sram_get(); gpool = gsram_d;
     sram_get(); gshipcls = gsram_d;
+    gi = 0u;
+    while (gi < 64u) {
+        sram_get();
+        gvisited[gi] = gsram_d;
+        gi++;
+    }
     sram_rd();
     if (gsram_d != gsram_ck) {
         gtmp = 0u;
@@ -1524,7 +1543,7 @@ static void do_warp(void) {
         gmsgmode = 0u;
         gm1 = "NO TURNS LEFT";
         gm1pal = PAL_RED;
-        gm2 = "REST AT CITADEL (SOON)";
+        gm2 = "REST AT CITADEL";
         gm3 = "";
         gm4 = "";
         gcmdopen = 0u;
@@ -1627,9 +1646,9 @@ static void exec_cmd(void) {
             }
         } else {
             gmsgmode = 0u;
-            gm1 = "NO HOSTILES HERE";
+            gm1 = "NO HOSTILES";
             gm1pal = PAL_GRAY;
-            gm2 = "SECTOR IS CLEAR";
+            gm2 = "ALL CLEAR";
             gm3 = "";
             gm4 = "";
             show_sector();
@@ -2019,7 +2038,7 @@ static void port_buy(void) {
     port_side();
     if (gj == 1u) {
         gportmsg = 0u;
-        gm1 = "PORT WON'T SELL THAT";
+        gm1 = "WON'T SELL THAT";
         gm1pal = PAL_RED;
         gm2 = "CHECK B/S LETTERS";
         show_port();
@@ -2063,7 +2082,7 @@ static void port_sell(void) {
     port_side();
     if (gj == 0u) {
         gportmsg = 0u;
-        gm1 = "PORT WON'T BUY THAT";
+        gm1 = "WON'T BUY THAT";
         gm1pal = PAL_RED;
         gm2 = "CHECK B/S LETTERS";
         show_port();
@@ -2163,7 +2182,7 @@ static void port_leave(void) {
         return;
     }
     gmsgmode = 0u;
-    gm1 = "UNDOCKED: FLY SAFE, TRADER";
+    gm1 = "UNDOCKED: FLY SAFE";
     gm1pal = PAL_WHITE;
     gm2 = "";
     gm3 = "";
@@ -2509,7 +2528,7 @@ static void dock_buyholds(void) {
         gdockmsg = 0u;
         gm1 = "NEED 5000 CREDITS";
         gm1pal = PAL_RED;
-        gm2 = "TRADE AT THE PORT FIRST";
+        gm2 = "TRADE AT PORT FIRST";
         show_dock();
         return;
     }
@@ -3309,7 +3328,7 @@ static void plan_detonate(void) {
     galign -= 50;
     if (galign < -999) galign = -999;
     gmsgmode = 0u;
-    gm1 = "PLANET DESTROYED +50XP";
+    gm1 = "PLANET DESTROYED";
     gm1pal = PAL_RED;
         gm2 = "ALIGN -50 FEDS NOTICE";
     gm3 = "";
@@ -3347,9 +3366,9 @@ static void planet_genesis(void) {
     gcolsec = gsec;
     gxp += 25u;
     gmsgmode = 0u;
-    gm1 = "GENESIS SUCCESS +25XP";
+    gm1 = "GENESIS +25XP";
     gm1pal = PAL_YEL;
-    gm2 = "A NEW WORLD AWAITS LAND";
+    gm2 = "NEW WORLD AWAITS";
     gm3 = "";
     gm4 = "";
     gcmdopen = 0u;

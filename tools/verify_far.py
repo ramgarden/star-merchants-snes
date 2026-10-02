@@ -59,7 +59,7 @@ FIELDS = [
     (1080 + 352, b"OVERFLOW TO POOL\x00"),
     (1080 + 376, b"POOL TAPPED\x00"),
 ]
-TOTAL = 792 + 288 + 400 + 88  # tours + M8 + M9 + tour7 (44 frames + 44 pads)
+TOTAL = 792 + 288 + 400 + 88 + 112  # + tour8 (56 frames + 56 pads)
 
 
 def parse_far_bytes(s: str) -> list:

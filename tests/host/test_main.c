@@ -101,6 +101,7 @@ extern uint16_t genftrs;
 extern uint8_t gcorpk;
 extern uint8_t gpool;
 extern uint8_t gshipcls;
+extern uint8_t gvisited[64];
 extern void sram_sync(void);
 extern void sram_load(void);
 extern uint16_t gday;
@@ -572,6 +573,32 @@ void test_main(void) {
             trep[146] = 1u;
         }
     }
+    /* T10: M10 persistence tour (selfdrive 8): warp x2, menu,
+       Continue, Resume. Runner asserts exact end state. */
+    boot_init();
+    gselfdrive = 8u;
+    run_ticks();
+    trep[148] = gstate;
+    trep[149] = (uint8_t)(gsec & 255u);
+    trep[150] = (uint8_t)(gturns & 255u);
+    trep[151] = (uint8_t)(gcredits & 255u);
+    trep[152] = (uint8_t)((gcredits >> 8) & 255u);
+    trep[153] = gvisited[0];
+    trep[154] = gvisited[1];
+    /* T10 unit probes: visited pattern round-trip + record version. */
+    gvisited[0] = 0xAAu;
+    gvisited[63] = 0x55u;
+    sram_sync();
+    gvisited[0] = 0u;
+    gvisited[63] = 0u;
+    sram_load();
+    trep[155] = 0u;
+    if (gvisited[0] == 0xAAu) {
+        if (gvisited[63] == 0x55u) {
+            trep[155] = 1u;
+        }
+    }
+    trep[156] = sram_mem[2];
     /* T9 pool-tapped probe: SCOUT->MERCHANT, 10+5=15 <= 30, pool 5>0. */
     gcorpk = 1u;
     gshipcls = 0u;

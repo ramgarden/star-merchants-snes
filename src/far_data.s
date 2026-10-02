@@ -8,7 +8,7 @@
 ; ($018000-$018BFF). If the font size changes, the FT_* bases move.
 
 .export _scf, _scp, _scf2, _scp2, _scf3, _scp3
-.export _scf4, _scp4, _scf5, _scp5, _scf6, _scp6, _scf7, _scp7
+.export _scf4, _scp4, _scf5, _scp5, _scf6, _scp6, _scf7, _scp7, _scf8, _scp8
 
 .segment "FARRODATA"
 
@@ -216,3 +216,23 @@ _scp7:
     .byte 3,0,6,0,3,0,3,0,6,0
     .byte 3,0,3,0,3,0,3,0,6,0
     .byte 3,0,6,0
+
+; Tour 8 (gselfdrive=8): scf8[56], scp8[56]
+; Persistence demo: new game -> warp0 chain 1,2,422,680,44,
+; 880,990 -> menu(B) -> Continue -> Resume(A) into 990.
+; Warp 44 renders white (visited). Head (36) reuses tour-1.
+_scf8:
+    .byte 3,4,9,10,15,16,21,22,27,28
+    .byte 40,41,46,47,52,53,58,59,64,65
+    .byte 70,71,76,77,82,83,88,89,94,95
+    .byte 100,101,106,107,112,113,115,116,118,119
+    .byte 121,122,124,125,127,128,130,131,133,134
+    .byte 136,137,139,140,142,143
+
+_scp8:
+    .byte 1,0,3,0,3,0,3,0,6,0
+    .byte 7,0,2,0,2,0,6,0,7,0
+    .byte 2,0,6,0,1,0,1,0,6,0
+    .byte 3,0,2,0,6,0,6,0,6,0
+    .byte 6,0,6,0,6,0,6,0,7,0
+    .byte 3,0,6,0,6,0

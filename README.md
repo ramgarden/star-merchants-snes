@@ -40,6 +40,11 @@ All captures are real emulator screenshots (snes9x) of the actual ROM.
 | ![Exchange](docs/screens/corp_exchange.png) |
 | Stardock Hardware: FREIGHTER / HULL SWAPPED (CR 0), charter + exchange rows intact |
 
+| Explored universe persists |
+|---|
+| ![Visited](docs/screens/visited_warps.png) |
+| Sector 990 after Continue → Resume: visited warp 44 renders white, rest red |
+
 ## Current Status
 
 Milestones 0–6 complete and screenshot-verified: ANSI title + attract
@@ -64,8 +69,13 @@ Mesen-S-exact validation.
 core) — Stardock-Hardware charter (5000cr) + 4-hull exchange with
 cargo-fit gate (no megaholds exploit by design), fighter overflow
 pool, SRAM v7. Host suite 74/74, screenshot-verified in Mesen-S and
-snes9x. Bank-0 is byte-full — M10 needs a budget first. Next:
-endgame & polish (Milestone 10).
+snes9x. Bank-0 is byte-full — M10 needs a budget first.
+
+**Milestone 10 slice complete 2026-10-02**: explored-universe
+persistence — visited-sector bitmap saved in SRAM v8, white warps
+survive Continue/resume (host 83/83, Mesen-S + snes9x verified).
+Next: more M10 slices (victory, Hall of Fame, animations, bug
+fixes, options, cartridge).
 
 ## Quick Start
 
